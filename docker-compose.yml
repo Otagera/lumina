@@ -15,6 +15,11 @@ services:
 
   redis:
     image: redis:alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   ai_service:
     build:
@@ -22,6 +27,11 @@ services:
       dockerfile: apps/ai/Dockerfile
     volumes:
       - uploads:/app/apps/api/src/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     logging:
       driver: "json-file"
       options:
@@ -51,7 +61,12 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     volumes:
       - uploads:/app/apps/api/src/uploads
     logging:
