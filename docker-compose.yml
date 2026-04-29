@@ -5,8 +5,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-anoda}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: ${POSTGRES_DB:-anoda_facematch}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -17,15 +15,11 @@ services:
 
   redis:
     image: redis:alpine
-    ports:
-      - "6379:6379"
 
   ai_service:
     build:
       context: .
       dockerfile: apps/ai/Dockerfile
-    ports:
-      - "8000:8000"
     volumes:
       - uploads:/app/apps/api/src/uploads
     logging:
