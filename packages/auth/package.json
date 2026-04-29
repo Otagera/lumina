@@ -1,5 +1,5 @@
 {
-	"name": "@anoda-facematch/auth",
+	"name": "@lumina/auth",
 	"version": "1.0.0",
 	"description": "Shared authentication services for Anoda Facematch",
 	"main": "index.js",

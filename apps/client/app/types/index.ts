@@ -35,6 +35,8 @@ export interface Person {
 	personId: string;
 	name: string;
 	createdAt: string;
+	faceUrl?: string;
+	boundingBox?: BoundingBox;
 }
 
 // ============== Image Types ==============

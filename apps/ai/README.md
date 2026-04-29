@@ -1,6 +1,6 @@
-# Anoda Facematch - AI Service
+# Lumina - AI Service
 
-This service provides the core machine learning and computer vision capabilities for Anoda Facematch. It processes images to detect faces and generate embeddings used for facial recognition and matching.
+This service provides the core machine learning and computer vision capabilities for Lumina. It processes images to detect faces and generate embeddings used for facial recognition and matching.
 
 ## Tech Stack
 

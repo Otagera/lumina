@@ -37,8 +37,8 @@ const service = async (data: any) => {
 
 	// Return directly mapped fields for UsageIndicator
 	return {
-		computeUnitsUsed: stats.imagesUsed,
-		computeUnitsLimit: stats.imagesLimit,
+		computeUnitsUsed: stats.computeUnitsUsed,
+		computeUnitsLimit: stats.computeUnitsLimit,
 		storageUsedMB: stats.storageUsedMB,
 		storageLimitMB: stats.storageLimitMB,
 		resetDate: resetDate.toISOString(),

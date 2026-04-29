@@ -105,6 +105,28 @@ const fetchAllImages = async () => {
 	}));
 };
 
+const softDeleteImagesByIds = async (imageIds: string[]) => {
+	return await prisma.images.updateMany({
+		where: {
+			image_id: { in: imageIds },
+		},
+		data: {
+			deleted_at: new Date(),
+		},
+	});
+};
+
+const restoreImagesByIds = async (imageIds: string[]) => {
+	return await prisma.images.updateMany({
+		where: {
+			image_id: { in: imageIds },
+		},
+		data: {
+			deleted_at: null,
+		},
+	});
+};
+
 const deleteImage = async (where) => {
 	const image = await prisma.images.findFirst({ where });
 	if (!image) return;
@@ -143,7 +165,7 @@ const deleteImage = async (where) => {
 		}
 
 		if (image.uploaded_by) {
-			await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+			await logUsage(image.uploaded_by, "compute", "delete", -1);
 		}
 	});
 
@@ -200,7 +222,7 @@ const deleteImageById = async (image_id) => {
 		}
 
 		if (image.uploaded_by) {
-			await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+			await logUsage(image.uploaded_by, "compute", "delete", -1);
 		}
 	});
 
@@ -265,7 +287,7 @@ const deleteImagesByIds = async (imageIds) => {
 			}
 
 			if (image.uploaded_by) {
-				await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+				await logUsage(image.uploaded_by, "compute", "delete", -1);
 			}
 		}
 	});
@@ -329,7 +351,7 @@ const deleteImagesByUserId = async (uploaded_by) => {
 			}
 
 			if (image.uploaded_by) {
-				await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+				await logUsage(image.uploaded_by, "compute", "delete", -1);
 			}
 		}
 	});
@@ -376,7 +398,7 @@ const deleteAllImages = async () => {
 			}
 
 			if (image.uploaded_by) {
-				await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+				await logUsage(image.uploaded_by, "compute", "delete", -1);
 			}
 		}
 	});
@@ -419,7 +441,7 @@ const fetchImagesByIdsQuery = async (imageIds) => {
             images.original_size::JSONB AS original_size
         FROM images
         LEFT JOIN faces ON faces.image_id = images.image_id
-        WHERE images.image_id = ANY(${imageIds})
+        WHERE images.image_id = ANY(${imageIds}) AND images.deleted_at IS NULL
         GROUP BY 
             images.image_id, 
             images.image_path, 
@@ -450,6 +472,7 @@ const fetchAllImagesQuery = async () => {
             images.original_size::JSONB AS original_size
         FROM images
         LEFT JOIN faces ON faces.image_id = images.image_id
+        WHERE images.deleted_at IS NULL
         GROUP BY 
             images.image_id, 
             images.image_path, 
@@ -468,26 +491,37 @@ const deleteImagesByIdsQuery = async (imageIds) => {
 	}
 };
 
-const deleteAllImagesQuery = async () => {
+const deleteAllImagesQuery = async (userId: string) => {
 	try {
+		// Only delete images belonging to the user
+		const images = await prisma.images.findMany({
+			where: { uploaded_by: userId },
+		});
+		const imageIds = images.map((i) => i.image_id);
+
 		return await prisma.$transaction([
-			prisma.$queryRaw`DELETE FROM "faces" RETURNING imageId;`,
-			prisma.$queryRaw`DELETE FROM "images" RETURNING imageId;`,
+			prisma.faces.deleteMany({ where: { image_id: { in: imageIds } } }),
+			prisma.images.deleteMany({ where: { image_id: { in: imageIds } } }),
 		]);
 	} finally {
 	}
 };
 
-const moderateImagesQuery = async (imageIds: string[], status: string) => {
+const moderateImagesQuery = async (
+	imageIds: string[],
+	status: string,
+	reason?: string,
+) => {
+	const data: any = { status };
+	if (reason) data.rejection_reason = reason;
+
 	return await prisma.images.updateMany({
 		where: {
 			image_id: {
 				in: imageIds,
 			},
 		},
-		data: {
-			status,
-		},
+		data,
 	});
 };
 
@@ -499,6 +533,8 @@ export {
 	fetchImagesByIds,
 	fetchImages,
 	fetchAllImages,
+	softDeleteImagesByIds,
+	restoreImagesByIds,
 	deleteImage,
 	deleteImageById,
 	deleteImagesByIds,
@@ -528,7 +564,7 @@ export const cleanupImageSideEffects = async (images: any[]) => {
 			} catch (_e) {}
 		}
 		if (image.uploaded_by) {
-			await logUsage(image.uploaded_by, "compute_unit", "delete", -1);
+			await logUsage(image.uploaded_by, "compute", "delete", -1);
 		}
 	}
 };

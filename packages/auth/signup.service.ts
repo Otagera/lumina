@@ -1,4 +1,6 @@
 import joi from "joi";
+import { queueServices } from "../../apps/worker/src/queue/queue.service.ts";
+import { createRefreshToken } from "../models/src/refreshTokens.lib.ts";
 import { createUser, getUser } from "../models/src/users.lib.ts";
 import {
 	createUserAuthToken,
@@ -16,7 +18,7 @@ const spec = joi.object({
 		.required()
 		.messages({
 			"string.pattern.base":
-				"Invalid password. It must contain only alphanumeric characters, be at least 8 characters long, contain at least 1 uppercase character, 1 lowercase character, 1 number and 1 special character.",
+				"Invalid password. It must be 8-128 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.",
 		}),
 });
 
@@ -50,6 +52,19 @@ const service = async (data) => {
 	const user = await createUser({ email, password: encryptedPassword });
 
 	const { accessToken, refreshToken } = await createUserAuthToken(user.user_id);
+
+	await createRefreshToken({
+		token: refreshToken,
+		user_id: user.user_id,
+		expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+	});
+
+	// Enqueue welcome email
+	queueServices.emailQueueLib.addJob("email", {
+		worker: "email",
+		type: "welcome",
+		data: { email },
+	});
 
 	const aliasRes = aliaserSpec(aliasSpec.response, {
 		...user,

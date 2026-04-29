@@ -1,8 +1,8 @@
-# Anoda Facematch
+# Lumina
 
 ### Overview
 
-This application, Anoda Facematch, allows users to upload photos and organize them into albums. The primary feature is face-matching. When viewing a photo, a user can select a recognized face and search for other photos within the same album containing that face.  Users will also be able to share their albums by generating a link that will allow others to view the album's photos and perform face searches.
+This application, Lumina, allows users to upload photos and organize them into albums. The primary feature is face-matching. When viewing a photo, a user can select a recognized face and search for other photos within the same album containing that face.  Users will also be able to share their albums by generating a link that will allow others to view the album's photos and perform face searches.
 
 For this demo application, a simplified authentication will be used. This allows users to quickly start uploading pictures and using the app. Only the uploader and those they share album links with will be able to view the content.
 
@@ -29,15 +29,15 @@ The application implements a non-intrusive background upload system similar to G
 ### Task Tracking
 
 Development is tracked using `beads` (bd). Current active tasks:
-*   `anoda-facematch-ofp`: Optimization: Worker-based Image Processing
-*   `anoda-facematch-apr`: Upload: Persistent Background Manager
-*   `anoda-facematch-kgm`: Real-time: SSE Status Updates
-*   `anoda-facematch-r2b`: Infrastructure: R2 Migration & BYOS Support
-*   `anoda-facematch-evt`: Features: Collaborative Events & Moderation
+*   `lumina-ofp`: Optimization: Worker-based Image Processing
+*   `lumina-apr`: Upload: Persistent Background Manager
+*   `lumina-kgm`: Real-time: SSE Status Updates
+*   `lumina-r2b`: Infrastructure: R2 Migration & BYOS Support
+*   `lumina-evt`: Features: Collaborative Events & Moderation
 
 ### Collaborative Events
 
-Anoda Facematch is evolving from a personal gallery into a social, collaborative platform. **Events** are special types of albums designed for crowdsourcing photos:
+Lumina is evolving from a personal gallery into a social, collaborative platform. **Events** are special types of albums designed for crowdsourcing photos:
 *   **Frictionless Contribution:** Guests can upload photos via a QR code or link without creating an account.
 *   **"Selfie to Join":** An optional flow where guests take a selfie to instantly find all photos of themselves within the event.
 *   **Host Control:** Hosts can review and approve guest uploads before they appear in the main gallery.
@@ -47,8 +47,8 @@ Anoda Facematch is evolving from a personal gallery into a social, collaborative
 
 The application separates the cost of **AI Intelligence** from **Physical Storage**:
 *   **Compute Credits:** Users pay for "Compute Units" (CPU/GPU time) consumed by face detection, embedding generation, and clustering.
-*   **Managed Storage:** Default storage provided by Anoda (using Cloudflare R2 for zero-egress costs).
-*   **BYOS (Bring Your Own Storage):** Power users and pros can connect their own S3-compatible buckets (AWS, Cloudflare R2). In this mode, Anoda acts as the "AI Layer," while the user retains full ownership and cost-control of their image files.
+*   **Managed Storage:** Default storage provided by Lumina (using Cloudflare R2 for zero-egress costs).
+*   **BYOS (Bring Your Own Storage):** Power users and pros can connect their own S3-compatible buckets (AWS, Cloudflare R2). In this mode, Lumina acts as the "AI Layer," while the user retains full ownership and cost-control of their image files.
 
 ### Infrastructure: Cloudflare R2 Migration
 
@@ -214,7 +214,7 @@ The project has transitioned to a monorepo structure utilizing Bun workspaces to
     -   `apps/client`: The React/Vite frontend.
     -   `apps/ai`: The Python FastAPI face recognition service.
     -   `apps/worker`: The Bun worker for background processing (e.g., image optimization).
--   **`packages/`**: Contains shared libraries and domain logic used across apps (e.g., `@anoda/models`, `@anoda/auth`, `@anoda/utils`, `@anoda/config`). This architecture isolates database models and shared utility functions from the application layers.
+-   **`packages/`**: Contains shared libraries and domain logic used across apps (e.g., `@lumina/models`, `@lumina/auth`, `@lumina/utils`, `@lumina/config`). This architecture isolates database models and shared utility functions from the application layers.
 
 ### Project Milestones
 
@@ -387,7 +387,7 @@ The application implements the LGTM stack (Loki, Grafana, Tempo, Mimir/Prometheu
 
 ### Expected Deliverables
 
-The Anoda Facematch application is expected to deliver the following core features and capabilities:
+The Lumina application is expected to deliver the following core features and capabilities:
 
 *   **User Authentication:**
     *   Users can create accounts.

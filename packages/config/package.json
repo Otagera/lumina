@@ -1,5 +1,5 @@
 {
-	"name": "@anoda-facematch/config",
+	"name": "@lumina/config",
 	"version": "1.0.0",
 	"description": "Shared configuration for Anoda Facematch monorepo",
 	"main": "src/index.config.ts",

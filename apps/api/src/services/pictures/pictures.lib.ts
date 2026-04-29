@@ -1,9 +1,12 @@
+import prisma from "../../../../../packages/config/src/db.config.ts";
 import {
 	deleteImage,
 	fetchFaces,
 	fetchImage,
 	fetchImages,
 	fetchImagesByIds,
+	restoreImagesByIds,
+	softDeleteImagesByIds,
 	uploadImage,
 	uploadImages,
 } from "../../../../../packages/models/src/images.model.ts";
@@ -29,8 +32,20 @@ const validateImageData = (imageData) => {
 };
 
 export const createImage = async (imageData) => {
-	validateImageData(imageData);
-	return await uploadImage(imageData);
+	const { album_id, ...rest } = imageData;
+	validateImageData(rest);
+	const image = await uploadImage(rest);
+
+	if (album_id) {
+		await prisma.album_images.create({
+			data: {
+				album_id,
+				image_id: image.image_id,
+			},
+		});
+	}
+
+	return image;
 };
 
 export const createImages = async (imagesData) => {
@@ -110,16 +125,13 @@ export const getImagesPaginaton = async (params) => {
 			nextCursorDecoded,
 			previousCursorDecoded,
 			model,
-			paramsRest,
+			{ ...paramsRest, deleted_at: null },
 		);
 	} else {
-		paginatedImages = await offsetPagination(
-			model,
-			page,
-			limit,
-			model,
-			paramsRest,
-		);
+		paginatedImages = await offsetPagination(model, page, limit, model, {
+			...paramsRest,
+			deleted_at: null,
+		});
 	}
 
 	return paginatedImages;
@@ -142,5 +154,9 @@ export const removeImage = async (where) => {
 	if (!image) {
 		throw new NotFoundError("Image not found.");
 	}
-	return await deleteImage(where);
+	return await softDeleteImagesByIds([where.image_id]);
+};
+
+export const restoreImages = async (imageIds: string[]) => {
+	return await restoreImagesByIds(imageIds);
 };

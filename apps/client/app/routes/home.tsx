@@ -89,10 +89,10 @@ const Home = () => {
 
 	useEffect(() => {
 		const shouldShowGuide =
-			localStorage.getItem("anoda:first-signup-guide") === "show";
+			localStorage.getItem("lumina:first-signup-guide") === "show";
 		if (shouldShowGuide) {
 			setShowFirstTimeGuide(true);
-			localStorage.removeItem("anoda:first-signup-guide");
+			localStorage.removeItem("lumina:first-signup-guide");
 		}
 	}, []);
 
@@ -232,7 +232,7 @@ const Home = () => {
 								Welcome to the Intelligence Layer
 							</Heading>
 							<p className="text-zinc-500 dark:text-zinc-400 font-medium">
-								Anoda Facematch is ready. Here's how to get the most value.
+								Lumina is ready. Here's how to get the most value.
 							</p>
 						</div>
 

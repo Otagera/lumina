@@ -4,8 +4,11 @@ import fetchFaceService from "../services/pictures/fetchFace.service.ts";
 import searchFacesService from "../services/pictures/searchFaces.service.ts";
 import updateFaceService from "../services/pictures/updateFace.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
+import { guestPlugin } from "./middleware/guest.plugin.ts";
+import { checkTaggingPolicy } from "./middleware/policy.middleware.ts";
 
 const facesRoutes = new Elysia({ prefix: "/faces" })
+	.use(guestPlugin)
 	.derive(authDerivation)
 	.get(
 		"/:faceId",
@@ -51,7 +54,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 	)
 	.patch(
 		"/:faceId",
-		async ({ params, body, set, userId }) => {
+		async ({ params, body, set, userId, guestSessionId }) => {
 			try {
 				const faceId = parseInt(params.faceId, 10);
 				if (Number.isNaN(faceId)) {
@@ -63,7 +66,14 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					};
 				}
 
-				const data = await updateFaceService({ ...body, faceId, userId });
+				// Enforce policy
+				await checkTaggingPolicy({ faceId, userId, guestSessionId });
+
+				const data = await updateFaceService({
+					...body,
+					faceId,
+					userId: userId || crypto.randomUUID(),
+				});
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
@@ -71,12 +81,11 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					message: "Face updated successfully.",
 					data,
 				};
-			} catch (error: unknown) {
-				const err = error as { statusCode?: number; message?: string };
-				set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
-					message: err?.message || "Internal server error",
+					message: error?.message || "Internal server error",
 					data: null,
 				};
 			}
@@ -124,7 +133,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 	)
 	.post(
 		"/:faceId/ignore",
-		async ({ params, body, set, userId }) => {
+		async ({ params, body, set, userId, guestSessionId }) => {
 			try {
 				const faceId = parseInt(params.faceId, 10);
 				if (Number.isNaN(faceId)) {
@@ -132,17 +141,20 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					return { status: "error", message: "Invalid face ID format." };
 				}
 
+				// Enforce policy
+				await checkTaggingPolicy({ faceId, userId, guestSessionId });
+
 				const { personId } = body;
 
 				const { ignoreFace } = await import(
 					"../../../../packages/models/src/faces.model.ts"
 				);
-				await ignoreFace(personId, faceId, userId);
+				await ignoreFace(personId, faceId, userId || crypto.randomUUID());
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return { status: "completed", message: "Face ignored successfully." };
 			} catch (error: any) {
-				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return { status: "error", message: error?.message || "Internal error" };
 			}
 		},
@@ -153,7 +165,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 	)
 	.post(
 		"/:faceId/unignore",
-		async ({ params, body, set, userId }) => {
+		async ({ params, body, set, userId, guestSessionId }) => {
 			try {
 				const faceId = parseInt(params.faceId, 10);
 				if (Number.isNaN(faceId)) {
@@ -161,11 +173,14 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					return { status: "error", message: "Invalid face ID format." };
 				}
 
+				// Enforce policy
+				await checkTaggingPolicy({ faceId, userId, guestSessionId });
+
 				const { personId } = body;
 				const { unignoreFace } = await import(
-					"../../../../../packages/models/src/faces.model.ts"
+					"../../../../packages/models/src/faces.model.ts"
 				);
-				await unignoreFace(personId, faceId, userId);
+				await unignoreFace(personId, faceId, userId || crypto.randomUUID());
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
@@ -173,7 +188,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					message: "Face un-ignored successfully.",
 				};
 			} catch (error: any) {
-				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return { status: "error", message: error?.message || "Internal error" };
 			}
 		},

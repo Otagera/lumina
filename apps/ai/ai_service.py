@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 load_dotenv(os.path.join(project_root, ".env"))
 
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, File, UploadFile
 import numpy as np
 import uuid
 from typing import List, Optional, Dict
@@ -39,7 +39,7 @@ handler = logging.StreamHandler()
 handler.setFormatter(JSONFormatter())
 logger.addHandler(handler)
 
-app = FastAPI(title="Anoda AI Face Service")
+app = FastAPI(title="Lumina AI Face Service")
 
 class ProcessRequest(BaseModel):
     image_path: str
@@ -115,6 +115,46 @@ async def fetch_image_from_storage(storage_provider: str, storage_key: str, stor
     
     logger.info(f"Image fetched to: {tmp_path}")
     return tmp_path
+
+@app.post("/detect")
+async def detect_faces(file: UploadFile = File(...)):
+    """
+    Accepts an uploaded image file and returns detected faces.
+    """
+    logger.info(f"Received file for detection: {file.filename}")
+    
+    # Save uploaded file to a temporary file
+    suffix = os.path.splitext(file.filename)[1] or ".jpg"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        content = await file.read()
+        tmp.write(content)
+        temp_path = tmp.name
+
+    try:
+        # Use the shared face extraction pipeline
+        faces_extracted = extract_faces(temp_path)
+        
+        faces_data = []
+        for face in faces_extracted:
+            faces_data.append({
+                "embedding": face["embedding"],
+                "box": face["bounding_box"],
+                "det_score": face.get("det_score")
+            })
+
+        logger.info(f"Found {len(faces_data)} faces in uploaded file")
+        return {"faces": faces_data}
+
+    except Exception as e:
+        logger.exception(f"Error detecting faces in uploaded file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error detecting faces: {str(e)}")
+    finally:
+        # Clean up temp file
+        if os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except Exception as e:
+                logger.warning(f"Failed to clean up temp file: {e}")
 
 @app.post("/process", response_model=ProcessResponse)
 async def process_image(request: ProcessRequest):

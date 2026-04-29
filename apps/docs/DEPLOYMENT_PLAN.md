@@ -1,41 +1,8 @@
-# Anoda Facematch - Deployment Plan (Parked)
+# Lumina - Deployment Plan (Parked)
 
 ## Current Status: PAUSED
 
-Last updated: March 31, 2026
-
----
-
-## Completed Work
-
-### ✅ Already Implemented
-- Usage tracking API + UI
-- Pricing section on Welcome page
-- Upload bug fixes (presigned URL path, buffer handling, UPLOADS_DIR)
-- Clustering fix (user_id on created people)
-- Structured JSON logging with pino (API, Worker, AI service)
-- Created reusable UI components (Modal, Input, Select, Checkbox, Skeleton, ErrorBoundary)
-- Added useDownloadZip hook
-- Centralized types in types/index.ts
-- Responsive navbar with hamburger menu
-- Mobile-friendly UsageIndicator
-- Replaced indigo with brand colors (sage)
-- Added `size` field to images model for storage tracking
-- Storage usage logging on image delete/optimization
-- R2 config in development environment
-- Public pictures routes for shared albums
-- Added JSON logging to AI service
-- Fixed storage usage not reducing on album image deletion
-
-### ✅ Git Commits (10 ahead of origin)
-- Add .env.example with all environment variables
-- Add usage tracking for storage, R2 config, and JSON logging
-- Add Python cache files to gitignore
-- Stop tracking Python cache files
-- Remove face_utils pycache from git
-- Fix storage usage not reducing on album image deletion
-- Prepare for Coolify deployment: remove observability stack, add Sentry
-- Update docker-compose.yml for Coolify: use env vars, add uploads volume
+Last updated: April 28, 2026
 
 ---
 
@@ -57,6 +24,10 @@ Last updated: March 31, 2026
 
 ### Option 3: Leave Local
 - **Current decision**
+
+---
+Self hosted
+- After creation ssh with - `ssh root@<ip address>`
 
 ---
 

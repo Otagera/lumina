@@ -1,17 +1,12 @@
-const prisma =
-	require("../../../../../packages/config/src/db.config.ts").default;
-const path = require("node:path");
-const fs = require("node:fs/promises");
-const sharp = require("sharp");
-const {
-	logUsage,
-} = require("../../../../../packages/models/src/usage.model.ts");
-const { queueServices } = require("../queue.service.ts");
-const {
-	storage,
-} = require("../../../../../packages/utils/src/storage.util.ts");
-const config =
-	require("../../../../../packages/config/src/index.config.ts").default;
+import fs from "node:fs/promises";
+import path from "node:path";
+import sharp from "sharp";
+import prisma from "../../../../../packages/config/src/db.config.ts";
+import config from "../../../../../packages/config/src/index.config.ts";
+import { logUsage } from "../../../../../packages/models/src/usage.model.ts";
+import { UPLOADS_DIR } from "../../../../../packages/utils/src/constants.util.ts";
+import { storage } from "../../../../../packages/utils/src/storage.util.ts";
+import { queueServices } from "../queue.service.ts";
 
 const getStorageProvider = (image, albumStorageConfig = null) => {
 	const provider =
@@ -32,7 +27,6 @@ const getStorageProvider = (image, albumStorageConfig = null) => {
 		region: image.storage_region || albumStorageConfig?.region,
 	};
 
-	// If credentials are missing, fall back to Managed R2 from config
 	const envConfig = config[config.env || "development"];
 	const r2 = envConfig?.r2;
 	if (
@@ -63,95 +57,140 @@ const getStorageProvider = (image, albumStorageConfig = null) => {
 	};
 };
 
+const calculatePerceptualHash = async (imageBuffer) => {
+	try {
+		// Use a simple dHash implementation:
+		// 1. Resize to 9x8 grayscale
+		// 2. Compare adjacent pixels in each row (8 comparisons per row * 8 rows = 64 bits)
+		const { data, info } = await sharp(imageBuffer)
+			.grayscale()
+			.resize(9, 8, { fit: "fill" })
+			.raw()
+			.toBuffer({ resolveWithObject: true });
+
+		let hash = "";
+		for (let row = 0; row < 8; row++) {
+			for (let col = 0; col < 8; col++) {
+				const left = data[row * 9 + col];
+				const right = data[row * 9 + col + 1];
+				hash += left > right ? "1" : "0";
+			}
+		}
+
+		// Convert binary string to hex
+		const hexHash = BigInt(`0b${hash}`).toString(16).padStart(16, "0");
+		return hexHash;
+	} catch (error) {
+		console.error("Error calculating perceptual hash:", error);
+		return null;
+	}
+};
+
 const run = async (jobData) => {
 	const { imageId, imagePath, storageProvider, storageKey, albumId } = jobData;
 
 	try {
 		console.log(
-			`Processing image optimization for: ${imagePath || storageKey}`,
+			`Starting background image optimization for image: ${imageId} (Album: ${albumId || "None"})`,
 		);
 
+		// 1. Fetch image record and potential album storage config
 		const image = await prisma.images.findUnique({
 			where: { image_id: imageId },
 		});
 
 		if (!image) {
-			throw new Error(`Image not found: ${imageId}`);
+			throw new Error(`Image record ${imageId} not found`);
 		}
 
 		let albumStorageConfig = null;
 		if (albumId) {
-			const albumImage = await prisma.album_images.findFirst({
-				where: { image_id: imageId },
-				include: { albums: { include: { storage_config: true } } },
+			const album = await prisma.albums.findUnique({
+				where: { album_id: albumId },
+				include: { storage_config: true },
 			});
-			if (albumImage?.albums?.storage_config) {
-				albumStorageConfig = albumImage.albums.storage_config;
-			}
+			albumStorageConfig = album?.storage_config;
 		}
 
-		const { provider: storageProviderInstance, isLocal } = getStorageProvider(
-			image,
-			albumStorageConfig,
-		);
+		// 2. Get the correct storage provider and file source
+		const { provider, isLocal } = getStorageProvider(image, albumStorageConfig);
 
 		let imageBuffer;
-		if (!isLocal && storageProviderInstance) {
-			const key = image.storage_key || storageKey;
-			console.log(`Fetching image from ${image.storage_provider}: ${key}`);
-			imageBuffer = await storageProviderInstance.getObject(key);
+		if (isLocal) {
+			const fullPath = path.resolve(
+				process.cwd(),
+				UPLOADS_DIR,
+				image.image_path,
+			);
+			imageBuffer = await fs.readFile(fullPath);
+		} else if (provider) {
+			imageBuffer = await provider.getObject(image.storage_key);
 		} else {
-			imageBuffer = await fs.readFile(imagePath);
+			throw new Error("Could not determine storage provider for source image");
 		}
 
-		const baseName = path.basename(
-			imagePath || storageKey,
-			path.extname(imagePath || storageKey),
-		);
-		const optimizedFilename = `${baseName}_optimized.webp`;
-		const tempPath = `/tmp/${optimizedFilename}`;
-
-		await sharp(imageBuffer)
-			.rotate() // Bake EXIF orientation before resizing
-			.resize({ width: 2000, withoutEnlargement: true })
+		// 3. Process with Sharp
+		// We'll create a standard "web-optimized" version:
+		// - Limit max dimension to 2000px
+		// - WebP format (smaller than JPG for same quality)
+		// - 80% quality
+		const optimizedBuffer = await sharp(imageBuffer)
+			.resize(2000, 2000, {
+				fit: "inside",
+				withoutEnlargement: true,
+			})
 			.webp({ quality: 80 })
-			.toFile(tempPath);
+			.toBuffer();
 
+		// 4. Save optimized version
 		let optimizedPathOrKey;
-		if (!isLocal && storageProviderInstance) {
-			console.log(`Uploading optimized image to ${image.storage_provider}`);
-			const optimizedBuffer = await fs.readFile(tempPath);
-			const optimizedKey = `optimized/${optimizedFilename}`;
-			await storageProviderInstance.upload(optimizedBuffer, {
+		let optimizedSize;
+
+		if (isLocal) {
+			// Save to local uploads/optimized
+			const optimizedRelPath = `optimized/${path.basename(image.image_path, path.extname(image.image_path))}.webp`;
+			const optimizedLocalPath = path.resolve(
+				process.cwd(),
+				UPLOADS_DIR,
+				optimizedRelPath,
+			);
+
+			await fs.mkdir(path.dirname(optimizedLocalPath), { recursive: true });
+			await fs.writeFile(optimizedLocalPath, optimizedBuffer);
+
+			optimizedPathOrKey = optimizedRelPath;
+			optimizedSize = (await fs.stat(optimizedLocalPath)).size;
+
+			// Log usage
+			if (image.uploaded_by) {
+				await logUsage(image.uploaded_by, "storage", "optimize", optimizedSize);
+			}
+		} else {
+			// Upload to external storage (R2/BYOS)
+			const optimizedKey = `optimized/${image.image_id}.webp`;
+			await provider.upload(optimizedBuffer, {
 				key: optimizedKey,
 				contentType: "image/webp",
 			});
-			await fs.unlink(tempPath);
+
 			optimizedPathOrKey = optimizedKey;
+			optimizedSize = optimizedBuffer.length;
 
 			if (image.uploaded_by) {
-				await logUsage(
-					image.uploaded_by,
-					"storage",
-					"optimize",
-					optimizedBuffer.length,
-				);
-			}
-		} else {
-			const optimizedLocalPath = path.join(
-				path.dirname(imagePath),
-				optimizedFilename,
-			);
-			await fs.rename(tempPath, optimizedLocalPath);
-			optimizedPathOrKey = optimizedLocalPath;
-
-			if (image.uploaded_by) {
-				const size = (await fs.stat(optimizedLocalPath)).size;
-				await logUsage(image.uploaded_by, "storage", "optimize", size);
+				await logUsage(image.uploaded_by, "storage", "optimize", optimizedSize);
 			}
 		}
 
-		const imageUpdateData = { optimized_path: optimizedPathOrKey };
+		// Calculate perceptual hash for duplicate detection
+		const pHash = await calculatePerceptualHash(imageBuffer);
+
+		const imageUpdateData = {
+			optimized_path: optimizedPathOrKey,
+			optimized_size: optimizedSize,
+			perceptual_hash: pHash,
+		};
+
+		// 5. Update DB
 		// DO NOT overwrite storage_key here! storage_key must point to the original high-res image
 		// so that the AI service (and future workers) process the correct original file.
 
@@ -162,19 +201,14 @@ const run = async (jobData) => {
 
 		console.log(`Optimized image saved: ${optimizedPathOrKey}`);
 
-		await queueServices.faceRecognitionQueueLib.addJob(
-			"faceRecognition",
-			{
-				imageId,
-				imagePath,
-				storageProvider: image.storage_provider,
-				storageKey: image.storage_key,
-				albumId,
-				worker: "faceRecognition",
-			},
-			{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
-		);
-		console.log(`Queued face recognition for: ${imagePath || storageKey}`);
+		// 6. Queue next step: Face Recognition
+		// We trigger this AFTER optimization so the AI service has a reliable version to work with if needed,
+		// though it usually uses the original for best quality.
+		await queueServices.faceRecognitionQueueLib.addJob("faceRecognition", {
+			imageId,
+			albumId,
+			worker: "faceRecognition",
+		});
 
 		return {
 			status: "success",
@@ -186,4 +220,4 @@ const run = async (jobData) => {
 	}
 };
 
-module.exports = run;
+export default run;

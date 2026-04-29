@@ -78,9 +78,10 @@ export const AlbumSettingsModal = ({
 			<div className="bg-white dark:bg-zinc-900 p-8 rounded-[2rem] shadow-2xl max-w-lg w-full border border-zinc-200 dark:border-zinc-800 animate-in fade-in zoom-in duration-300">
 				<div className="flex justify-between items-start mb-6">
 					<div>
-						<Heading level={2}>Album Settings: {albumName}</Heading>
+						<Heading level={2}>Album Settings</Heading>
 						<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium">
-							Configure collaboration, moderation, and storage for this album.
+							Configure collaboration, moderation, storage, and webhooks for
+							this album.
 						</p>
 					</div>
 					<button
@@ -104,7 +105,7 @@ export const AlbumSettingsModal = ({
 					</button>
 				</div>
 
-				<div className="space-y-6 mt-6 max-h-[60vh] overflow-y-auto px-1">
+				<div className="space-y-6 mt-6 max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
 					{/* Storage Selection */}
 					<div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
 						<div className="flex items-center gap-2 mb-3">
@@ -199,7 +200,7 @@ export const AlbumSettingsModal = ({
 
 									{/* Tagging Policy */}
 									<div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
-										<p className="font-bold text-zinc-900 dark:text-white mb-3 text-sm text-sm">
+										<p className="font-bold text-zinc-900 dark:text-white mb-3 text-sm">
 											Who can tag faces?
 										</p>
 										<div className="space-y-3">
@@ -276,6 +277,28 @@ export const AlbumSettingsModal = ({
 							)}
 						</>
 					)}
+
+					{/* Webhooks */}
+					<div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
+						<div className="flex items-center justify-between mb-3">
+							<p className="font-bold text-zinc-900 dark:text-white text-sm">
+								Webhook URL
+							</p>
+						</div>
+						<input
+							type="url"
+							placeholder="https://your-server.com/webhook"
+							value={localSettings.webhook_url || ""}
+							onChange={(e) =>
+								handleSettingChange("webhook_url", e.target.value)
+							}
+							className="w-full px-4 py-3 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-sm font-bold focus:ring-2 focus:ring-sage outline-none transition-all"
+						/>
+						<p className="text-[10px] text-zinc-500 mt-2 font-medium">
+							Receive POST requests when guests upload photos or clustering
+							completes.
+						</p>
+					</div>
 				</div>
 
 				<div className="mt-8 flex items-center space-x-3">

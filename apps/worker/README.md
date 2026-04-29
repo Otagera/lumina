@@ -1,6 +1,6 @@
-# Anoda Facematch - Worker
+# Lumina - Worker
 
-This service handles background processing tasks for Anoda Facematch to ensure the main API remains fast and responsive.
+This service handles background processing tasks for Lumina to ensure the main API remains fast and responsive.
 
 ## Tech Stack
 

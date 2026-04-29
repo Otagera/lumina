@@ -95,3 +95,27 @@ async def test_process_success(mocker):
     assert data["results"][0]["image_id"] == valid_uuid
     assert len(data["results"][0]["faces"]) == 1
     assert data["results"][0]["faces"][0]["det_score"] == 0.99
+
+@pytest.mark.asyncio
+async def test_detect_success(mocker):
+    # Mock extract_faces to return a dummy face
+    mock_face = {
+        "embedding": [0.1] * 512,
+        "bounding_box": {"left": 0, "top": 0, "right": 100, "bottom": 100},
+        "det_score": 0.95
+    }
+    mocker.patch("ai_service.extract_faces", return_value=[mock_face])
+    
+    # Create a dummy file content
+    file_content = b"fake image content"
+    
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        files = {"file": ("test.jpg", file_content, "image/jpeg")}
+        response = await ac.post("/detect", files=files)
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert "faces" in data
+    assert len(data["faces"]) == 1
+    assert data["faces"][0]["det_score"] == 0.95
+    assert data["faces"][0]["box"]["left"] == 0

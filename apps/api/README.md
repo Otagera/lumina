@@ -1,6 +1,6 @@
-# Anoda Facematch - API
+# Lumina - API
 
-This is the core backend service for Anoda Facematch. It handles authentication, album management, image uploads, and coordinates with the AI service and worker queues for background processing.
+This is the core backend service for Lumina. It handles authentication, album management, image uploads, and coordinates with the AI service and worker queues for background processing.
 
 ## Tech Stack
 
@@ -14,7 +14,7 @@ This is the core backend service for Anoda Facematch. It handles authentication,
 
 - **RESTful Endpoints**: Provides routes for Albums, Images, Faces, People, and Authentication.
 - **SSE Support**: Includes endpoints for Server-Sent Events to push live processing statuses to the client.
-- **Monorepo Integration**: Uses shared models and utilities from the `packages/` directory (`@anoda/models`, `@anoda/auth`, etc.).
+- **Monorepo Integration**: Uses shared models and utilities from the `packages/` directory (`@lumina/models`, `@lumina/auth`, etc.).
 
 ## Getting Started
 

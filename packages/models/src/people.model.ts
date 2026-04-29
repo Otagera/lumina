@@ -14,6 +14,14 @@ const getPeople = async (user_id: string) => {
 		where: {
 			user_id,
 		},
+		include: {
+			faces: {
+				take: 1,
+				include: {
+					images: true,
+				},
+			},
+		},
 		orderBy: {
 			name: "asc",
 		},

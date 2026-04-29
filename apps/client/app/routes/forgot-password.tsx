@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
+import { forgotPassword } from "../utils/api";
 
 const ForgotPasswordPage = () => {
 	const [email, setEmail] = useState("");
@@ -16,12 +17,14 @@ const ForgotPasswordPage = () => {
 
 		setIsLoading(true);
 		try {
-			// Mock API call
-			await new Promise((resolve) => setTimeout(resolve, 1500));
+			await forgotPassword(email);
 			setIsSubmitted(true);
 			toast.success("Reset link sent to your email!");
 		} catch (error: any) {
-			toast.error("Something went wrong. Please try again.");
+			toast.error(
+				error.response?.data?.message ||
+					"Something went wrong. Please try again.",
+			);
 		} finally {
 			setIsLoading(false);
 		}

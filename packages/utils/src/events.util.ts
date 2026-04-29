@@ -1,5 +1,8 @@
 import { EventEmitter } from "node:events";
+import config from "../../config/src/index.config.ts";
 import redisClient from "./redisClient.util";
+
+const envConfig = config[config.env || "development"];
 
 export const eventEmitter = new EventEmitter();
 
@@ -13,7 +16,7 @@ export const EVENTS = {
 const REDIS_CHANNEL = "facematch_events";
 
 // Bridge Redis Pub/Sub to local EventEmitter for the API process
-if (process.env.IS_API === "true") {
+if (envConfig.is_api) {
 	const subClient = redisClient.duplicate();
 	subClient.subscribe(REDIS_CHANNEL);
 	subClient.on("message", (channel, message) => {

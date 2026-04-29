@@ -1,6 +1,6 @@
-# Anoda Facematch - Client
+# Lumina - Client
 
-This is the frontend application for Anoda Facematch, built with React, Vite, and Tailwind CSS. It provides the user interface for uploading, managing, and searching through photos and recognized faces.
+This is the frontend application for Lumina, built with React, Vite, and Tailwind CSS. It provides the user interface for uploading, managing, and searching through photos and recognized faces.
 
 ## Features
 
@@ -24,7 +24,7 @@ This is the frontend application for Anoda Facematch, built with React, Vite, an
 
 ### Prerequisites
 
-Ensure you have [Bun](https://bun.sh/) installed. This app is part of the Anoda Facematch monorepo, so dependencies should be installed from the root.
+Ensure you have [Bun](https://bun.sh/) installed. This app is part of the Lumina monorepo, so dependencies should be installed from the root.
 
 ### Development
 

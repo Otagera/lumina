@@ -13,6 +13,9 @@ const spec = Joi.object({
 	shareToken: Joi.string().optional(),
 	fileName: Joi.string().required(),
 	contentType: Joi.string().required(),
+	isMultipart: Joi.boolean().optional(),
+	uploadId: Joi.string().optional(),
+	partNumber: Joi.number().optional(),
 });
 
 const aliasSpec = {
@@ -22,22 +25,26 @@ const aliasSpec = {
 		shareToken: "shareToken",
 		fileName: "fileName",
 		contentType: "contentType",
+		isMultipart: "isMultipart",
+		uploadId: "uploadId",
+		partNumber: "partNumber",
 	},
 	response: {
 		uploadUrl: "uploadUrl",
 		key: "key",
 		storageProvider: "storageProvider",
+		uploadId: "uploadId",
 	},
 };
 
 const service = async (data: any) => {
 	const params = validateSpec(spec, data);
 
-	const key = `${Date.now()}-${params.fileName}`;
+	const key = params.key || `${Date.now()}-${params.fileName}`;
 	let currentStorage = storage;
 	let storageProvider: string | undefined = storage.getProviderName();
 
-	// Use album's storage if specified (via albumId for owners or shareToken for guests)
+	// Use album's storage if specified
 	if (params.albumId || params.shareToken) {
 		const album = await prisma.albums.findUnique({
 			where: params.albumId
@@ -65,13 +72,63 @@ const service = async (data: any) => {
 				storageProvider = album.storage_config.provider;
 			} catch (err) {
 				console.error("Failed to get storage provider:", err);
-				// Fall back to default storage
+			}
+		}
+
+		// Fallback to global storage if no album storage configured
+		if (!storageProvider || storageProvider === "local") {
+			const globalProvider = storage.getProviderName();
+			if (globalProvider !== "local") {
+				const envConfig = config[config.env || "development"];
+				const r2 = envConfig?.r2;
+				if (r2?.access_key_id && r2?.bucket) {
+					currentStorage = storage.getProvider({
+						provider: globalProvider,
+						credentials: {
+							accessKeyId: r2.access_key_id,
+							secretAccessKey: r2.secret_access_key,
+							bucket: r2.bucket,
+							endpoint: r2.endpoint,
+							region: r2.region,
+						},
+						skip_tls_verify: (envConfig as any).skip_tls_verify,
+					}) as any;
+					storageProvider = globalProvider;
+				}
 			}
 		}
 	}
 
-	// For presigned URL, we need a special method in the provider
 	try {
+		if (params.isMultipart) {
+			if (params.uploadId && params.partNumber) {
+				// Requesting a URL for a specific part
+				const uploadUrl = await currentStorage.getUploadPartPresignedUrl(
+					key,
+					params.uploadId,
+					params.partNumber,
+				);
+				return aliaserSpec(aliasSpec.response, {
+					uploadUrl,
+					key,
+					storageProvider,
+					uploadId: params.uploadId,
+				});
+			} else {
+				// Initializing a new multipart upload
+				const uploadId = await currentStorage.createMultipartUpload(
+					key,
+					params.contentType,
+				);
+				return aliaserSpec(aliasSpec.response, {
+					key,
+					storageProvider,
+					uploadId,
+				});
+			}
+		}
+
+		// Single file upload (default)
 		const uploadUrl = await (currentStorage as any).getUploadPresignedUrl(
 			key,
 			params.contentType,

@@ -12,6 +12,7 @@ import ImageModal from "~/Images/ImageModal";
 import { getBentoSpanClass } from "~/utils/bento";
 import { SelfieSearchModal } from "../components/SelfieSearchModal";
 import { fetchSharedAlbum, searchFaces } from "../utils/api";
+import axiosAPI from "../utils/axios";
 import { useUpload } from "../utils/UploadContext";
 
 const SharedAlbumPage = () => {
@@ -105,50 +106,66 @@ const SharedAlbumPage = () => {
 	};
 
 	const handleBulkDownload = async () => {
-		const selectedImages = allImages.filter((img: any) =>
-			selectedIds.has(img.imageId),
-		);
+		const ids = Array.from(selectedIds);
+		if (ids.length === 0) {
+			toast.error("No images selected");
+			return;
+		}
 
 		const toastId = toast.loading(
-			`Preparing ZIP with ${selectedIds.size} photos...`,
+			`Initiating ZIP generation for ${ids.length} photos...`,
 		);
 
 		try {
-			const zip = new JSZip();
-			const folder = zip.folder("photos");
+			const { data: res } = await axiosAPI.post("/images/bulk-download", {
+				imageIds: ids,
+			});
+			const jobId = res.data.jobId;
 
-			for (let i = 0; i < selectedImages.length; i++) {
-				const image = selectedImages[i];
-				const response = await fetch(image.imagePath);
-				const blob = await response.blob();
+			let attempts = 0;
+			const maxAttempts = 120;
+			let completed = false;
 
-				const fileName = `photo-${i + 1}-${image.imageId.slice(0, 8)}.jpg`;
-				folder?.file(fileName, blob);
+			while (!completed && attempts < maxAttempts) {
+				attempts++;
+				const { data: statusRes } = await axiosAPI.get(
+					`/images/bulk-download/${jobId}`,
+				);
+				const { state, downloadUrl } = statusRes.data;
 
-				if (i % 5 === 0) {
-					toast.loading(`Zipping: ${i + 1}/${selectedImages.length}`, {
-						id: toastId,
-					});
+				if (state === "completed" && downloadUrl) {
+					toast.loading("Download ready, starting...", { id: toastId });
+
+					const link = document.createElement("a");
+					link.href = downloadUrl;
+					link.download = `photos-${Date.now()}.zip`;
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link);
+
+					toast.success("Download started!", { id: toastId });
+					setSelectedIds(new Set());
+					completed = true;
+					break;
 				}
+
+				if (state === "failed") {
+					throw new Error("ZIP generation failed on server.");
+				}
+
+				toast.loading(`Processing: ${state}...`, { id: toastId });
+				await new Promise((resolve) => setTimeout(resolve, 2000));
 			}
 
-			toast.loading("Generating ZIP file...", { id: toastId });
-			const content = await zip.generateAsync({ type: "blob" });
-
-			const url = window.URL.createObjectURL(content);
-			const link = document.createElement("a");
-			link.href = url;
-			link.download = `${albumData?.albumName || "album"}-photos.zip`;
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-			window.URL.revokeObjectURL(url);
-
-			toast.success("Download started!", { id: toastId });
-			setSelectedIds(new Set());
-		} catch (_error) {
-			console.error("ZIP Error:", _error);
-			toast.error("Failed to create ZIP. Please try again.", { id: toastId });
+			if (!completed) {
+				throw new Error("Download generation timed out.");
+			}
+		} catch (error: any) {
+			console.error("Bulk Download Error:", error);
+			toast.error(
+				error.message || "Failed to prepare download. Please try again.",
+				{ id: toastId },
+			);
 		}
 	};
 

@@ -37,8 +37,8 @@ const _paginationAbstract = async (model, { _page, _limit, filter }) => {
 };
 
 const buildQuery = (params) => {
-	const filter = {};
-	const other_options = {};
+	const filter: any = { deleted_at: null };
+	const other_options: any = {};
 
 	if (params.from || params.to) {
 		const from_date = dayjs.utc(params.from);

@@ -6,6 +6,8 @@ import pinoHttp from "pino-http";
 // import { startChatterboxServer } from "@chatterbox/chatterbox-sdk";
 import config from "../../config/src/index.config.ts";
 
+const envConfig = config[config.env || "development"];
+
 // startChatterboxServer({
 // 	appName: config[config.env].chatterbox.app_name,
 // 	apiSecret: config[config.env].chatterbox.api_secret,
@@ -171,12 +173,12 @@ class PinoLogger {
 			serializers: {
 				err: pino.stdSerializers.err,
 				req: (req) => {
-					return process.env.NODE_ENV === "development"
+					return config.env === "development"
 						? `${req.method} ${req.url}`
 						: req;
 				},
 				res: (res) =>
-					process.env.NODE_ENV === "development"
+					config.env === "development"
 						? `${res.statusCode} ${res.headers["content-type"]}`
 						: res,
 			},
@@ -215,7 +217,7 @@ const logger = new PinoLogger({
 export const createServiceLogger = (serviceName: string) => {
 	const pinoInstance = pino({
 		name: serviceName,
-		level: process.env.LOG_LEVEL || "info",
+		level: envConfig.log_level,
 		formatters: {
 			bindings: () => ({ service: serviceName }),
 		},

@@ -1,9 +1,8 @@
-const {
-	storage,
-} = require("../../../../../packages/utils/src/storage.util.ts");
-const config =
-	require("../../../../../packages/config/src/index.config.ts").default;
-const fs = require("node:fs/promises");
+import fs from "node:fs/promises";
+import path from "node:path";
+import config from "../../../../../packages/config/src/index.config.ts";
+import { UPLOADS_DIR } from "../../../../../packages/utils/src/constants.util.ts";
+import { storage } from "../../../../../packages/utils/src/storage.util.ts";
 
 const getStorageProvider = (image, albumStorageConfig = null) => {
 	const provider =
@@ -55,65 +54,67 @@ const getStorageProvider = (image, albumStorageConfig = null) => {
 };
 
 const run = async (jobData) => {
-	const { images, albumStorageConfig } = jobData;
+	const { image, albumStorageConfig } = jobData;
 
-	if (!images || images.length === 0) {
-		return { status: "success", message: "No images to delete." };
-	}
+	try {
+		console.log(`Starting file deletion for image: ${image.image_id}`);
 
-	console.log(`Starting background deletion for ${images.length} files...`);
+		const { provider, isLocal } = getStorageProvider(image, albumStorageConfig);
 
-	let deletedCount = 0;
-	let errorCount = 0;
-
-	for (const image of images) {
-		try {
-			const { provider: storageProviderInstance, isLocal } = getStorageProvider(
-				image,
-				albumStorageConfig,
+		// 1. Delete original file
+		if (isLocal) {
+			const originalPath = path.resolve(
+				process.cwd(),
+				UPLOADS_DIR,
+				image.image_path,
 			);
-
-			if (isLocal) {
-				// Delete local files
-				if (image.image_path) {
-					await fs.unlink(image.image_path).catch((e) => {
-						if (e.code !== "ENOENT") throw e;
-					});
-				}
-				if (image.optimized_path) {
-					await fs.unlink(image.optimized_path).catch((e) => {
-						if (e.code !== "ENOENT") throw e;
-					});
-				}
-			} else if (storageProviderInstance) {
-				// Delete from cloud storage
-				if (image.storage_key) {
-					await storageProviderInstance.delete(image.storage_key);
-				}
-				// Also try to delete the optimized key if it exists
-				if (image.optimized_path) {
-					// The optimized_path column stores the cloud key when the provider is not local
-					await storageProviderInstance.delete(image.optimized_path);
-				}
-			}
-
-			deletedCount++;
-		} catch (error) {
-			console.error(`Failed to delete files for image ${image.image_id}:`, error);
-			errorCount++;
+			await fs.unlink(originalPath).catch((err) => {
+				if (err.code !== "ENOENT")
+					console.error("Error deleting local original:", err);
+			});
+		} else if (provider && image.storage_key) {
+			await provider.delete(image.storage_key).catch((err) => {
+				console.error("Error deleting remote original:", err);
+			});
 		}
+
+		// 2. Delete optimized version
+		if (image.optimized_path) {
+			if (isLocal) {
+				const optimizedPath = path.resolve(
+					process.cwd(),
+					UPLOADS_DIR,
+					image.optimized_path,
+				);
+				await fs.unlink(optimizedPath).catch((err) => {
+					if (err.code !== "ENOENT")
+						console.error("Error deleting local optimized:", err);
+				});
+			} else if (provider) {
+				await provider.delete(image.optimized_path).catch((err) => {
+					console.error("Error deleting remote optimized:", err);
+				});
+			}
+		}
+
+		// 3. Delete thumbnails if any
+		// (Thumbnails might be stored in a consistent path pattern)
+		const thumbRelPath = `thumbnails/${image.image_id}.jpg`;
+		if (isLocal) {
+			const thumbPath = path.resolve(process.cwd(), UPLOADS_DIR, thumbRelPath);
+			await fs.unlink(thumbPath).catch(() => {}); // Ignore error if thumb doesn't exist
+		} else if (provider) {
+			await provider.delete(thumbRelPath).catch(() => {});
+		}
+
+		return {
+			status: "success",
+			imageId: image.image_id,
+		};
+	} catch (error) {
+		console.error("Error processing file deletion task:", error);
+		throw error;
 	}
-
-	console.log(`Background deletion complete. Deleted: ${deletedCount}, Errors: ${errorCount}`);
-
-	if (errorCount > 0) {
-		throw new Error(`Failed to delete ${errorCount} files. Check logs for details.`);
-	}
-
-	return {
-		status: "success",
-		message: `Successfully deleted files for ${deletedCount} images.`,
-	};
 };
 
-module.exports = run;
+export default run;

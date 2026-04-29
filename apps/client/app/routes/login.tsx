@@ -1,27 +1,75 @@
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { joinAlbum } from "../utils/api";
 import { useAuth } from "../utils/auth";
 
 const LoginPage = () => {
 	const navigate = useNavigate();
+	const [searchParams] = useSearchParams();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
 	const { login, isAuthenticated, isInitialized } = useAuth();
 
+	const redirectParam = searchParams.get("redirect");
+	const pendingJoinToken = sessionStorage.getItem("pendingJoinToken");
+
 	useEffect(() => {
-		if (isInitialized && isAuthenticated) {
-			navigate("/home", { replace: true });
+		if (!isInitialized) return;
+
+		const completePendingJoin = async () => {
+			if (pendingJoinToken) {
+				sessionStorage.removeItem("pendingJoinToken");
+				try {
+					const res = await joinAlbum(pendingJoinToken);
+					if (res.status === "completed") {
+						toast.success("You joined the album!");
+						navigate(`/album/${res.data.albumId}`);
+						return true;
+					}
+				} catch {
+					// Continue to home if join fails
+				}
+			}
+			navigate(redirectParam || "/home", { replace: true });
+			return false;
+		};
+
+		if (isAuthenticated) {
+			completePendingJoin();
+		} else if (redirectParam?.startsWith("/join/")) {
+			const token = redirectParam.replace("/join/", "");
+			sessionStorage.setItem("pendingJoinToken", token);
 		}
-	}, [isInitialized, isAuthenticated, navigate]);
+	}, [
+		isInitialized,
+		isAuthenticated,
+		navigate,
+		redirectParam,
+		pendingJoinToken,
+	]);
 
 	const mutation = useMutation({
 		mutationFn: login,
-		onSuccess: () => {
+		onSuccess: async () => {
 			toast.success("Welcome back!");
-			navigate("/home");
+
+			if (pendingJoinToken) {
+				sessionStorage.removeItem("pendingJoinToken");
+				try {
+					const res = await joinAlbum(pendingJoinToken);
+					if (res.status === "completed") {
+						navigate(`/album/${res.data.albumId}`);
+						return;
+					}
+				} catch {
+					// Continue to home
+				}
+			}
+
+			navigate(redirectParam || "/home");
 		},
 		onError: (error: any) => {
 			toast.error(error.message || "Login failed. Please try again.");

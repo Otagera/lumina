@@ -1,5 +1,5 @@
 {
-	"name": "@anoda-facematch/models",
+	"name": "@lumina/models",
 	"version": "1.0.0",
 	"description": "Shared model definitions for Anoda Facematch monorepo",
 	"main": "src/index.js",

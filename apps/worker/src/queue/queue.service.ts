@@ -30,6 +30,11 @@ const fileDeletionQueue = new Queue(
 	BULL_QUEUE_NAMES.FILE_DELETION,
 	queueConnectionConfig,
 );
+const emailQueue = new Queue(BULL_QUEUE_NAMES.EMAIL, queueConnectionConfig);
+const trashCleanupQueue = new Queue(
+	BULL_QUEUE_NAMES.TRASH_CLEANUP,
+	queueConnectionConfig,
+);
 
 // The lib that contain adding the job and getting the queue
 export class QueueLib {
@@ -38,7 +43,7 @@ export class QueueLib {
 		this._queue = queue;
 	}
 
-	async addJob(queueName, data, options) {
+	async addJob(queueName, data, options?: any) {
 		return await this._queue.add(queueName, data, options);
 	}
 	getQueue() {
@@ -54,6 +59,8 @@ class QueueServices {
 	faceClusteringQueueLib;
 	bulkDownloadQueueLib;
 	fileDeletionQueueLib;
+	emailQueueLib;
+	trashCleanupQueueLib;
 
 	constructor() {
 		this.defaultQueueLib = new QueueLib(defaultQueue);
@@ -63,6 +70,8 @@ class QueueServices {
 		this.faceClusteringQueueLib = new QueueLib(faceClusteringQueue);
 		this.bulkDownloadQueueLib = new QueueLib(bulkDownloadQueue);
 		this.fileDeletionQueueLib = new QueueLib(fileDeletionQueue);
+		this.emailQueueLib = new QueueLib(emailQueue);
+		this.trashCleanupQueueLib = new QueueLib(trashCleanupQueue);
 	}
 }
 

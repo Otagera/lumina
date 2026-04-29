@@ -1,5 +1,6 @@
-const run = async (data) => {
-	console.log(data);
-	return { status: "string", message: `message` };
+const run = async (jobData) => {
+	console.log("[TEST WORKER] Received job:", jobData);
+	return { status: "success", data: jobData };
 };
-module.exports = run;
+
+export default run;

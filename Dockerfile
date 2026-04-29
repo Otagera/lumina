@@ -27,7 +27,7 @@ RUN cd apps/api && NODE_TLS_REJECT_UNAUTHORIZED=0 bunx prisma generate
 # Stage: API
 FROM base AS api
 EXPOSE 3005
-CMD ["bun", "run", "start:api"]
+CMD ["sh", "-c", "cd apps/api && bunx prisma migrate deploy && bunx prisma db seed && cd /app && bun run start:api"]
 
 # Stage: Worker
 FROM base AS worker

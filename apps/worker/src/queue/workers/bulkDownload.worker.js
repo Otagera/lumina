@@ -4,6 +4,7 @@ import path from "node:path";
 import archiver from "archiver";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
+import { logUsage } from "../../../../../packages/models/src/usage.model.ts";
 import { UPLOADS_DIR } from "../../../../../packages/utils/src/constants.util.ts";
 import { storage } from "../../../../../packages/utils/src/storage.util.ts";
 
@@ -125,9 +126,31 @@ const run = async (jobData) => {
 						let imageBuffer;
 
 						if (!isLocal && storageProviderInstance) {
-							imageBuffer = await storageProviderInstance.getObject(
-								image.storage_key,
-							);
+							try {
+								imageBuffer = await storageProviderInstance.getObject(
+									image.storage_key,
+								);
+							} catch (e) {
+								if (
+									e.name === "NoSuchKey" ||
+									e.code === "NoSuchKey" ||
+									e.message?.includes("NoSuchKey") ||
+									e.name === "NotFound" ||
+									e.code === "NotFound"
+								) {
+									console.warn(
+										`[Bulk Download] File not found in ${image.storage_provider} as ${image.storage_key}. Falling back to local file.`,
+									);
+									const localPath = path.resolve(
+										process.cwd(),
+										UPLOADS_DIR,
+										image.storage_key || image.image_path,
+									);
+									imageBuffer = await readFile(localPath);
+								} else {
+									throw e;
+								}
+							}
 						} else {
 							const localPath = path.resolve(
 								process.cwd(),
@@ -157,6 +180,19 @@ const run = async (jobData) => {
 		if (fs.existsSync(zipPath)) {
 			await unlink(zipPath).catch(() => {});
 		}
+
+		// Log compute usage for bulk download (on failure too, to track attempts)
+		if (userId) {
+			await logUsage(
+				userId,
+				"compute",
+				"bulk_download",
+				Math.ceil(imageIds.length / 10), // 1 unit per 10 images
+				null,
+				{ image_count: imageIds.length, job_id: jobId },
+			);
+		}
+
 		throw error;
 	}
 };

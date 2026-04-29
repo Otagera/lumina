@@ -1,5 +1,5 @@
 {
-	"name": "@anoda-facematch/worker",
+	"name": "@lumina/worker",
 	"version": "1.0.0",
 	"description": "Worker application for Anoda Facematch",
 	"main": "src/index.js",

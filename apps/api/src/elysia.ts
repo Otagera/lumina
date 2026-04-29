@@ -1,3 +1,4 @@
+import path from "node:path";
 import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ElysiaAdapter } from "@bull-board/elysia";
@@ -14,9 +15,12 @@ import {
 } from "../../../packages/utils/src/events.util.ts";
 import { createServiceLogger } from "../../../packages/utils/src/logger.util.ts";
 import { queueServices } from "../../worker/src/queue/queue.service.ts";
+import { csrfPlugin } from "./routes/middleware/csrf.plugin.ts";
+
+const envConfig = config[config.env || "development"];
 
 Sentry.init({
-	dsn: process.env.SENTRY_DSN,
+	dsn: envConfig.sentry_dsn,
 	environment: config.env,
 	serverName: "api",
 });
@@ -25,7 +29,9 @@ const logger = createServiceLogger("api");
 
 export const createElysiaApp = async () => {
 	const { default: albumsRoutes } = await import("./routes/albums.route");
-	const { default: authRoutes } = await import("./routes/auth.route");
+	const { default: authRoutes, unsubscribeRoutes } = await import(
+		"./routes/auth.route"
+	);
 	const { picturesRoutes, publicPicturesRoutes } = await import(
 		"./routes/pictures.route"
 	);
@@ -33,6 +39,15 @@ export const createElysiaApp = async () => {
 	const { default: publicRoutes } = await import("./routes/public.route");
 	const { default: peopleRoutes } = await import("./routes/people.route");
 	const { default: settingsRoutes } = await import("./routes/settings.route");
+	const { default: trashRoutes } = await import("./routes/trash.route");
+	const { default: notificationsRoutes } = await import(
+		"./routes/notifications.route"
+	);
+	const { default: usageRoutes } = await import("./routes/usage.route");
+	const { thumbnailRoutes } = await import("./routes/thumbnail.route");
+	const { default: billingWebhookRoutes } = await import(
+		"./routes/billing-webhook.route"
+	);
 
 	let bullBoardPlugin: any = null;
 	if (config.env !== "test") {
@@ -61,6 +76,7 @@ export const createElysiaApp = async () => {
 			limit: "10mb",
 		},
 	})
+		.use(csrfPlugin)
 		.onBeforeHandle(({ request, body }) => {
 			console.log(
 				`[${new Date().toISOString()}] ${request.method} ${request.url}`,
@@ -85,8 +101,8 @@ export const createElysiaApp = async () => {
 				origin:
 					config.env === "development"
 						? true
-						: process.env.CORS_ORIGIN
-							? process.env.CORS_ORIGIN.split(",")
+						: envConfig.cors_origin
+							? envConfig.cors_origin.split(",")
 							: false,
 			}),
 		)
@@ -145,15 +161,21 @@ export const createElysiaApp = async () => {
 			},
 		)
 		.group("/api/v1/public", (app) => app.use(publicPicturesRoutes))
+		.group("/api/v1/webhooks", (app) => app.use(billingWebhookRoutes))
 		.group("/api/v1", (app) =>
 			app
+				.use(thumbnailRoutes)
+				.use(unsubscribeRoutes)
 				.use(authRoutes)
 				.use(albumsRoutes)
 				.use(picturesRoutes)
 				.use(facesRoutes)
 				.use(publicRoutes)
 				.use(peopleRoutes)
-				.use(settingsRoutes),
+				.use(settingsRoutes)
+				.use(trashRoutes)
+				.use(notificationsRoutes)
+				.use(usageRoutes),
 		);
 
 	if (bullBoardPlugin) {
@@ -177,6 +199,7 @@ const start = async () => {
 		);
 		return app;
 	} catch (error: any) {
+		console.log("Failed to start Elysia server:", error);
 		logger.error("Failed to start Elysia server", {
 			error: error.message,
 			stack: error.stack,

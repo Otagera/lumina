@@ -1,16 +1,16 @@
-# Anoda Facematch
+# Lumina
 
 ![diagram-export-15-04-2025-11_32_33](https://github.com/user-attachments/assets/f4715318-8575-4a6b-9227-4073fb53c234)
 
 ## Overview
 
-Anoda Facematch is an **AI Intelligence Layer** for your photo library. It allows users to organize photos, perform advanced face recognition, and host **Collaborative Events**. The platform separates AI compute from physical storage, offering a **Bring Your Own Storage (BYOS)** model that gives users full control over their data while leveraging powerful facial recognition and search.
+Lumina is an **AI Intelligence Layer** for your photo library. It allows users to organize photos, perform advanced face recognition, and host **Collaborative Events**. The platform separates AI compute from physical storage, offering a **Bring Your Own Storage (BYOS)** model that gives users full control over their data while leveraging powerful facial recognition and search.
 
 ## Features
 
 - **Collaborative Events:** Host weddings, parties, or gatherings where guests can contribute photos via QR code without an account.
 - **"Selfie to Join":** Guests can take a selfie to instantly find all photos of themselves within a shared event.
-- **BYOS (Bring Your Own Storage):** Connect your own AWS S3 or Cloudflare R2 bucket. Anoda handles the AI, while you own the files and the costs.
+- **BYOS (Bring Your Own Storage):** Connect your own AWS S3 or Cloudflare R2 bucket. Lumina handles the AI, while you own the files and the costs.
 - **Face Detection & Recognition:** Automatically detects and clusters faces using a high-performance background worker.
 - **Face Search:** Find all occurrences of a specific face across albums or collaborative events.
 - **Managed Storage (R2):** Sustainable managed storage with zero egress fees powered by Cloudflare R2.
@@ -20,13 +20,13 @@ Anoda Facematch is an **AI Intelligence Layer** for your photo library. It allow
 
 ## Project Structure
 
-Anoda Facematch is a monorepo managed with [Bun Workspaces](https://bun.sh/docs/install/workspaces).
+Lumina is a monorepo managed with [Bun Workspaces](https://bun.sh/docs/install/workspaces).
 - **`apps/`**: Contains the runnable services.
   - `api`: The core backend built with Elysia JS.
   - `client`: The frontend built with React, Vite, and Tailwind CSS.
   - `ai`: The Python/FastAPI service for generating face embeddings.
   - `worker`: The Bun background processor for image optimization and queues.
-- **`packages/`**: Contains shared libraries and domain models (e.g., `@anoda/models`, `@anoda/auth`) to separate database logic and utilities from the application layer.
+- **`packages/`**: Contains shared libraries and domain models (e.g., `@lumina/models`, `@lumina/auth`) to separate database logic and utilities from the application layer.
 
 ## Installation
 
@@ -39,8 +39,8 @@ To set up the project locally, follow these steps:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-repo/anoda-facematch.git
-   cd anoda-facematch
+   git clone https://github.com/your-repo/lumina.git
+   cd lumina
    ```
 
 2. **Start Infrastructure (Postgres & Redis):**

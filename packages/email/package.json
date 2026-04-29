@@ -1,0 +1,12 @@
+{
+	"name": "@lumina/email",
+	"version": "1.0.0",
+	"description": "Email service for Anoda Facematch monorepo",
+	"main": "src/email.service.ts",
+	"private": true,
+	"type": "module",
+	"dependencies": {
+		"@prisma/client": "^6.19.0",
+		"resend": "^4.0.0"
+	}
+}

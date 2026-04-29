@@ -71,19 +71,31 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 									</div>
 								</td>
 								<td className="p-4">
-									<div className="w-12 h-12 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0">
+									<div className="w-12 h-12 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 relative">
 										<img
 											src={image.imagePath}
 											alt={filename}
-											className="w-full h-full object-cover"
+											className={`w-full h-full object-cover ${image.status === "QUOTA_EXCEEDED" ? "grayscale opacity-60" : ""}`}
 										/>
+										{image.status === "QUOTA_EXCEEDED" && (
+											<div className="absolute inset-0 flex items-center justify-center">
+												<div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+											</div>
+										)}
 									</div>
 								</td>
 								<td className="p-4">
 									<div className="flex flex-col">
-										<span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate max-w-[200px]">
-											{filename}
-										</span>
+										<div className="flex items-center gap-2">
+											<span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate max-w-[200px]">
+												{filename}
+											</span>
+											{image.status === "QUOTA_EXCEEDED" && (
+												<span className="px-1.5 py-0.5 bg-red-500/10 text-red-500 text-[8px] font-black uppercase tracking-tighter rounded-md">
+													Limit Reached
+												</span>
+											)}
+										</div>
 										<span className="text-[10px] text-zinc-500 font-mono">
 											{image.imageId.substring(0, 8)}...
 										</span>

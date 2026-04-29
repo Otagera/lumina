@@ -1,4 +1,5 @@
 import { Elysia, t } from "elysia";
+import prisma from "../../../../packages/config/src/db.config.ts";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
 import { createStorageConfigService } from "../services/settings/createStorageConfig.service.ts";
 import { deleteStorageConfigService } from "../services/settings/deleteStorageConfig.service.ts";
@@ -6,6 +7,7 @@ import { fetchSettingsService } from "../services/settings/fetchSettings.service
 import { fetchUsageService } from "../services/settings/fetchUsage.service.ts";
 import { updateStorageConfigService } from "../services/settings/updateStorageConfig.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
+import { strictPublicRateLimit } from "./middleware/rate-limit.plugin.ts";
 
 const settingsRoutes = new Elysia({ prefix: "/settings" })
 	.derive(authDerivation)
@@ -17,25 +19,6 @@ const settingsRoutes = new Elysia({ prefix: "/settings" })
 			return {
 				status: "completed",
 				message: "Settings retrieved successfully.",
-				data,
-			};
-		} catch (error: any) {
-			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-			return {
-				status: "error",
-				message: error?.message || "Internal server error",
-				data: null,
-			};
-		}
-	})
-	.get("/usage", async ({ set, userId }) => {
-		try {
-			const data = await fetchUsageService({ userId });
-
-			set.status = HTTP_STATUS_CODES.OK;
-			return {
-				status: "completed",
-				message: "Usage retrieved successfully.",
 				data,
 			};
 		} catch (error: any) {
@@ -151,6 +134,61 @@ const settingsRoutes = new Elysia({ prefix: "/settings" })
 				configId: t.String(),
 			}),
 		},
-	);
+	)
+	.get("/email-preferences", async ({ set }) => {
+		set.status = HTTP_STATUS_CODES.OK;
+		return {
+			status: "completed",
+			data: {
+				welcome: true,
+				photoApproved: true,
+				clustering: true,
+				marketing: false,
+			},
+		};
+	})
+	.put("/email-preferences", async ({ body, set, userId }) => {
+		try {
+			const prefs = body as {
+				welcome?: boolean;
+				photoApproved?: boolean;
+				clustering?: boolean;
+				marketing?: boolean;
+			};
+
+			const user = await prisma.users.findUnique({
+				where: { user_id: userId },
+				select: { email_preferences: true },
+			});
+
+			const current = (user?.email_preferences as any) || {
+				welcome: true,
+				photoApproved: true,
+				clustering: true,
+				marketing: false,
+			};
+
+			const updated = { ...current, ...prefs };
+
+			await prisma.users.update({
+				where: { user_id: userId },
+				data: { email_preferences: updated as any },
+			});
+
+			set.status = HTTP_STATUS_CODES.OK;
+			return {
+				status: "completed",
+				message: "Email preferences updated.",
+				data: updated,
+			};
+		} catch (error: any) {
+			set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+			return {
+				status: "error",
+				message: error?.message || "Failed to update preferences",
+				data: null,
+			};
+		}
+	});
 
 export default settingsRoutes;

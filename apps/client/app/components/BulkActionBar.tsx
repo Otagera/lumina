@@ -5,7 +5,9 @@ import { Button } from "./standard/Button";
 
 interface BulkActionBarProps {
 	selectedCount: number;
+	totalCount?: number;
 	onClear: () => void;
+	onSelectAll?: () => void;
 	onDelete?: () => void;
 	onAddToAlbum?: () => void;
 	onDownload?: () => void;
@@ -13,7 +15,9 @@ interface BulkActionBarProps {
 
 export const BulkActionBar: React.FC<BulkActionBarProps> = ({
 	selectedCount,
+	totalCount,
 	onClear,
+	onSelectAll,
 	onDelete,
 	onAddToAlbum,
 	onDownload,
@@ -22,11 +26,34 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
 
 	if (selectedCount === 0) return null;
 
+	const isAllSelected = totalCount && selectedCount === totalCount;
+
 	return (
 		<>
 			<div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[70] animate-in fade-in slide-in-from-bottom-8 duration-500 w-max max-w-[95vw]">
 				<div className="bg-zinc-950/90 backdrop-blur-2xl border border-zinc-800/50 px-6 sm:px-8 py-4 rounded-[2.5rem] shadow-2xl flex items-center space-x-6 sm:space-x-8 overflow-x-auto no-scrollbar">
 					<div className="flex items-center space-x-4 pr-6 sm:pr-8 border-r border-zinc-800/50">
+						<button
+							type="button"
+							onClick={onSelectAll}
+							className="p-2 hover:bg-zinc-800 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-90"
+							title={isAllSelected ? "Unselect all" : "Select all"}
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								className="h-5 w-5"
+								fill={isAllSelected ? "currentColor" : "none"}
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={2.5}
+									d={isAllSelected ? "M5 12h14" : "M4 6h16v12H4z"}
+								/>
+							</svg>
+						</button>
 						<button
 							type="button"
 							onClick={onClear}
@@ -136,9 +163,9 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
 			{onDelete && (
 				<ConfirmModal
 					isOpen={isConfirmOpen}
-					title="Delete Selected Photos"
-					message={`Are you sure you want to permanently delete these ${selectedCount} photos? This action cannot be undone.`}
-					confirmText={`Delete ${selectedCount} Items`}
+					title="Move to Trash"
+					message={`Are you sure you want to move these ${selectedCount} photos to trash? They will be permanently deleted after 30 days if not restored.`}
+					confirmText={`Move ${selectedCount} to Trash`}
 					onConfirm={() => {
 						onDelete();
 						setIsConfirmOpen(false);

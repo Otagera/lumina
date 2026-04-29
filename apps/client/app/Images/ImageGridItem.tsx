@@ -8,6 +8,7 @@ interface ImageGridItemProps extends HTMLAttributes<HTMLImageElement> {
 		url: string;
 		alt: string;
 		id: string;
+		status?: string;
 	};
 	onDelete: (imageId: string) => void;
 	shared?: boolean;
@@ -28,6 +29,8 @@ const ImageGridItem = ({
 	containerClassName = "",
 	shared = false,
 }: ImageGridItemProps) => {
+	const isQuotaExceeded = image.status === "QUOTA_EXCEEDED";
+
 	return (
 		<div
 			className={cn(
@@ -36,6 +39,7 @@ const ImageGridItem = ({
 				isSelected
 					? "ring-4 ring-sage ring-offset-4 dark:ring-offset-zinc-950 scale-[0.98] shadow-2xl shadow-sage/20"
 					: "hover:shadow-2xl hover:shadow-sage/10",
+				isQuotaExceeded ? "grayscale-[0.5] opacity-90" : "",
 			)}
 		>
 			<img
@@ -55,6 +59,18 @@ const ImageGridItem = ({
 					}
 				}}
 			/>
+
+			{/* Quota Exceeded Badge */}
+			{isQuotaExceeded && (
+				<div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-4">
+					<div className="bg-white/90 dark:bg-zinc-900/90 px-4 py-2 rounded-2xl shadow-xl border border-white/20 flex items-center gap-2 animate-in zoom-in duration-300">
+						<div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+						<span className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">
+							Quota Exceeded
+						</span>
+					</div>
+				</div>
+			)}
 
 			{/* Selection Checkbox Overlay */}
 			<div
@@ -93,8 +109,8 @@ const ImageGridItem = ({
 				</button>
 			</div>
 
-			{/* Delete Button */}
-			{!shared && (
+			{/* Delete Button - hide when in selection mode */}
+			{!shared && !selectionMode && (
 				<button
 					type="button"
 					className="absolute top-4 right-4 p-2.5 bg-black/40 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-plum shadow-lg backdrop-blur-md border border-white/10 active:scale-90"
@@ -102,7 +118,7 @@ const ImageGridItem = ({
 						e.stopPropagation();
 						onDelete(image.id);
 					}}
-					title="Delete image"
+					title="Move to trash"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

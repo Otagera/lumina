@@ -1,4 +1,5 @@
 import joi from "joi";
+import { createRefreshToken } from "../models/src/refreshTokens.lib.ts";
 import { getUser } from "../models/src/users.lib.ts";
 import {
 	comparePasswords,
@@ -50,6 +51,12 @@ const service = async (data) => {
 	}
 
 	const { accessToken, refreshToken } = await createUserAuthToken(user.user_id);
+
+	await createRefreshToken({
+		token: refreshToken,
+		user_id: user.user_id,
+		expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+	});
 
 	const aliasRes = aliaserSpec(aliasSpec.response, {
 		...user,

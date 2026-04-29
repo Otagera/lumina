@@ -1,6 +1,8 @@
 import axios from "axios";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
+import { logUsage } from "../../../../../packages/models/src/usage.model.ts";
+import { queueServices } from "../queue.service.ts";
 
 const run = async (jobData) => {
 	const { albumId } = jobData;
@@ -10,7 +12,11 @@ const run = async (jobData) => {
 
 		const album = await prisma.albums.findUnique({
 			where: { album_id: albumId },
-			select: { created_by: true },
+			select: {
+				created_by: true,
+				album_name: true,
+				users: { select: { email: true } },
+			},
 		});
 
 		if (!album) {
@@ -90,6 +96,49 @@ const run = async (jobData) => {
 		console.log(
 			`Clustering complete. Created ${newPeopleCount} new people groups. Tagged ${updatedFacesCount} faces.`,
 		);
+
+		// Enqueue in-app notification
+		if (userId) {
+			await prisma.notifications.create({
+				data: {
+					user_id: userId,
+					type: "CLUSTERING_COMPLETE",
+					metadata: {
+						albumId,
+						albumName: album.album_name || "your album",
+						newPeople: newPeopleCount,
+						taggedFaces: updatedFacesCount,
+					},
+				},
+			});
+		}
+
+		// Enqueue notification email
+		if (album.users?.email) {
+			await queueServices.emailQueueLib.addJob("email", {
+				worker: "email",
+				type: "clustering_complete",
+				data: {
+					email: album.users.email,
+					albumName: album.album_name || "your album",
+				},
+			});
+		}
+
+		// Log compute usage for face clustering
+		if (userId) {
+			await logUsage(
+				userId,
+				"compute",
+				"face_clustering",
+				Math.ceil(unassignedFaces.length / 10), // 1 unit per 10 faces processed
+				albumId,
+				{
+					new_people: newPeopleCount,
+					tagged_faces: updatedFacesCount,
+				},
+			);
+		}
 
 		return {
 			status: "success",

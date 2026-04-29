@@ -25,14 +25,12 @@ const capitalize = (text) => {
 
 const generate_login_url = (redirect_url) => {
 	const login_url = new url.URL(
-		config[process.env.NODE_ENV]?.identity_login_url ||
-			config.identity_login_url,
+		config[config.env]?.identity_login_url || config.identity_login_url,
 	);
 	const query_params = {
 		state: uuidv4(),
 		nonce: uuidv4(),
-		client_id:
-			config[process.env.NODE_ENV]?.login_client_id || config.login_client_id,
+		client_id: config[config.env]?.login_client_id || config.login_client_id,
 		response_mode: "fragment",
 		response_type: "code",
 		scope: "openid",

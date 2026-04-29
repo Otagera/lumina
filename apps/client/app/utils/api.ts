@@ -66,19 +66,37 @@ export const fetchAlbums = async () => {
 	}
 };
 
+export const fetchPlans = async () => {
+	try {
+		const response = await axiosAPI.get("/public/plans");
+		return response.data;
+	} catch (error) {
+		console.error("Error fetching plans:", error);
+	}
+};
+
 export const fetchImagesInAlbum = async ({
 	albumId,
 	pageParam = null,
 	status = "APPROVED",
+	startDate,
+	endDate,
+	uploaderId,
 }: {
 	albumId: string;
 	pageParam?: string | null;
 	status?: "APPROVED" | "PENDING" | "REJECTED";
+	startDate?: string;
+	endDate?: string;
+	uploaderId?: string;
 }) => {
 	try {
-		const url = pageParam
-			? `/albums/${albumId}/images?paginationType=cursor&limit=25&nextCursor=${pageParam}&status=${status}`
-			: `/albums/${albumId}/images?paginationType=cursor&limit=25&status=${status}`;
+		let url = `/albums/${albumId}/images?paginationType=cursor&limit=25&status=${status}`;
+		if (pageParam) url += `&nextCursor=${pageParam}`;
+		if (startDate) url += `&startDate=${startDate}`;
+		if (endDate) url += `&endDate=${endDate}`;
+		if (uploaderId) url += `&uploaderId=${uploaderId}`;
+
 		const response = await axiosAPI.get(url);
 		return response.data;
 	} catch (error) {
@@ -111,6 +129,26 @@ export const signup = async (credentials: any) => {
 		return response.data;
 	} catch (error) {
 		console.error("Error signing up:", error);
+		throw error;
+	}
+};
+
+export const forgotPassword = async (email: string) => {
+	try {
+		const response = await axiosAPI.post("/auth/forgot-password", { email });
+		return response.data;
+	} catch (error) {
+		console.error("Error sending forgot password link:", error);
+		throw error;
+	}
+};
+
+export const resetPassword = async (data: any) => {
+	try {
+		const response = await axiosAPI.post("/auth/reset-password", data);
+		return response.data;
+	} catch (error) {
+		console.error("Error resetting password:", error);
 		throw error;
 	}
 };
@@ -169,6 +207,16 @@ export const reprocessImage = async (imageId: string) => {
 		return response.data;
 	} catch (error) {
 		console.error("Error reprocessing image:", error);
+		throw error;
+	}
+};
+
+export const downloadImage = async (imageId: string) => {
+	try {
+		const response = await axiosAPI.post(`/images/${imageId}/download`);
+		return response.data;
+	} catch (error) {
+		console.error("Error downloading image:", error);
 		throw error;
 	}
 };
@@ -244,6 +292,16 @@ export const updatePerson = async (personId: string, name: string) => {
 	}
 };
 
+export const deletePerson = async (personId: string) => {
+	try {
+		const response = await axiosAPI.delete(`/people/${personId}`);
+		return response.data;
+	} catch (error) {
+		console.error("Error deleting person:", error);
+		throw error;
+	}
+};
+
 export const updateFace = async (
 	faceId: number,
 	data: { personId: string | null },
@@ -293,7 +351,7 @@ export const fetchSettings = async () => {
 
 export const fetchUsage = async () => {
 	try {
-		const response = await axiosAPI.get("/settings/usage");
+		const response = await axiosAPI.get("/usage");
 		return response.data;
 	} catch (error) {
 		console.error("Error fetching usage:", error);
@@ -350,6 +408,10 @@ export const getPublicPresignedUrl = async (
 	data: {
 		fileName: string;
 		contentType: string;
+		isMultipart?: boolean;
+		uploadId?: string;
+		partNumber?: number;
+		key?: string;
 	},
 ) => {
 	try {
@@ -360,6 +422,74 @@ export const getPublicPresignedUrl = async (
 		return response.data;
 	} catch (error) {
 		console.error("Error getting public presigned URL:", error);
+		throw error;
+	}
+};
+
+export const completeMultipartUpload = async (data: {
+	albumId?: string;
+	key: string;
+	uploadId: string;
+	parts: { ETag: string; PartNumber: number }[];
+}) => {
+	try {
+		const response = await axiosAPI.post("/images/complete-multipart", data);
+		return response.data;
+	} catch (error) {
+		console.error("Error completing multipart upload:", error);
+		throw error;
+	}
+};
+
+export const completePublicMultipartUpload = async (
+	token: string,
+	data: {
+		key: string;
+		uploadId: string;
+		parts: { ETag: string; PartNumber: number }[];
+	},
+) => {
+	try {
+		const response = await axiosAPI.post(`/public/images/complete-multipart`, {
+			...data,
+			shareToken: token,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error completing public multipart upload:", error);
+		throw error;
+	}
+};
+
+export const abortMultipartUpload = async (data: {
+	albumId?: string;
+	key: string;
+	uploadId: string;
+}) => {
+	try {
+		const response = await axiosAPI.post("/images/abort-multipart", data);
+		return response.data;
+	} catch (error) {
+		console.error("Error aborting multipart upload:", error);
+		throw error;
+	}
+};
+
+export const abortPublicMultipartUpload = async (
+	token: string,
+	data: {
+		key: string;
+		uploadId: string;
+	},
+) => {
+	try {
+		const response = await axiosAPI.post(`/public/images/abort-multipart`, {
+			...data,
+			shareToken: token,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error aborting public multipart upload:", error);
 		throw error;
 	}
 };
@@ -395,19 +525,170 @@ export const editAlbumSettings = async (albumId: string, data: any) => {
 };
 
 export const moderateImages = async (
+	albumId: string,
 	imageIds: string[],
 	status: "APPROVED" | "REJECTED",
+	reason?: string,
 ) => {
 	try {
-		// We might need a new endpoint for bulk moderation or just update each image
-		// For now, let's assume we have a bulk update endpoint or we'll implement it
-		const response = await axiosAPI.patch("/images/moderate", {
+		const response = await axiosAPI.post(`/albums/${albumId}/moderate`, {
 			imageIds,
 			status,
+			reason,
 		});
 		return response.data;
 	} catch (error) {
 		console.error("Error moderating images:", error);
+		throw error;
+	}
+};
+
+export const generateInvite = async (
+	albumId: string,
+	role: string,
+	expiresInDays?: number,
+) => {
+	try {
+		const response = await axiosAPI.post(`/albums/${albumId}/invites`, {
+			role,
+			expiresInDays,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error generating invite:", error);
+		throw error;
+	}
+};
+
+export const updateMemberRole = async (
+	albumId: string,
+	memberId: string,
+	role: string,
+) => {
+	try {
+		const response = await axiosAPI.patch(
+			`/albums/${albumId}/members/${memberId}`,
+			{
+				role,
+			},
+		);
+		return response.data;
+	} catch (error) {
+		console.error("Error updating member role:", error);
+		throw error;
+	}
+};
+
+export const removeMember = async (albumId: string, memberId: string) => {
+	try {
+		const response = await axiosAPI.delete(
+			`/albums/${albumId}/members/${memberId}`,
+		);
+		return response.data;
+	} catch (error) {
+		console.error("Error removing member:", error);
+		throw error;
+	}
+};
+
+export const deleteInvite = async (albumId: string, memberId: string) => {
+	try {
+		const response = await axiosAPI.delete(
+			`/albums/${albumId}/invites/${memberId}`,
+		);
+		return response.data;
+	} catch (error) {
+		console.error("Error deleting invite:", error);
+		throw error;
+	}
+};
+
+export const resendInvite = async (albumId: string, memberId: string) => {
+	try {
+		const response = await axiosAPI.post(
+			`/albums/${albumId}/invites/${memberId}/resend`,
+		);
+		return response.data;
+	} catch (error) {
+		console.error("Error resending invite:", error);
+		throw error;
+	}
+};
+
+export const joinAlbum = async (inviteToken: string) => {
+	try {
+		const response = await axiosAPI.post("/albums/join", {
+			inviteToken,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error joining album:", error);
+		throw error;
+	}
+};
+
+export const fetchTrash = async () => {
+	try {
+		const response = await axiosAPI.get("/trash");
+		return response.data;
+	} catch (error) {
+		console.error("Error fetching trash:", error);
+		throw error;
+	}
+};
+
+export const restoreImages = async (imageIds: string[]) => {
+	try {
+		const response = await axiosAPI.post("/trash/images/restore", {
+			imageIds,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error restoring images:", error);
+		throw error;
+	}
+};
+
+export const restoreAlbum = async (albumId: string) => {
+	try {
+		const response = await axiosAPI.post(`/trash/albums/${albumId}/restore`);
+		return response.data;
+	} catch (error) {
+		console.error("Error restoring album:", error);
+		throw error;
+	}
+};
+
+export const permanentlyDeleteImages = async (imageIds: string[]) => {
+	try {
+		const response = await axiosAPI.delete("/trash/images", {
+			data: { imageIds },
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error permanently deleting images:", error);
+		throw error;
+	}
+};
+
+export const permanentlyDeleteAlbums = async (albumIds: string[]) => {
+	try {
+		const response = await axiosAPI.delete("/trash/albums", {
+			data: { albumIds },
+		});
+		return response.data;
+	} catch (error) {
+		console.error("Error permanently deleting albums:", error);
+		throw error;
+	}
+};
+
+export const emptyTrash = async () => {
+	try {
+		const response = await axiosAPI.delete("/trash");
+		return response.data;
+	} catch (error) {
+		console.error("Error emptying trash:", error);
 		throw error;
 	}
 };

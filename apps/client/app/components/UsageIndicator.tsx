@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { HardDrive, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 import { fetchUsage } from "~/utils/api";
 
 export const UsageIndicator = () => {
@@ -11,16 +12,29 @@ export const UsageIndicator = () => {
 
 	const usage = usageResponse?.data;
 
-	if (!usage) return null;
+	if (!usage) {
+		return (
+			<div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4 py-1.5 sm:py-2 bg-zinc-100 dark:bg-zinc-900 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+				<span className="text-[9px] sm:text-[10px] font-bold text-zinc-400">
+					Loading...
+				</span>
+			</div>
+		);
+	}
+
+	const computeUnitsUsed = usage.computeUnitsUsed ?? 0;
+	const computeUnitsLimit = usage.computeUnitsLimit ?? 100;
+	const storageUsedMB = usage.storageUsedMB ?? 0;
+	const storageLimitMB = usage.storageLimitMB ?? 5 * 1024;
 
 	const computePercentage = Math.min(
 		100,
-		(usage.computeUnitsUsed / usage.computeUnitsLimit) * 100,
+		(computeUnitsUsed / computeUnitsLimit) * 100,
 	);
 
 	const storagePercentage = Math.min(
 		100,
-		(usage.storageUsedMB / usage.storageLimitMB) * 100,
+		(storageUsedMB / storageLimitMB) * 100,
 	);
 
 	const isComputeNearLimit = computePercentage > 80;
@@ -50,7 +64,7 @@ export const UsageIndicator = () => {
 							Img
 						</span>
 						<span className="text-[9px] sm:text-[10px] font-bold text-zinc-900 dark:text-zinc-100">
-							{usage.computeUnitsUsed}/{usage.computeUnitsLimit}
+							{computeUnitsUsed}/{computeUnitsLimit}
 						</span>
 					</div>
 					<div className="w-12 sm:w-16 h-0.5 sm:h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
@@ -89,7 +103,9 @@ export const UsageIndicator = () => {
 							Store
 						</span>
 						<span className="text-[9px] sm:text-[10px] font-bold text-zinc-900 dark:text-zinc-100">
-							{Math.round(usage.storageUsedMB / 1024) || "<1"}GB
+							{storageUsedMB >= 1024
+								? `${(storageUsedMB / 1024).toFixed(1)}GB`
+								: `${storageUsedMB}MB`}
 						</span>
 					</div>
 					<div className="w-12 sm:w-16 h-0.5 sm:h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
@@ -106,6 +122,13 @@ export const UsageIndicator = () => {
 					</div>
 				</div>
 			</div>
+			<Link
+				to="/usage"
+				className="ml-2 text-xs text-sage hover:underline"
+				title="View full usage dashboard"
+			>
+				→
+			</Link>
 		</div>
 	);
 };

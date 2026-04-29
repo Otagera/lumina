@@ -25,6 +25,7 @@ const aliasSpec = {
 		shared_link: "sharedLink",
 		share_token: "shareToken",
 		settings: "settings",
+		album_members: "members",
 	},
 };
 const service = async (data: unknown) => {

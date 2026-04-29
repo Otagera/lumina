@@ -10,6 +10,8 @@ import {
 } from "../../../../packages/utils/src/constants.util.ts";
 import { storage } from "../../../../packages/utils/src/storage.util.ts";
 import { queueServices } from "../../../worker/src/queue/queue.service";
+import { abortMultipartUploadService } from "../services/pictures/abortMultipartUpload.service.ts";
+import { completeMultipartUploadService } from "../services/pictures/completeMultipartUpload.service.ts";
 import deletePictureService from "../services/pictures/deletePicture.service.ts";
 import fetchFacesService from "../services/pictures/fetchFaces.service.ts";
 import fetchPictureService from "../services/pictures/fetchPicture.service.ts";
@@ -19,9 +21,11 @@ import { moderatePicturesService } from "../services/pictures/moderatePictures.s
 import { reprocessPictureService } from "../services/pictures/reprocessPicture.service.ts";
 import { uploadPicturesService } from "../services/pictures/uploadPictures.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
+import { guestPlugin } from "./middleware/guest.plugin.ts";
 import { checkQuota } from "./middleware/quota.middleware.ts";
 
 const picturesRoutes = new Elysia({ prefix: "/images" })
+	.use(guestPlugin)
 	.derive(authDerivation)
 	.post(
 		"/bulk-download",
@@ -33,7 +37,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				const images = await prisma.images.findMany({
 					where: {
 						image_id: { in: imageIds },
-						created_by: userId,
+						uploaded_by: userId,
 					},
 					select: { image_id: true },
 				});
@@ -146,7 +150,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 	)
 	.post(
 		"/",
-		async ({ body, set, userId }) => {
+		async ({ body, set, userId, guestSessionId }) => {
 			try {
 				const files = body.uploadedImages;
 				const albumId = body.albumId;
@@ -305,7 +309,9 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				}
 
 				const data = await uploadPicturesService({
+					albumId: body.albumId,
 					userId: userId,
+					guestSessionId,
 					files: convertedFiles,
 					status: body.status,
 				});
@@ -363,10 +369,85 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 			}
 		},
 		{
+			beforeHandle: [checkQuota as any],
 			body: t.Object({
 				albumId: t.Optional(t.String()),
 				fileName: t.String(),
 				contentType: t.String(),
+				isMultipart: t.Optional(t.Boolean()),
+				uploadId: t.Optional(t.String()),
+				partNumber: t.Optional(t.Numeric()),
+				key: t.Optional(t.String()),
+			}),
+		},
+	)
+	.post(
+		"/complete-multipart",
+		async ({ body, set, userId }) => {
+			try {
+				const data = await completeMultipartUploadService({
+					...body,
+					userId,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Multipart upload completed successfully.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			body: t.Object({
+				albumId: t.Optional(t.String()),
+				key: t.String(),
+				uploadId: t.String(),
+				parts: t.Array(
+					t.Object({
+						ETag: t.String(),
+						PartNumber: t.Numeric(),
+					}),
+				),
+			}),
+		},
+	)
+	.post(
+		"/abort-multipart",
+		async ({ body, set, userId }) => {
+			try {
+				const data = await abortMultipartUploadService({
+					...body,
+					userId,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Multipart upload aborted successfully.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			body: t.Object({
+				albumId: t.Optional(t.String()),
+				key: t.String(),
+				uploadId: t.String(),
 			}),
 		},
 	)
@@ -537,6 +618,60 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 			}),
 		},
 	)
+	.post(
+		"/:imageId/download",
+		async ({ params, set, userId }) => {
+			try {
+				const imageId = params.imageId;
+
+				// Verify ownership
+				const image = await prisma.images.findFirst({
+					where: { image_id: imageId, uploaded_by: userId },
+				});
+
+				if (!image) {
+					throw new Error("Image not found or unauthorized.");
+				}
+
+				// Generate presigned URL
+				const downloadUrl = await storage.getSignedUrl(
+					image.storage_key || image.image_path,
+					3600,
+				);
+
+				// Track download for analytics
+				await prisma.usage_logs
+					.create({
+						data: {
+							user_id: userId!,
+							resource: "download",
+							operation: "single_image_download",
+							quantity: 1,
+						},
+					})
+					.catch(() => {});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Download URL generated.",
+					data: { downloadUrl },
+				};
+			} catch (error: any) {
+				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error.message || "Failed to generate download URL.",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({
+				imageId: t.String(),
+			}),
+		},
+	)
 	.patch(
 		"/moderate",
 		async ({ body, set, userId }) => {
@@ -569,86 +704,167 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 		},
 	);
 
-const publicPicturesRoutes = new Elysia({ prefix: "/images" }).put(
-	"/upload-direct-local",
-	async ({ query, set, headers, request }) => {
-		try {
-			const key = query.key;
-			const shareToken = query.shareToken;
-			const authHeader = headers.authorization;
+const publicPicturesRoutes = new Elysia({ prefix: "/images" })
+	.put(
+		"/upload-direct-local",
+		async ({ query, set, headers, request }) => {
+			try {
+				const key = query.key;
+				const shareToken = query.shareToken;
+				const authHeader = headers.authorization;
 
-			if (!key) throw new Error("Key is required");
+				if (!key) throw new Error("Key is required");
 
-			// 1. Authorization Check: Either valid JWT or valid shareToken
-			let isAuthorized = false;
+				// 1. Authorization Check: Either valid JWT or valid shareToken
+				let isAuthorized = false;
 
-			if (authHeader) {
-				// We don't need to fully decode here, the key itself is a strong secret,
-				// but presence of any token in this protected group is a good basic check.
-				// (Real security comes from the fact that the backend generated the 'key').
-				isAuthorized = true;
-			} else if (shareToken) {
-				// Verify shareToken exists in DB
+				if (authHeader) {
+					// We don't need to fully decode here, the key itself is a strong secret,
+					// but presence of any token in this protected group is a good basic check.
+					// (Real security comes from the fact that the backend generated the 'key').
+					isAuthorized = true;
+				} else if (shareToken) {
+					// Verify shareToken exists in DB
+					const album = await prisma.albums.findUnique({
+						where: { share_token: shareToken },
+					});
+					if (album) isAuthorized = true;
+				}
+
+				if (!isAuthorized) {
+					set.status = HTTP_STATUS_CODES.UNAUTHORIZED;
+					return { error: "Unauthorized upload attempt" };
+				}
+
+				// Use absolute path based on app directory
+				const uploadsDir = path.resolve(process.cwd(), "src/uploads");
+				const filePath = path.resolve(uploadsDir, key);
+
+				if (!filePath.startsWith(uploadsDir + path.sep)) {
+					set.status = 400;
+					return { error: "Invalid key" };
+				}
+
+				console.log("[LOCAL UPLOAD] Writing to:", filePath);
+				console.log("[LOCAL UPLOAD] cwd:", process.cwd());
+
+				// Ensure directory exists
+				await fs.promises.mkdir(uploadsDir, { recursive: true });
+
+				const arrayBuffer = await request.arrayBuffer();
+				const buffer = Buffer.from(arrayBuffer);
+
+				await Bun.write(filePath, buffer);
+
+				// Verify file was written
+				const exists = await fs.promises
+					.access(filePath)
+					.then(() => true)
+					.catch(() => false);
+				console.log("[LOCAL UPLOAD] File exists:", exists);
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "File uploaded successfully via direct local upload.",
+					data: { key },
+				};
+			} catch (error: any) {
+				console.error("[LOCAL UPLOAD] Error:", error.message, error.stack);
+				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			query: t.Object({
+				key: t.String(),
+				shareToken: t.Optional(t.String()),
+			}),
+		},
+	)
+	.post(
+		"/complete-multipart",
+		async ({ body, set }) => {
+			try {
+				// Verify share token
 				const album = await prisma.albums.findUnique({
-					where: { share_token: shareToken },
+					where: { share_token: body.shareToken },
 				});
-				if (album) isAuthorized = true;
+				if (!album) throw new Error("Invalid share token");
+
+				const data = await completeMultipartUploadService({
+					...body,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Multipart upload completed successfully.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
 			}
+		},
+		{
+			body: t.Object({
+				shareToken: t.String(),
+				key: t.String(),
+				uploadId: t.String(),
+				parts: t.Array(
+					t.Object({
+						ETag: t.String(),
+						PartNumber: t.Numeric(),
+					}),
+				),
+			}),
+		},
+	)
+	.post(
+		"/abort-multipart",
+		async ({ body, set }) => {
+			try {
+				// Verify share token
+				const album = await prisma.albums.findUnique({
+					where: { share_token: body.shareToken },
+				});
+				if (!album) throw new Error("Invalid share token");
 
-			if (!isAuthorized) {
-				set.status = HTTP_STATUS_CODES.UNAUTHORIZED;
-				return { error: "Unauthorized upload attempt" };
+				const data = await abortMultipartUploadService({
+					...body,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Multipart upload aborted successfully.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
 			}
-
-			// Use absolute path based on app directory
-			const uploadsDir = path.resolve(process.cwd(), "src/uploads");
-			const filePath = path.resolve(uploadsDir, key);
-
-			if (!filePath.startsWith(uploadsDir + path.sep)) {
-				set.status = 400;
-				return { error: "Invalid key" };
-			}
-
-			console.log("[LOCAL UPLOAD] Writing to:", filePath);
-			console.log("[LOCAL UPLOAD] cwd:", process.cwd());
-
-			// Ensure directory exists
-			await fs.promises.mkdir(uploadsDir, { recursive: true });
-
-			const arrayBuffer = await request.arrayBuffer();
-			const buffer = Buffer.from(arrayBuffer);
-
-			await Bun.write(filePath, buffer);
-
-			// Verify file was written
-			const exists = await fs.promises
-				.access(filePath)
-				.then(() => true)
-				.catch(() => false);
-			console.log("[LOCAL UPLOAD] File exists:", exists);
-
-			set.status = HTTP_STATUS_CODES.OK;
-			return {
-				status: "completed",
-				message: "File uploaded successfully via direct local upload.",
-				data: { key },
-			};
-		} catch (error: any) {
-			console.error("[LOCAL UPLOAD] Error:", error.message, error.stack);
-			set.status = HTTP_STATUS_CODES.BAD_REQUEST;
-			return {
-				status: "error",
-				message: error?.message || "Internal server error",
-				data: null,
-			};
-		}
-	},
-	{
-		query: t.Object({
-			key: t.String(),
-			shareToken: t.Optional(t.String()),
-		}),
-	},
-);
+		},
+		{
+			body: t.Object({
+				shareToken: t.String(),
+				key: t.String(),
+				uploadId: t.String(),
+			}),
+		},
+	);
 
 export { picturesRoutes, publicPicturesRoutes };

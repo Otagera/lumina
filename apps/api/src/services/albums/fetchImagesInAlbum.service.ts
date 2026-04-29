@@ -9,13 +9,15 @@ import { getAlbumLinks } from "./albums.lib";
 const spec = joi.object({
 	album_id: joi.string().required(),
 	user_id: joi.string().required(),
-	status: joi
-		.string()
-		.valid("APPROVED", "PENDING", "REJECTED")
-		.default("APPROVED"),
+	status: joi.string().valid("APPROVED", "PENDING", "REJECTED").optional(),
 	limit: joi.alternatives().try(joi.number(), joi.string()).optional(),
 	nextCursor: joi.string().optional(),
 	paginationType: joi.string().optional(),
+	// Filters
+	startDate: joi.date().optional(),
+	endDate: joi.date().optional(),
+	uploaderId: joi.string().uuid().optional(),
+	minFaces: joi.number().min(0).optional(),
 });
 
 const aliasSpec = {
@@ -26,6 +28,10 @@ const aliasSpec = {
 		limit: "limit",
 		nextCursor: "nextCursor",
 		paginationType: "paginationType",
+		startDate: "startDate",
+		endDate: "endDate",
+		uploaderId: "uploaderId",
+		minFaces: "minFaces",
 	},
 	response: {
 		album_id: "albumId",
@@ -41,6 +47,7 @@ const aliasSpec = {
 		update_date: "updateDate",
 		original_size: "originalSize",
 		uploaded_by: "userId",
+		users: "user",
 		album_images_id: "albumImageId",
 		album_id: "albumId",
 	},

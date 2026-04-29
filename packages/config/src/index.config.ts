@@ -10,9 +10,20 @@ dotenv.config({ path: path.join(import.meta.dir, "../../../.env") });
 // 3. Try loading from the current working directory
 dotenv.config();
 
-const config = {
-	env: process.env.NODE_ENV || "development",
-	app_name: process.env.APP_NAME || "Anoda Facematch",
+interface IConfig {
+	env: "development" | "test" | "production";
+	app_name: string;
+	development: Record<string, any>;
+	test: Record<string, any>;
+	production: Record<string, any>;
+}
+
+const config: IConfig = {
+	env: (process.env.NODE_ENV || "development") as
+		| "development"
+		| "test"
+		| "production",
+	app_name: process.env.APP_NAME || "Lumina",
 	development: {
 		// DB
 		db_user: process.env.PG_USERNAME,
@@ -40,7 +51,7 @@ const config = {
 		chatterbox_max_bulk_log: process.env.MAX_BULK_LOG || 10,
 		chatterbox_api_url:
 			process.env.CHATTERBOX_API_URL || "http://localhost:3005",
-		chatterbox_app_name: process.env.CHATTERBOX_APP_NAME || "anoda",
+		chatterbox_app_name: process.env.CHATTERBOX_APP_NAME || "lumina",
 		chatterbox_api_secret: process.env.CHATTERBOX_API_SECRET,
 
 		chatterbox: {
@@ -74,6 +85,34 @@ const config = {
 			bucket: process.env.R2_BUCKET,
 			endpoint: process.env.R2_ENDPOINT,
 			region: process.env.R2_REGION || "auto",
+			public_url: process.env.R2_PUBLIC_URL,
+		},
+
+		// Email
+		resend_api_key: process.env.RESEND_API_KEY,
+		frontend_url: process.env.FRONTEND_URL || "http://localhost:5173",
+
+		// Secrets & Webhooks
+		billing_webhook_secret: process.env.BILLING_WEBHOOK_SECRET,
+		webhook_secret: process.env.WEBHOOK_SECRET || "default_secret",
+		encryption_key: process.env.ENCRYPTION_KEY || "anoda-default-secret-key",
+
+		// Monitoring & Security
+		sentry_dsn: process.env.SENTRY_DSN,
+		cors_origin: process.env.CORS_ORIGIN,
+		log_level: process.env.LOG_LEVEL || "info",
+		is_api: process.env.IS_API === "true",
+
+		// Plan limits
+		plans: {
+			free: {
+				storage_mb: 5 * 1024, // 5GB
+				compute_units_per_month: 100,
+			},
+			pro: {
+				storage_mb: 50 * 1024, // 50GB
+				compute_units_per_month: -1, // unlimited
+			},
 		},
 	},
 	test: {
@@ -111,6 +150,21 @@ const config = {
 		),
 		ai_service_url: process.env.TEST_AI_SERVICE_URL || "http://localhost:8000",
 		skip_tls_verify: process.env.SKIP_TLS_VERIFY === "true",
+
+		// Email
+		resend_api_key: process.env.RESEND_API_KEY,
+		frontend_url: process.env.FRONTEND_URL || "http://localhost:5173",
+
+		// Secrets & Webhooks
+		billing_webhook_secret: process.env.BILLING_WEBHOOK_SECRET,
+		webhook_secret: process.env.WEBHOOK_SECRET || "default_secret",
+		encryption_key: process.env.ENCRYPTION_KEY || "anoda-default-secret-key",
+
+		// Monitoring & Security
+		sentry_dsn: process.env.SENTRY_DSN,
+		cors_origin: process.env.CORS_ORIGIN,
+		log_level: process.env.LOG_LEVEL || "info",
+		is_api: process.env.IS_API === "true",
 	},
 	production: {
 		db_url: process.env.DB_URL,
@@ -130,7 +184,7 @@ const config = {
 		chatterbox_max_bulk_log: process.env.MAX_BULK_LOG || 10,
 		chatterbox_api_url:
 			process.env.CHATTERBOX_API_URL || "http://localhost:3005",
-		chatterbox_app_name: process.env.CHATTERBOX_APP_NAME || "anoda",
+		chatterbox_app_name: process.env.CHATTERBOX_APP_NAME || "lumina",
 		chatterbox_api_secret: process.env.CHATTERBOX_API_SECRET,
 
 		chatterbox: {
@@ -145,6 +199,33 @@ const config = {
 		},
 		ai_service_url: process.env.AI_SERVICE_URL || "http://localhost:8000",
 		skip_tls_verify: process.env.SKIP_TLS_VERIFY === "true",
+
+		// Email
+		resend_api_key: process.env.RESEND_API_KEY,
+		frontend_url: process.env.FRONTEND_URL || "http://localhost:5173",
+
+		// Secrets & Webhooks
+		billing_webhook_secret: process.env.BILLING_WEBHOOK_SECRET,
+		webhook_secret: process.env.WEBHOOK_SECRET || "default_secret",
+		encryption_key: process.env.ENCRYPTION_KEY || "anoda-default-secret-key",
+
+		// Monitoring & Security
+		sentry_dsn: process.env.SENTRY_DSN,
+		cors_origin: process.env.CORS_ORIGIN,
+		log_level: process.env.LOG_LEVEL || "info",
+		is_api: process.env.IS_API === "true",
+
+		// Plan limits
+		plans: {
+			free: {
+				storage_mb: 5 * 1024, // 5GB
+				compute_units_per_month: 100,
+			},
+			pro: {
+				storage_mb: 50 * 1024, // 50GB
+				compute_units_per_month: -1, // unlimited
+			},
+		},
 	},
 };
 

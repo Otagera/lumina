@@ -1,16 +1,12 @@
-const axios = require("axios");
-const path = require("node:path");
-const prisma =
-	require("../../../../../packages/config/src/db.config.ts").default;
-const {
-	emitImageProcessed,
-} = require("../../../../../packages/utils/src/events.util.ts");
-const config =
-	require("../../../../../packages/config/src/index.config.ts").default;
-const {
-	storage,
-} = require("../../../../../packages/utils/src/storage.util.ts");
-const fs = require("node:fs/promises");
+import fs from "node:fs/promises";
+import path from "node:path";
+import axios from "axios";
+import prisma from "../../../../../packages/config/src/db.config.ts";
+import config from "../../../../../packages/config/src/index.config.ts";
+import { logUsage } from "../../../../../packages/models/src/usage.model.ts";
+import { UPLOADS_DIR } from "../../../../../packages/utils/src/constants.util.ts";
+import { emitFaceDetected } from "../../../../../packages/utils/src/events.util.ts";
+import { storage } from "../../../../../packages/utils/src/storage.util.ts";
 
 const getStorageProvider = (image, albumStorageConfig = null) => {
 	const provider =
@@ -31,7 +27,6 @@ const getStorageProvider = (image, albumStorageConfig = null) => {
 		region: image.storage_region || albumStorageConfig?.region,
 	};
 
-	// If credentials are missing, fall back to Managed R2 from config
 	const envConfig = config[config.env || "development"];
 	const r2 = envConfig?.r2;
 	if (
@@ -63,104 +58,98 @@ const getStorageProvider = (image, albumStorageConfig = null) => {
 };
 
 const run = async (jobData) => {
-	const { imageId, imagePath, storageProvider, storageKey, albumId } = jobData;
+	const { imageId, albumId } = jobData;
 
 	try {
-		console.log(
-			`Processing face recognition for: ${imagePath || storageKey} via AI Service`,
-		);
+		console.log(`Starting face recognition for image: ${imageId}`);
 
 		const image = await prisma.images.findUnique({
 			where: { image_id: imageId },
 		});
 
-		if (!image) {
-			throw new Error(`Image not found: ${imageId}`);
-		}
+		if (!image) throw new Error("Image not found");
 
 		let albumStorageConfig = null;
 		if (albumId) {
-			const albumImage = await prisma.album_images.findFirst({
-				where: { image_id: imageId },
-				include: { albums: { include: { storage_config: true } } },
+			const album = await prisma.albums.findUnique({
+				where: { album_id: albumId },
+				include: { storage_config: true },
 			});
-			if (albumImage?.albums?.storage_config) {
-				albumStorageConfig = albumImage.albums.storage_config;
-			}
+			albumStorageConfig = album?.storage_config;
 		}
 
-		const { provider: storageProviderInstance, isLocal } = getStorageProvider(
-			image,
-			albumStorageConfig,
-		);
+		const { provider, isLocal } = getStorageProvider(image, albumStorageConfig);
 
 		let imageBuffer;
-		let imagePathForAI;
-
-		if (!isLocal && storageProviderInstance) {
-			const key = image.storage_key || storageKey;
-			console.log(`Fetching image from ${image.storage_provider}: ${key}`);
-			imageBuffer = await storageProviderInstance.getObject(key);
-			const tempPath = `/tmp/${path.basename(key)}`;
-			await fs.writeFile(tempPath, imageBuffer);
-			imagePathForAI = tempPath;
-		} else {
-			imagePathForAI = imagePath;
+		if (isLocal) {
+			const fullPath = path.resolve(
+				process.cwd(),
+				UPLOADS_DIR,
+				image.image_path,
+			);
+			imageBuffer = await fs.readFile(fullPath);
+		} else if (provider) {
+			imageBuffer = await provider.getObject(image.storage_key);
 		}
 
-		const aiServiceUrl = config[config.env].ai_service_url;
+		if (!imageBuffer) throw new Error("Failed to load image buffer");
 
-		const response = await axios.post(`${aiServiceUrl}/process`, {
-			image_path: imagePathForAI,
-			image_id: imageId,
-			storage_provider: image.storage_provider,
-			storage_key: image.storage_key,
+		const envConfig = config[config.env || "development"];
+		const aiServiceUrl = envConfig.ai_service_url;
+
+		// Call AI service for face detection and embedding
+		// We send the file as multipart/form-data
+		const formData = new FormData();
+		const blob = new Blob([imageBuffer], { type: "image/jpeg" });
+		formData.append("file", blob, "image.jpg");
+
+		const response = await axios.post(`${aiServiceUrl}/detect`, formData, {
+			headers: { "Content-Type": "multipart/form-data" },
 		});
 
-		if (!isLocal && imagePathForAI.startsWith("/tmp/")) {
-			await fs.unlink(imagePathForAI);
-		}
+		const faces = response.data.faces; // [{ box: [], embedding: [] }]
 
-		const faceData = response.data;
-
-		if (faceData.results && faceData.results.length > 0) {
-			const imageResult = faceData.results[0];
-
-			if (imageResult.error) {
-				throw new Error(`AI Service Error: ${imageResult.error}`);
+		if (faces && faces.length > 0) {
+			// Save faces to database
+			for (const face of faces) {
+				await prisma.faces.create({
+					data: {
+						image_id: imageId,
+						bounding_box: face.box,
+						embedding: face.embedding,
+					},
+				});
 			}
 
-			if (imageResult.faces && imageResult.faces.length > 0) {
-				for (const face of imageResult.faces) {
-					await prisma.faces.create({
-						data: {
-							image_id: imageResult.image_id,
-							embedding: face.embedding,
-							bounding_box: face.bounding_box,
-							processed_time: new Date(),
-						},
-					});
-				}
-			} else {
-				console.log(`No faces detected for image: ${imagePath || storageKey}`);
+			// Emit event for real-time updates
+			await emitFaceDetected(imageId, albumId);
+
+			// Log usage
+			if (image.uploaded_by) {
+				await logUsage(
+					image.uploaded_by,
+					"compute",
+					"face_recognition",
+					faces.length,
+					null,
+					{ image_id: imageId, face_count: faces.length },
+				);
 			}
-		} else {
-			console.error(
-				`No results found in AI Service response for ${imagePath || storageKey}`,
-			);
 		}
 
-		console.log(`Face data saved for image: ${imagePath || storageKey}`);
-		emitImageProcessed(imageId, albumId);
+		console.log(
+			`Face recognition completed for ${imageId}. Found ${faces?.length || 0} faces.`,
+		);
 
 		return {
 			status: "success",
-			message: `Face recognition completed for ${imagePath || storageKey}`,
+			imageId,
+			faceCount: faces?.length || 0,
 		};
 	} catch (error) {
-		console.error("Error processing face recognition task:", error.message);
+		console.error("Face recognition worker failed:", error);
 		throw error;
 	}
 };
 
-module.exports = run;
+export default run;

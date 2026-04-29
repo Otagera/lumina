@@ -11,8 +11,23 @@ interface AlbumCoverProps {
 }
 
 export const AlbumCover = ({ album, className }: AlbumCoverProps) => {
+	// 1. Manual Cover Selection (Priority)
+	if (album.coverImage) {
+		return (
+			<img
+				src={album.coverImage}
+				alt={album.albumName}
+				className={cn(
+					"w-full h-full object-cover transition-transform duration-500 group-hover:scale-105",
+					className,
+				)}
+			/>
+		);
+	}
+
 	const coverImages = album.coverImages || [];
 
+	// 2. Fallback: Grid of 4 images
 	if (coverImages.length >= 4) {
 		return (
 			<div
@@ -30,6 +45,7 @@ export const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 		);
 	}
 
+	// 3. Fallback: Single image
 	if (coverImages.length > 0) {
 		return (
 			<img
@@ -43,12 +59,11 @@ export const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 		);
 	}
 
-	// Fallback stylized text for empty albums
+	// 4. Fallback: stylized text for empty albums
 	const firstLetter = album.albumName
 		? album.albumName.charAt(0).toUpperCase()
 		: "?";
 
-	// Using the new OKLCH colors for fallbacks
 	const fallbackGradients = [
 		"from-sage to-slate-blue",
 		"from-terracotta to-plum",
@@ -56,7 +71,6 @@ export const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 		"from-plum to-sage",
 	];
 
-	// Deterministic selection based on album ID or name
 	const charCode = (album.albumName || "A").charCodeAt(0);
 	const gradient = fallbackGradients[charCode % fallbackGradients.length];
 

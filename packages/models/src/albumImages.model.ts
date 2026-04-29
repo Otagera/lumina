@@ -34,6 +34,12 @@ const fetchAlbumImages = async (where, options = {}) => {
 			images: {
 				include: {
 					faces: true,
+					users: {
+						select: {
+							user_id: true,
+							email: true,
+						},
+					},
 				},
 			},
 		},

@@ -1,4 +1,4 @@
-import { createNewUser, fetchUser } from "./users.model";
+import { createNewUser, fetchUser, updateExistingUser } from "./users.model";
 
 const createUser = async (userData) => {
 	return await createNewUser(userData);
@@ -6,4 +6,7 @@ const createUser = async (userData) => {
 
 const getUser = async (where) => fetchUser(where);
 
-export { createUser, getUser };
+const updateUser = async (userId, userData) =>
+	updateExistingUser(userId, userData);
+
+export { createUser, getUser, updateUser };

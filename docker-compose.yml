@@ -38,7 +38,7 @@ services:
     build:
       context: .
       target: api
-    command: sh -c "cd apps/api && bun run migrate && cd /app && bun run start:api"
+    command: sh -c "cd apps/api && bun run migrate && bunx prisma db seed && cd /app && bun run start:api"
     ports:
       - "3005:3005"
     environment:

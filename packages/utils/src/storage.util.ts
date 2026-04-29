@@ -1,10 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import {
+	AbortMultipartUploadCommand,
+	CompleteMultipartUploadCommand,
+	CreateMultipartUploadCommand,
 	DeleteObjectCommand,
 	GetObjectCommand,
 	PutObjectCommand,
 	S3Client,
+	UploadPartCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import config from "../../config/src/index.config.ts";
@@ -27,6 +31,11 @@ export interface UploadOptions {
 	contentType?: string;
 }
 
+export interface StoragePart {
+	ETag: string;
+	PartNumber: number;
+}
+
 export interface StorageProvider {
 	upload(file: Buffer | Uint8Array, options: UploadOptions): Promise<string>;
 	delete(key: string): Promise<void>;
@@ -37,6 +46,21 @@ export interface StorageProvider {
 		expires?: number,
 		shareToken?: string,
 	): Promise<string>;
+	// Multipart methods
+	createMultipartUpload(key: string, contentType: string): Promise<string>;
+	getUploadPartPresignedUrl(
+		key: string,
+		uploadId: string,
+		partNumber: number,
+		expires?: number,
+	): Promise<string>;
+	completeMultipartUpload(
+		key: string,
+		uploadId: string,
+		parts: StoragePart[],
+	): Promise<void>;
+	abortMultipartUpload(key: string, uploadId: string): Promise<void>;
+
 	getDownloadUrl(key: string): string;
 	getObject(key: string): Promise<Buffer>;
 	getProviderName(): string;
@@ -90,6 +114,33 @@ export class LocalProvider implements StorageProvider {
 		// For local, we point to our own API endpoint that handles the direct local upload
 		const baseUrl = `http://localhost:${config[config.env || "development"].elysia_port}/api/v1/public/images/upload-direct-local?key=${key}`;
 		return shareToken ? `${baseUrl}&shareToken=${shareToken}` : baseUrl;
+	}
+
+	async createMultipartUpload(
+		_key: string,
+		_contentType: string,
+	): Promise<string> {
+		throw new Error("Multipart upload not supported by LocalProvider");
+	}
+
+	async getUploadPartPresignedUrl(
+		_key: string,
+		_uploadId: string,
+		_partNumber: number,
+	): Promise<string> {
+		throw new Error("Multipart upload not supported by LocalProvider");
+	}
+
+	async completeMultipartUpload(
+		_key: string,
+		_uploadId: string,
+		_parts: StoragePart[],
+	): Promise<void> {
+		throw new Error("Multipart upload not supported by LocalProvider");
+	}
+
+	async abortMultipartUpload(_key: string, _uploadId: string): Promise<void> {
+		throw new Error("Multipart upload not supported by LocalProvider");
 	}
 
 	getDownloadUrl(key: string): string {
@@ -177,6 +228,59 @@ export class R2Provider implements StorageProvider {
 			ContentType: contentType,
 		});
 		return getSignedUrl(this.client, command, { expiresIn: expires });
+	}
+
+	async createMultipartUpload(
+		key: string,
+		contentType: string,
+	): Promise<string> {
+		const command = new CreateMultipartUploadCommand({
+			Bucket: this.bucket,
+			Key: key,
+			ContentType: contentType,
+		});
+		const response = await this.client.send(command);
+		return response.UploadId!;
+	}
+
+	async getUploadPartPresignedUrl(
+		key: string,
+		uploadId: string,
+		partNumber: number,
+		expires: number = 3600,
+	): Promise<string> {
+		const command = new UploadPartCommand({
+			Bucket: this.bucket,
+			Key: key,
+			UploadId: uploadId,
+			PartNumber: partNumber,
+		});
+		return getSignedUrl(this.client, command, { expiresIn: expires });
+	}
+
+	async completeMultipartUpload(
+		key: string,
+		uploadId: string,
+		parts: StoragePart[],
+	): Promise<void> {
+		const command = new CompleteMultipartUploadCommand({
+			Bucket: this.bucket,
+			Key: key,
+			UploadId: uploadId,
+			MultipartUpload: {
+				Parts: parts,
+			},
+		});
+		await this.client.send(command);
+	}
+
+	async abortMultipartUpload(key: string, uploadId: string): Promise<void> {
+		const command = new AbortMultipartUploadCommand({
+			Bucket: this.bucket,
+			Key: key,
+			UploadId: uploadId,
+		});
+		await this.client.send(command);
 	}
 
 	getDownloadUrl(key: string): string {
@@ -308,6 +412,39 @@ export class StorageService {
 			expires,
 			shareToken,
 		);
+	}
+
+	async createMultipartUpload(
+		key: string,
+		contentType: string,
+	): Promise<string> {
+		return this.provider.createMultipartUpload(key, contentType);
+	}
+
+	async getUploadPartPresignedUrl(
+		key: string,
+		uploadId: string,
+		partNumber: number,
+		expires?: number,
+	): Promise<string> {
+		return this.provider.getUploadPartPresignedUrl(
+			key,
+			uploadId,
+			partNumber,
+			expires,
+		);
+	}
+
+	async completeMultipartUpload(
+		key: string,
+		uploadId: string,
+		parts: StoragePart[],
+	): Promise<void> {
+		return this.provider.completeMultipartUpload(key, uploadId, parts);
+	}
+
+	async abortMultipartUpload(key: string, uploadId: string): Promise<void> {
+		return this.provider.abortMultipartUpload(key, uploadId);
 	}
 
 	async getObject(key: string): Promise<Buffer> {

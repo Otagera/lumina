@@ -6,6 +6,7 @@ import { Toaster } from "react-hot-toast";
 import {
 	isRouteErrorResponse,
 	Link,
+	NavLink,
 	Outlet,
 	useNavigate,
 } from "react-router-dom";
@@ -25,6 +26,7 @@ Sentry.init({
 
 import "./index.css";
 import "./app.css";
+import { NotificationDropdown } from "./components/NotificationDropdown";
 import { Button } from "./components/standard/Button";
 import { Card } from "./components/standard/Card";
 import { Heading } from "./components/standard/Heading";
@@ -62,37 +64,80 @@ const Navbar = () => {
 						<div className="w-2 h-2 sm:w-3 sm:h-3 bg-zinc-950 rounded-full" />
 					</div>
 					<span className="text-base sm:text-xl font-black tracking-tighter text-zinc-900 dark:text-white">
-						anoda<span className="text-sage hidden sm:inline">.</span>facematch
+						lumina<span className="text-sage hidden sm:inline">.</span>io
 					</span>
 				</Link>
 
 				{/* Desktop Navigation */}
-				<div className="hidden sm:flex items-center gap-3">
-					{isHydrated && isAuthenticated && <UsageIndicator />}
-					<ThemeToggle />
+				<div className="hidden sm:flex items-center gap-2">
 					{isHydrated && isAuthenticated && (
 						<>
-							<Link
-								to="/home"
-								className="text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors"
-							>
-								Home
-							</Link>
-							<Link
-								to="/settings"
-								className="text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors"
-							>
-								Settings
-							</Link>
+							<div className="flex items-center gap-1">
+								<NavLink
+									to="/home"
+									className={({ isActive }) =>
+										`px-3 py-1.5 text-sm font-bold transition-colors ${
+											isActive
+												? "text-sage underline underline-offset-4 decoration-2"
+												: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+										}`
+									}
+								>
+									Home
+								</NavLink>
+								<NavLink
+									to="/people"
+									className={({ isActive }) =>
+										`px-3 py-1.5 text-sm font-bold transition-colors ${
+											isActive
+												? "text-sage underline underline-offset-4 decoration-2"
+												: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+										}`
+									}
+								>
+									People
+								</NavLink>
+								<NavLink
+									to="/settings"
+									className={({ isActive }) =>
+										`px-3 py-1.5 text-sm font-bold transition-colors ${
+											isActive
+												? "text-sage underline underline-offset-4 decoration-2"
+												: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+										}`
+									}
+								>
+									Settings
+								</NavLink>
+								<NavLink
+									to="/trash"
+									className={({ isActive }) =>
+										`px-3 py-1.5 text-sm font-bold transition-colors ${
+											isActive
+												? "text-sage underline underline-offset-4 decoration-2"
+												: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+										}`
+									}
+								>
+									Trash
+								</NavLink>
+							</div>
+							<div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-1" />
+							<div className="flex items-center gap-1">
+								<UsageIndicator />
+								<NotificationDropdown />
+							</div>
+							<div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-1" />
 							<button
 								type="button"
 								onClick={handleLogout}
-								className="text-zinc-500 dark:text-zinc-400 hover:text-plum dark:hover:text-plum font-bold text-sm transition-colors"
+								className="text-zinc-500 dark:text-zinc-400 hover:text-plum dark:hover:text-plum font-bold text-sm transition-colors px-3 py-1.5"
 							>
 								Logout
 							</button>
 						</>
 					)}
+					<ThemeToggle />
 				</div>
 
 				{/* Mobile Menu Button */}
@@ -110,24 +155,65 @@ const Navbar = () => {
 				{isMobileMenuOpen && isHydrated && isAuthenticated && (
 					<div className="w-full sm:hidden mt-2 pb-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800 pt-3">
 						<UsageIndicator />
-						<div className="flex items-center gap-2">
-							<ThemeToggle />
-							<span className="text-xs text-zinc-500">Theme</span>
+						<div className="flex items-center justify-between">
+							<div className="flex items-center gap-2">
+								<ThemeToggle />
+								<span className="text-xs text-zinc-500">Theme</span>
+							</div>
+							<NotificationDropdown />
 						</div>
-						<Link
+						<NavLink
 							to="/home"
 							onClick={() => setIsMobileMenuOpen(false)}
-							className="block text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors py-2"
+							className={({ isActive }) =>
+								`block py-2 text-sm font-bold transition-colors ${
+									isActive
+										? "text-sage underline underline-offset-4 decoration-2"
+										: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+								}`
+							}
 						>
 							Home
-						</Link>
-						<Link
+						</NavLink>
+						<NavLink
+							to="/people"
+							onClick={() => setIsMobileMenuOpen(false)}
+							className={({ isActive }) =>
+								`block py-2 text-sm font-bold transition-colors ${
+									isActive
+										? "text-sage underline underline-offset-4 decoration-2"
+										: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+								}`
+							}
+						>
+							People
+						</NavLink>
+						<NavLink
 							to="/settings"
 							onClick={() => setIsMobileMenuOpen(false)}
-							className="block text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage font-bold text-sm transition-colors py-2"
+							className={({ isActive }) =>
+								`block py-2 text-sm font-bold transition-colors ${
+									isActive
+										? "text-sage underline underline-offset-4 decoration-2"
+										: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+								}`
+							}
 						>
 							Settings
-						</Link>
+						</NavLink>
+						<NavLink
+							to="/trash"
+							onClick={() => setIsMobileMenuOpen(false)}
+							className={({ isActive }) =>
+								`block py-2 text-sm font-bold transition-colors ${
+									isActive
+										? "text-sage underline underline-offset-4 decoration-2"
+										: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+								}`
+							}
+						>
+							Trash
+						</NavLink>
 						<button
 							type="button"
 							onClick={handleLogout}
