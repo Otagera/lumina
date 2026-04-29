@@ -18,8 +18,8 @@ RUN bun install --ignore-scripts
 # Copy the rest of the monorepo code
 COPY . .
 
-# Install system dependencies for Prisma
-RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+# Install system dependencies for Prisma and Health Checks
+RUN apt-get update && apt-get install -y openssl ca-certificates curl && rm -rf /var/lib/apt/lists/*
 
 # Generate Prisma Client (Bypass SSL for binary download if needed)
 RUN cd apps/api && NODE_TLS_REJECT_UNAUTHORIZED=0 bunx prisma generate
