@@ -71,7 +71,11 @@ export const createElysiaApp = async () => {
 
 	eventEmitter.setMaxListeners(100);
 
-	const app = new Elysia()
+	const app = new Elysia({
+		bodyParser: {
+			limit: "10mb",
+		},
+	})
 		.use(csrfPlugin)
 		.onBeforeHandle(({ request, body }) => {
 			console.log(
