@@ -45,9 +45,11 @@ const rewriteImageUrls = (data: unknown, origin: string): unknown => {
 	return rewrite(data);
 };
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+
 // Create an Axios instance
 const axiosAPI = axios.create({
-	baseURL: "/api/v1",
+	baseURL: `${API_BASE_URL}/api/v1`,
 	timeout: 10000,
 	headers: {
 		"Content-Type": "application/json",
