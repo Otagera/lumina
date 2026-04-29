@@ -29,11 +29,12 @@ const isImageCorrupted = async (imagePath) => {
 
 const normalizeImagePath = (image_path) => {
 	if (config.env === "test" || config.env === "development") {
+		const envConfig = config[config.env];
+		const port = envConfig.elysia_port;
+		const baseUrl = port ? `${envConfig.base_api_url}:${port}` : envConfig.base_api_url;
 		const imagePathSplit = image_path.split("/");
 		const strucImagePath = image_path
-			? `http://localhost:${config[config.env].elysia_port}/api/uploads/${
-					imagePathSplit[imagePathSplit.length - 1]
-				}`
+			? `${baseUrl}/api/uploads/${imagePathSplit[imagePathSplit.length - 1]}`
 			: image_path;
 		return strucImagePath;
 	} else {

@@ -75,7 +75,10 @@ export class LocalProvider implements StorageProvider {
 
 	constructor() {
 		this.baseDir = path.resolve(process.cwd(), "apps/api/src/uploads");
-		this.baseUrl = `http://localhost:${config[config.env || "development"].elysia_port}/api/uploads`;
+		const envConfig = config[config.env || "development"];
+		const port = envConfig.elysia_port;
+		const baseUrl = port ? `${envConfig.base_api_url}:${port}` : envConfig.base_api_url;
+		this.baseUrl = `${baseUrl}/api/uploads`;
 	}
 
 	getProviderName(): string {
@@ -111,9 +114,11 @@ export class LocalProvider implements StorageProvider {
 		_expires?: number,
 		shareToken?: string,
 	): Promise<string> {
-		// For local, we point to our own API endpoint that handles the direct local upload
-		const baseUrl = `http://localhost:${config[config.env || "development"].elysia_port}/api/v1/public/images/upload-direct-local?key=${key}`;
-		return shareToken ? `${baseUrl}&shareToken=${shareToken}` : baseUrl;
+		const envConfig = config[config.env || "development"];
+		const port = envConfig.elysia_port;
+		const baseUrl = port ? `${envConfig.base_api_url}:${port}` : envConfig.base_api_url;
+		const url = `${baseUrl}/api/v1/public/images/upload-direct-local?key=${key}`;
+		return shareToken ? `${url}&shareToken=${shareToken}` : url;
 	}
 
 	async createMultipartUpload(
