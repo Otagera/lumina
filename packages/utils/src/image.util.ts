@@ -39,23 +39,13 @@ const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 		return strucImagePath;
 	} else {
 		// Production: use R2 public URL if available
-		const envConfig = config[config.env || "production"];
-		const r2PublicUrl = envConfig?.r2?.public_url;
+		const r2PublicUrl = config[config.env || "production"]?.r2?.public_url;
 
-		// Fallback: if storage_provider not set, check if global R2 is configured
-		if (!storage_provider && r2PublicUrl && image_path) {
-			const r2 = envConfig?.r2;
-			if (r2?.access_key_id && r2?.bucket) {
-				storage_provider = "r2";
-				if (!storage_key) {
-					const parts = image_path.split("/");
-					storage_key = parts[parts.length - 1];
-				}
-			}
-		}
-
-		if (storage_provider === "r2" && storage_key && r2PublicUrl) {
-			return `${r2PublicUrl}/${storage_key}`;
+		if (r2PublicUrl && image_path) {
+			// Extract filename from image_path
+			const parts = image_path.split("/");
+			const filename = storage_key || parts[parts.length - 1];
+			return `${r2PublicUrl}/${filename}`;
 		}
 		return image_path;
 	}
