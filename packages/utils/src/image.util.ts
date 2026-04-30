@@ -27,7 +27,7 @@ const isImageCorrupted = async (imagePath) => {
 	}
 };
 
-const normalizeImagePath = (image_path) => {
+const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 	if (config.env === "test" || config.env === "development") {
 		const envConfig = config[config.env];
 		const port = envConfig.elysia_port;
@@ -38,6 +38,11 @@ const normalizeImagePath = (image_path) => {
 			: image_path;
 		return strucImagePath;
 	} else {
+		// Production: use R2 public URL if available
+		if (storage_provider === "r2" && storage_key) {
+			const publicUrl = config[config.env || "production"]?.r2?.public_url;
+			if (publicUrl) return `${publicUrl}/${storage_key}`;
+		}
 		return image_path;
 	}
 };

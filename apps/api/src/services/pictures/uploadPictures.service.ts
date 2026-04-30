@@ -235,7 +235,7 @@ const service = async (data) => {
 		images: images.map((image) => {
 			return aliaserSpec(aliasSpec.image, {
 				...image,
-				image_path: normalizeImagePath(image.image_path),
+				image_path: normalizeImagePath(image.image_path, image.storage_provider, image.storage_key),
 			});
 		}),
 	});

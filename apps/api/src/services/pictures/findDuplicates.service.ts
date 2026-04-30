@@ -84,7 +84,7 @@ const service = async (data: any) => {
 				duplicates.push({
 					...aliaserSpec(aliasSpec.image, {
 						...img2,
-						image_path: normalizeImagePath(img2.image_path),
+						image_path: normalizeImagePath(img2.image_path, img2.storage_provider, img2.storage_key),
 					}),
 					distance,
 					isExact,
@@ -97,7 +97,7 @@ const service = async (data: any) => {
 			groups.push({
 				original: aliaserSpec(aliasSpec.image, {
 					...img1,
-					image_path: normalizeImagePath(img1.image_path),
+					image_path: normalizeImagePath(img1.image_path, img1.storage_provider, img1.storage_key),
 				}),
 				duplicates,
 			});

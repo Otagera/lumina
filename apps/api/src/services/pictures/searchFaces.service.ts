@@ -46,7 +46,7 @@ const service = async (data) => {
 				personId: face.person_id,
 				personName: face.people?.name || null,
 				imagePath: face.images
-					? normalizeImagePath(face.images.image_path)
+					? normalizeImagePath(face.images.image_path, face.images.storage_provider, face.images.storage_key)
 					: null,
 				boundingBox: face.bounding_box,
 				originalWidth: face.images?.original_width || null,
@@ -68,7 +68,7 @@ const service = async (data) => {
 	const aliasRes = aliaserSpec(aliasSpec.response, {
 		faces: similarFaces.map((f) => ({
 			...f,
-			imagePath: normalizeImagePath(f.imagePath),
+			imagePath: normalizeImagePath(f.imagePath, f.storageProvider, f.storageKey),
 		})),
 		sourceFace: sourceFaceData,
 	});

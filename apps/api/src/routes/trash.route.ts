@@ -43,7 +43,7 @@ const trashRoutes = new Elysia({ prefix: "/trash" })
 					})),
 					images: deletedImages.map((img) => ({
 						id: img.image_id,
-						path: normalizeImagePath(img.image_path),
+						path: normalizeImagePath(img.image_path, img.storage_provider, img.storage_key),
 						deletedAt: img.deleted_at,
 					})),
 				},

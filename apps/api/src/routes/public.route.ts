@@ -119,7 +119,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					.map((img) => ({
 						...img,
 						imageId: img.image_id,
-						imagePath: normalizeImagePath(img.image_path),
+						imagePath: normalizeImagePath(img.image_path, img.storage_provider, img.storage_key),
 						originalSize: {
 							width: img.original_width,
 							height: img.original_height,
@@ -190,7 +190,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					message: "Image retrieved successfully.",
 					data: {
 						...image,
-						imagePath: normalizeImagePath(image?.image_path),
+						imagePath: normalizeImagePath(image?.image_path, image?.storage_provider, image?.storage_key),
 						originalSize: {
 							width: image?.original_width,
 							height: image?.original_height,
@@ -246,7 +246,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 						// 3. Transform paths for results
 						const formattedResults = searchResults.map((result) => ({
 							...result,
-							imagePath: normalizeImagePath(result.imagePath),
+							imagePath: normalizeImagePath(result.imagePath, result.storageProvider, result.storageKey),
 						}));
 
 						set.status = HTTP_STATUS_CODES.OK;
@@ -357,7 +357,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 						// 5. Transform results
 						const formattedResults = searchResults.map((result) => ({
 							...result,
-							imagePath: normalizeImagePath(result.imagePath),
+							imagePath: normalizeImagePath(result.imagePath, result.storageProvider, result.storageKey),
 						}));
 
 						set.status = HTTP_STATUS_CODES.OK;

@@ -39,7 +39,7 @@ const service = async (data) => {
 			height: image.original_height,
 			width: image.original_width,
 		},
-		image_path: normalizeImagePath(image.image_path),
+		image_path: normalizeImagePath(image.image_path, image.storage_provider, image.storage_key),
 	});
 	return aliasRes;
 };
