@@ -40,11 +40,12 @@ export interface StorageProvider {
 	upload(file: Buffer | Uint8Array, options: UploadOptions): Promise<string>;
 	delete(key: string): Promise<void>;
 	getSignedUrl(key: string, expires?: number): Promise<string>;
-	getUploadPresignedUrl(
+		getUploadPresignedUrl(
 		key: string,
 		contentType: string,
 		expires?: number,
 		shareToken?: string,
+		authToken?: string,
 	): Promise<string>;
 	// Multipart methods
 	createMultipartUpload(key: string, contentType: string): Promise<string>;
@@ -113,12 +114,15 @@ export class LocalProvider implements StorageProvider {
 		_contentType: string,
 		_expires?: number,
 		shareToken?: string,
+		authToken?: string,
 	): Promise<string> {
 		const envConfig = config[config.env || "development"];
 		const port = envConfig.elysia_port;
 		const baseUrl = port ? `${envConfig.base_api_url}:${port}` : envConfig.base_api_url;
 		const url = `${baseUrl}/api/v1/public/images/upload-direct-local?key=${key}`;
-		return shareToken ? `${url}&shareToken=${shareToken}` : url;
+		let finalUrl = shareToken ? `${url}&shareToken=${shareToken}` : url;
+		if (authToken) finalUrl += `${shareToken ? "&" : "?"}authToken=${authToken}`;
+		return finalUrl;
 	}
 
 	async createMultipartUpload(
@@ -410,12 +414,14 @@ export class StorageService {
 		contentType: string,
 		expires?: number,
 		shareToken?: string,
+		authToken?: string,
 	): Promise<string> {
 		return this.provider.getUploadPresignedUrl(
 			key,
 			contentType,
 			expires,
 			shareToken,
+			authToken,
 		);
 	}
 

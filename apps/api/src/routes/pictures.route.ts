@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import jwt from "jsonwebtoken";
 import { Elysia, t } from "elysia";
 import prisma from "../../../../packages/config/src/db.config.ts";
 import config from "../../../../packages/config/src/index.config.ts";
@@ -711,20 +712,27 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 			try {
 				const key = query.key;
 				const shareToken = query.shareToken;
+				const authToken = query.authToken;
 				const authHeader = headers.authorization;
 
 				if (!key) throw new Error("Key is required");
 
-				// 1. Authorization Check: Either valid JWT or valid shareToken
+				// 1. Authorization Check: JWT token, valid shareToken, or auth header
 				let isAuthorized = false;
 
-				if (authHeader) {
-					// We don't need to fully decode here, the key itself is a strong secret,
-					// but presence of any token in this protected group is a good basic check.
-					// (Real security comes from the fact that the backend generated the 'key').
+				if (authToken) {
+					try {
+						const decoded = jwt.verify(
+							authToken,
+							config[config.env || "development"].secret || "default_secret",
+						) as any;
+						if (decoded.key === key) isAuthorized = true;
+					} catch {
+						// Invalid or expired token
+					}
+				} else if (authHeader) {
 					isAuthorized = true;
 				} else if (shareToken) {
-					// Verify shareToken exists in DB
 					const album = await prisma.albums.findUnique({
 						where: { share_token: shareToken },
 					});
@@ -783,6 +791,7 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 			query: t.Object({
 				key: t.String(),
 				shareToken: t.Optional(t.String()),
+				authToken: t.Optional(t.String()),
 			}),
 		},
 	)

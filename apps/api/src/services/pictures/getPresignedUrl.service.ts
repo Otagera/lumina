@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
@@ -43,6 +44,7 @@ const service = async (data: any) => {
 	const key = params.key || `${Date.now()}-${params.fileName}`;
 	let currentStorage = storage;
 	let storageProvider: string | undefined = storage.getProviderName();
+	let authToken: string | undefined;
 
 	// Use album's storage if specified
 	if (params.albumId || params.shareToken) {
@@ -129,11 +131,20 @@ const service = async (data: any) => {
 		}
 
 		// Single file upload (default)
+		if (storageProvider === "local") {
+			authToken = jwt.sign(
+				{ key, userId: params.userId, shareToken: params.shareToken },
+				config[config.env || "development"].secret || "default_secret",
+				{ expiresIn: "1h" },
+			);
+		}
+
 		const uploadUrl = await (currentStorage as any).getUploadPresignedUrl(
 			key,
 			params.contentType,
 			3600,
 			params.shareToken,
+			authToken,
 		);
 
 		return aliaserSpec(aliasSpec.response, {

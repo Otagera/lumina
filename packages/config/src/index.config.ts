@@ -169,7 +169,7 @@ const config: IConfig = {
 	production: {
 		db_url: process.env.DB_URL,
 		base_api_url:
-			process.env.BASE_API_URL || "https://entryboost-server-node.onrender.com",
+			process.env.BASE_API_URL || "https://lumina-api.otagera.xyz",
 		port: process.env.PORT || 5001,
 		secret: process.env.SESSION_SECRET,
 		redis_port: process.env.REDIS_PORT, // Redis port
@@ -197,12 +197,22 @@ const config: IConfig = {
 			app_name: process.env.CHATTERBOX_APP_NAME || "chatterbox",
 			api_secret: process.env.CHATTERBOX_API_SECRET,
 		},
-		ai_service_url: process.env.AI_SERVICE_URL || "http://localhost:8000",
+		ai_service_url: process.env.AI_SERVICE_URL || "https://lumina-api.otagera.xyz/",
 		skip_tls_verify: process.env.SKIP_TLS_VERIFY === "true",
+
+		// Managed R2
+		r2: {
+			access_key_id: process.env.R2_ACCESS_KEY_ID,
+			secret_access_key: process.env.R2_SECRET_ACCESS_KEY,
+			bucket: process.env.R2_BUCKET,
+			endpoint: process.env.R2_ENDPOINT,
+			region: process.env.R2_REGION || "auto",
+			public_url: process.env.R2_PUBLIC_URL,
+		},
 
 		// Email
 		resend_api_key: process.env.RESEND_API_KEY,
-		frontend_url: process.env.FRONTEND_URL || "http://localhost:5173",
+		frontend_url: process.env.FRONTEND_URL || "https://lumina.otagera.xyz",
 
 		// Secrets & Webhooks
 		billing_webhook_secret: process.env.BILLING_WEBHOOK_SECRET,
