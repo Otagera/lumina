@@ -204,9 +204,9 @@ return buffer;
 			},
 		)
 		.group("/api/v1/public", (app) => app.use(publicPicturesRoutes))
-		.group("/api/v1/webhooks", (app) => app.use(billingWebhookRoutes))
 		.group("/api/v1", (app) =>
 			app
+				.use(billingWebhookRoutes)
 				.use(thumbnailRoutes)
 				.use(unsubscribeRoutes)
 				.use(authRoutes)
