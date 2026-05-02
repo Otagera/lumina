@@ -88,13 +88,16 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 		set(IDB_KEY, tasks);
 	}, [tasks]);
 
-	const addUploads = useCallback(
-		async (
-			files: FileList,
-			albumId: string,
-			initialStatus?: "PENDING" | "APPROVED",
-			shareToken?: string,
-		) => {
+const addUploads = useCallback(
+	async (
+		files: FileList,
+		albumId: string,
+		initialStatus?: "PENDING" | "APPROVED",
+		shareToken?: string,
+	) => {
+		// Skip quota check for guest uploads (shareToken present)
+		// Quota is charged to the host, not the guest
+		if (!shareToken) {
 			try {
 				const usageRes = await fetchUsage();
 				const usage = usageRes?.data;
@@ -117,38 +120,27 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 						);
 					}
 				}
-
-				const newTasks: UploadTask[] = Array.from(files).map((file) => ({
-					id: Math.random().toString(36).substring(2, 11),
-					fileName: file.name,
-					file,
-					progress: 0,
-					status: "pending",
-					albumId,
-					initialStatus,
-					shareToken,
-				}));
-				setTasks((prev) => [...prev, ...newTasks]);
-				setIsManagerOpen(true);
 			} catch (error) {
 				console.error("Error checking quota:", error);
 				toast.error("Could not verify quota. Proceeding with upload.");
-				const newTasks: UploadTask[] = Array.from(files).map((file) => ({
-					id: Math.random().toString(36).substring(2, 11),
-					fileName: file.name,
-					file,
-					progress: 0,
-					status: "pending",
-					albumId,
-					initialStatus,
-					shareToken,
-				}));
-				setTasks((prev) => [...prev, ...newTasks]);
-				setIsManagerOpen(true);
 			}
-		},
-		[],
-	);
+		}
+
+		const newTasks: UploadTask[] = Array.from(files).map((file) => ({
+			id: Math.random().toString(36).substring(2, 11),
+			fileName: file.name,
+			file,
+			progress: 0,
+			status: "pending",
+			albumId,
+			initialStatus,
+			shareToken,
+		}));
+		setTasks((prev) => [...prev, ...newTasks]);
+		setIsManagerOpen(true);
+	},
+	[],
+);
 
 	const processNextTask = useCallback(async () => {
 		if (processingRef.current) return;

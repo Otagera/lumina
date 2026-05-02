@@ -5,7 +5,6 @@ import axios from "axios";
 import { Elysia, t } from "elysia";
 import prisma from "../../../../packages/config/src/db.config.ts";
 import config from "../../../../packages/config/src/index.config.ts";
-import { createAlbumImageLinks } from "../../../../packages/models/src/albumImages.model.ts";
 import {
 	searchFaces,
 	searchFacesByEmbedding,
@@ -754,18 +753,6 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 								userId: hostId || undefined, // Charge compute to host
 							});
 						}
-
-						const newImageIds = uploadResult.images.map(
-							(img: any) => img.imageId,
-						);
-						const allImageIds = [...newImageIds, ...duplicateIds];
-
-						await createAlbumImageLinks(
-							allImageIds.map((id) => ({
-								album_id: album.album_id,
-								image_id: id,
-							})),
-						);
 
 						set.status = HTTP_STATUS_CODES.CREATED;
 						return {
