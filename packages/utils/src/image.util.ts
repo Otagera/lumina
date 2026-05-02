@@ -32,6 +32,7 @@ const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 	const envConfig = config[env];
 
 	if (env === "test" || env === "development") {
+		if (!image_path) return image_path;
 		const port = envConfig.elysia_port;
 		const baseUrl = port ? `${envConfig.base_api_url}:${port}` : envConfig.base_api_url;
 		const imagePathSplit = image_path.split("/");
@@ -40,7 +41,20 @@ const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 			: image_path;
 		return strucImagePath;
 	} else {
-		// Production: use R2 public URL if available
+		// Production: determine URL based on storage provider
+		const isLocalStorage = !storage_provider || storage_provider === "local";
+
+		if (isLocalStorage) {
+			// For local storage, use API endpoint
+			if (image_path) {
+				const baseUrl = envConfig.base_api_url || "https://lumina-api.otagera.xyz";
+				const filename = storage_key || image_path.split("/").pop();
+				return `${baseUrl}/api/uploads/${filename}`;
+			}
+			return image_path;
+		}
+
+		// For external storage (R2), use R2 public URL if available
 		const r2PublicUrl = envConfig?.r2?.public_url;
 
 		if (r2PublicUrl && image_path) {
@@ -48,7 +62,7 @@ const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 			return `${r2PublicUrl}/${filename}`;
 		}
 
-		// Fallback: If no R2 public URL, point to the API's serving endpoint
+		// Fallback to API endpoint for external storage
 		if (image_path) {
 			const baseUrl = envConfig.base_api_url || "https://lumina-api.otagera.xyz";
 			const filename = storage_key || image_path.split("/").pop();

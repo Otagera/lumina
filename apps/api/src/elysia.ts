@@ -96,16 +96,59 @@ export const createElysiaApp = async () => {
 				console.log(`[${set.status}] ${request.method} ${safeUrl}`);
 			}
 		})
-		.use(
-			cors({
-				origin:
-					config.env === "development"
-						? true
-						: envConfig.cors_origin
-							? envConfig.cors_origin.split(",")
-							: false,
-			}),
-		)
+		.use(cors({
+			origin:
+				config.env === "development"
+					? true
+					: envConfig.cors_origin
+						? envConfig.cors_origin.split(",")
+						: false,
+		}))
+		.get("/api/health", () => ({
+			status: "ok",
+			timestamp: new Date().toISOString(),
+		}))
+		.get("/api/uploads/:key", async ({ params: { key }, set }) => {
+			const normalizedKey = path.basename(key);
+			if (normalizedKey !== key) {
+				set.status = 400;
+				return { error: "Invalid file path" };
+			}
+
+			const { storage } = await import(
+				"../../../packages/utils/src/storage.util.ts"
+			);
+			const fs = await import("node:fs/promises");
+
+			const localPath = path.resolve(process.cwd(), "src/uploads", normalizedKey);
+
+			try {
+				await fs.access(localPath);
+				return Bun.file(localPath);
+			} catch (_e) {
+				try {
+					const buffer = await storage.getObject(normalizedKey);
+
+					const ext = normalizedKey.split(".").pop()?.toLowerCase();
+					const contentTypes: Record<string, string> = {
+						jpg: "image/jpeg",
+						jpeg: "image/jpeg",
+						png: "image/png",
+						webp: "image/webp",
+						gif: "image/gif",
+					};
+					if (ext && contentTypes[ext]) {
+						set.headers["content-type"] = contentTypes[ext];
+					}
+
+return buffer;
+				} catch (err) {
+					console.error(`[UPLOADS] Failed to fetch ${key} from storage:`, err);
+					set.status = 404;
+					return { error: "File not found" };
+				}
+			}
+		})
 		.use(staticPlugin({ assets: "src/uploads", prefix: "/api/uploads" }))
 		.get("/", () => "Face Search Backend is running with Elysia!")
 		.get(
