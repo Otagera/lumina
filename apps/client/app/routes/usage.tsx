@@ -68,13 +68,16 @@ export default function UsageDashboard() {
 	const computeUnitsUsed = usage.computeUnitsUsed ?? 0;
 	const computeUnitsLimit = usage.computeUnitsLimit ?? 100;
 
-	const storagePercentage = (storageUsedMB / storageLimitMB) * 100;
-	const computePercentage = (computeUnitsUsed / computeUnitsLimit) * 100;
+	const isUnlimitedStorage = storageLimitMB === -1;
+	const isUnlimitedCompute = computeUnitsLimit === -1;
 
-	const isStorageWarning = storagePercentage >= 80;
-	const isComputeWarning = computePercentage >= 80;
-	const isStorageCritical = storagePercentage >= 100;
-	const isComputeCritical = computePercentage >= 100;
+	const storagePercentage = isUnlimitedStorage ? 0 : (storageUsedMB / storageLimitMB) * 100;
+	const computePercentage = isUnlimitedCompute ? 0 : (computeUnitsUsed / computeUnitsLimit) * 100;
+
+	const isStorageWarning = !isUnlimitedStorage && storagePercentage >= 80;
+	const isComputeWarning = !isUnlimitedCompute && computePercentage >= 80;
+	const isStorageCritical = !isUnlimitedStorage && storagePercentage >= 100;
+	const isComputeCritical = !isUnlimitedCompute && computePercentage >= 100;
 
 	const storageByAlbumData =
 		usage.storageByAlbum?.map((item: any) => ({
@@ -167,15 +170,23 @@ export default function UsageDashboard() {
 									<p className="text-sm text-zinc-500">Total used</p>
 								</div>
 							</div>
-							{isStorageCritical && (
-								<span className="px-2 py-1 bg-red-500/10 text-red-500 text-xs font-medium rounded">
-									Over Limit
+							{isUnlimitedStorage ? (
+								<span className="px-2 py-1 bg-sage/10 text-sage text-xs font-medium rounded">
+									Unlimited
 								</span>
-							)}
-							{isStorageWarning && !isStorageCritical && (
-								<span className="px-2 py-1 bg-amber-500/10 text-amber-500 text-xs font-medium rounded">
-									Warning
-								</span>
+							) : (
+								<>
+									{isStorageCritical && (
+										<span className="px-2 py-1 bg-red-500/10 text-red-500 text-xs font-medium rounded">
+											Over Limit
+										</span>
+									)}
+									{isStorageWarning && !isStorageCritical && (
+										<span className="px-2 py-1 bg-amber-500/10 text-amber-500 text-xs font-medium rounded">
+											Warning
+										</span>
+									)}
+								</>
 							)}
 						</div>
 						<div className="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
@@ -184,27 +195,32 @@ export default function UsageDashboard() {
 								: `${storageUsedMB} MB`}
 						</div>
 						<div className="text-sm text-zinc-500 mb-4">
-							of{" "}
-							{storageLimitMB >= 1024
-								? `${(storageLimitMB / 1024).toFixed(0)} GB`
-								: `${storageLimitMB} MB`}{" "}
-							limit
+							{isUnlimitedStorage 
+								? "Unlimited storage plan"
+								: `of ${storageLimitMB >= 1024
+										? `${(storageLimitMB / 1024).toFixed(0)} GB`
+										: `${storageLimitMB} MB`} limit`
+							}
 						</div>
 						<div className="w-full h-3 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
 							<div
 								className={`h-full transition-all ${
-									isStorageCritical
-										? "bg-red-500"
-										: isStorageWarning
-											? "bg-amber-500"
-											: "bg-sage"
+									isUnlimitedStorage
+										? "bg-sage opacity-30"
+										: isStorageCritical
+											? "bg-red-500"
+											: isStorageWarning
+												? "bg-amber-500"
+												: "bg-sage"
 								}`}
-								style={{ width: `${Math.min(storagePercentage, 100)}%` }}
+								style={{ width: isUnlimitedStorage ? "100%" : `${Math.min(storagePercentage, 100)}%` }}
 							/>
 						</div>
-						<div className="mt-2 text-xs text-zinc-400">
-							{Math.round(storagePercentage)}% used
-						</div>
+						{!isUnlimitedStorage && (
+							<div className="mt-2 text-xs text-zinc-400">
+								{Math.round(storagePercentage)}% used
+							</div>
+						)}
 					</Card>
 
 					{/* Compute Card */}
@@ -221,48 +237,51 @@ export default function UsageDashboard() {
 									<p className="text-sm text-zinc-500">This month</p>
 								</div>
 							</div>
-							{usage.computeUnitsLimit === -1 && (
+							{isUnlimitedCompute ? (
 								<span className="px-2 py-1 bg-sage/10 text-sage text-xs font-medium rounded">
 									Unlimited
 								</span>
-							)}
-							{isComputeCritical && usage.computeUnitsLimit !== -1 && (
-								<span className="px-2 py-1 bg-red-500/10 text-red-500 text-xs font-medium rounded">
-									Over Limit
-								</span>
-							)}
-							{isComputeWarning && !isComputeCritical && (
-								<span className="px-2 py-1 bg-amber-500/10 text-amber-500 text-xs font-medium rounded">
-									Warning
-								</span>
+							) : (
+								<>
+									{isComputeCritical && (
+										<span className="px-2 py-1 bg-red-500/10 text-red-500 text-xs font-medium rounded">
+											Over Limit
+										</span>
+									)}
+									{isComputeWarning && !isComputeCritical && (
+										<span className="px-2 py-1 bg-amber-500/10 text-amber-500 text-xs font-medium rounded">
+											Warning
+										</span>
+									)}
+								</>
 							)}
 						</div>
 						<div className="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
 							{computeUnitsUsed.toLocaleString()}
 						</div>
 						<div className="text-sm text-zinc-500 mb-4">
-							{computeUnitsLimit === -1
-								? "Unlimited plan"
+							{isUnlimitedCompute
+								? "Unlimited processing plan"
 								: `of ${computeUnitsLimit.toLocaleString()} limit`}
 						</div>
-						{computeUnitsLimit !== -1 && (
-							<>
-								<div className="w-full h-3 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-									<div
-										className={`h-full transition-all ${
-											isComputeCritical
-												? "bg-red-500"
-												: isComputeWarning
-													? "bg-amber-500"
-													: "bg-plum"
-										}`}
-										style={{ width: `${Math.min(computePercentage, 100)}%` }}
-									/>
-								</div>
-								<div className="mt-2 text-xs text-zinc-400">
-									{Math.round(computePercentage)}% used
-								</div>
-							</>
+						<div className="w-full h-3 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+							<div
+								className={`h-full transition-all ${
+									isUnlimitedCompute
+										? "bg-plum opacity-30"
+										: isComputeCritical
+											? "bg-red-500"
+											: isComputeWarning
+												? "bg-amber-500"
+												: "bg-plum"
+								}`}
+								style={{ width: isUnlimitedCompute ? "100%" : `${Math.min(computePercentage, 100)}%` }}
+							/>
+						</div>
+						{!isUnlimitedCompute && (
+							<div className="mt-2 text-xs text-zinc-400">
+								{Math.round(computePercentage)}% used
+							</div>
 						)}
 					</Card>
 				</div>

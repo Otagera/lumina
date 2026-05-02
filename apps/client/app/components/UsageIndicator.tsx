@@ -27,21 +27,22 @@ export const UsageIndicator = () => {
 	const storageUsedMB = usage.storageUsedMB ?? 0;
 	const storageLimitMB = usage.storageLimitMB ?? 5 * 1024;
 
-	const computePercentage = Math.min(
-		100,
-		(computeUnitsUsed / computeUnitsLimit) * 100,
-	);
+	const isUnlimitedCompute = computeUnitsLimit === -1;
+	const isUnlimitedStorage = storageLimitMB === -1;
 
-	const storagePercentage = Math.min(
-		100,
-		(storageUsedMB / storageLimitMB) * 100,
-	);
+	const computePercentage = isUnlimitedCompute
+		? 0
+		: Math.min(100, (computeUnitsUsed / computeUnitsLimit) * 100);
 
-	const isComputeNearLimit = computePercentage > 80;
-	const isComputeOverLimit = computePercentage >= 100;
+	const storagePercentage = isUnlimitedStorage
+		? 0
+		: Math.min(100, (storageUsedMB / storageLimitMB) * 100);
 
-	const isStorageNearLimit = storagePercentage > 80;
-	const isStorageOverLimit = storagePercentage >= 100;
+	const isComputeNearLimit = !isUnlimitedCompute && computePercentage > 80;
+	const isComputeOverLimit = !isUnlimitedCompute && computePercentage >= 100;
+
+	const isStorageNearLimit = !isUnlimitedStorage && storagePercentage > 80;
+	const isStorageOverLimit = !isUnlimitedStorage && storagePercentage >= 100;
 
 	return (
 		<div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4 py-1.5 sm:py-2 bg-zinc-100 dark:bg-zinc-900 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
@@ -64,19 +65,21 @@ export const UsageIndicator = () => {
 							Img
 						</span>
 						<span className="text-[9px] sm:text-[10px] font-bold text-zinc-900 dark:text-zinc-100">
-							{computeUnitsUsed}/{computeUnitsLimit}
+							{computeUnitsUsed}/{isUnlimitedCompute ? "∞" : computeUnitsLimit}
 						</span>
 					</div>
 					<div className="w-12 sm:w-16 h-0.5 sm:h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
 						<div
 							className={`h-full transition-all duration-1000 ${
-								isComputeOverLimit
-									? "bg-red-500"
-									: isComputeNearLimit
-										? "bg-amber-500"
-										: "bg-sage"
+								isUnlimitedCompute
+									? "bg-sage opacity-30"
+									: isComputeOverLimit
+										? "bg-red-500"
+										: isComputeNearLimit
+											? "bg-amber-500"
+											: "bg-sage"
 							}`}
-							style={{ width: `${computePercentage}%` }}
+							style={{ width: isUnlimitedCompute ? "100%" : `${computePercentage}%` }}
 						/>
 					</div>
 				</div>

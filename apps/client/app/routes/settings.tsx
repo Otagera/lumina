@@ -42,7 +42,8 @@ const UsageBar = ({
 	label: string;
 	color?: "sage" | "plum" | "terracotta";
 }) => {
-	const percentage = Math.min((used / limit) * 100, 100);
+	const isUnlimited = limit === -1;
+	const percentage = isUnlimited ? 0 : Math.min((used / limit) * 100, 100);
 	const colorClasses = {
 		sage: "bg-sage",
 		plum: "bg-plum",
@@ -55,6 +56,7 @@ const UsageBar = ({
 	};
 
 	const getAlertLevel = () => {
+		if (isUnlimited) return null;
 		if (percentage >= 90) return "critical";
 		if (percentage >= 80) return "warning";
 		return null;
@@ -81,13 +83,13 @@ const UsageBar = ({
 					{label}
 				</span>
 				<span className="font-bold text-zinc-900 dark:text-white">
-					{used.toLocaleString()} / {limit.toLocaleString()}
+					{used.toLocaleString()} / {isUnlimited ? "∞" : limit.toLocaleString()}
 				</span>
 			</div>
 			<div className={`h-3 rounded-full overflow-hidden ${bgClasses[color]}`}>
 				<div
-					className={`h-full rounded-full transition-all duration-500 ${colorClasses[color]}`}
-					style={{ width: `${percentage}%` }}
+					className={`h-full rounded-full transition-all duration-500 ${colorClasses[color]} ${isUnlimited ? "opacity-30" : ""}`}
+					style={{ width: isUnlimited ? "100%" : `${percentage}%` }}
 				/>
 			</div>
 			{alertLevel && (
