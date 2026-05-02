@@ -27,6 +27,12 @@ services:
       dockerfile: apps/ai/Dockerfile
     volumes:
       - uploads:/app/apps/api/src/uploads
+    deploy:
+      resources:
+        limits:
+          memory: 3.5G
+        reservations:
+          memory: 1.5G
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -45,6 +51,12 @@ services:
     command: sh -c "cd apps/api && bun run migrate && bunx prisma db seed && cd /app && bun run start:api"
     ports:
       - "3005:3005"
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 512M
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://anoda:password@db:5432/anoda_facematch?schema=public}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
@@ -79,6 +91,12 @@ services:
     build:
       context: .
       target: worker
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://anoda:password@db:5432/anoda_facematch?schema=public}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}

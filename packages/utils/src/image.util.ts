@@ -28,8 +28,10 @@ const isImageCorrupted = async (imagePath) => {
 };
 
 const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
-	if (config.env === "test" || config.env === "development") {
-		const envConfig = config[config.env];
+	const env = config.env || "production";
+	const envConfig = config[env];
+
+	if (env === "test" || env === "development") {
 		const port = envConfig.elysia_port;
 		const baseUrl = port ? `${envConfig.base_api_url}:${port}` : envConfig.base_api_url;
 		const imagePathSplit = image_path.split("/");
@@ -39,14 +41,20 @@ const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 		return strucImagePath;
 	} else {
 		// Production: use R2 public URL if available
-		const r2PublicUrl = config[config.env || "production"]?.r2?.public_url;
+		const r2PublicUrl = envConfig?.r2?.public_url;
 
 		if (r2PublicUrl && image_path) {
-			// Extract filename from image_path
-			const parts = image_path.split("/");
-			const filename = storage_key || parts[parts.length - 1];
+			const filename = storage_key || image_path.split("/").pop();
 			return `${r2PublicUrl}/${filename}`;
 		}
+
+		// Fallback: If no R2 public URL, point to the API's serving endpoint
+		if (image_path) {
+			const baseUrl = envConfig.base_api_url || "https://lumina-api.otagera.xyz";
+			const filename = storage_key || image_path.split("/").pop();
+			return `${baseUrl}/api/uploads/${filename}`;
+		}
+
 		return image_path;
 	}
 };
