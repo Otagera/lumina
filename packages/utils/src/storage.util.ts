@@ -75,7 +75,7 @@ export class LocalProvider implements StorageProvider {
 	private baseUrl: string;
 
 	constructor() {
-		this.baseDir = path.resolve(process.cwd(), "apps/api/src/uploads");
+		this.baseDir = path.resolve(process.cwd(), "src/uploads");
 		const envConfig = config[config.env || "development"];
 		const port = envConfig.elysia_port;
 		const baseUrl = port ? `${envConfig.base_api_url}:${port}` : envConfig.base_api_url;
