@@ -2,10 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies required for OpenCV, InsightFace, and dlib (if still needed)
+# Install system dependencies required for OpenCV and InsightFace
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
     curl \
     libgl1 \
     libglib2.0-0 \

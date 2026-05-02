@@ -38,3 +38,5 @@ __pycache__/
 !.idx/dev.nix
 
 venv
+
+log.txt
