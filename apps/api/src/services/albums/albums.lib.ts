@@ -191,6 +191,12 @@ export const getAlbumForUser = async (albumId: string, userId: string) => {
 		throw new Error("User id: userId is required");
 	}
 
+	// Validate UUID format - throw NotFoundError for invalid format
+	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+	if (!uuidRegex.test(albumId)) {
+		throw new NotFoundError("Album not found");
+	}
+
 	const album = await prisma.albums.findFirst({
 		where: { album_id: albumId, deleted_at: null },
 		include: {
@@ -274,6 +280,7 @@ export const getAlbumLinks = async (where, options = {}) => {
 		endDate,
 		uploaderId,
 		minFaces,
+		sortBy,
 	} = where;
 
 	const filter: any = { album_id, image_id };
@@ -286,8 +293,18 @@ export const getAlbumLinks = async (where, options = {}) => {
 
 	if (startDate || endDate) {
 		imageFilter.upload_date = {};
-		if (startDate) imageFilter.upload_date.gte = new Date(startDate);
-		if (endDate) imageFilter.upload_date.lte = new Date(endDate);
+		if (startDate) {
+			// Start of day in local timezone
+			const start = new Date(startDate);
+			start.setHours(0, 0, 0, 0);
+			imageFilter.upload_date.gte = start;
+		}
+		if (endDate) {
+			// End of day in local timezone (next day - 1ms)
+			const end = new Date(endDate);
+			end.setHours(23, 59, 59, 999);
+			imageFilter.upload_date.lte = end;
+		}
 	}
 
 	if (minFaces !== undefined) {
@@ -300,7 +317,12 @@ export const getAlbumLinks = async (where, options = {}) => {
 
 	filter.images = imageFilter;
 
-	const album = await fetchAlbumImages(filter, options);
+	// Handle sorting - default to newest first
+	const orderBy = sortBy === "oldest"
+		? { images: { upload_date: "asc" } }
+		: { images: { upload_date: "desc" } };
+
+	const album = await fetchAlbumImages(filter, { ...options, orderBy });
 
 	if (!album || !album.length) {
 		return [];

@@ -7,6 +7,7 @@ import Home from "./routes/home";
 import JoinAlbum from "./routes/joinAlbum";
 import Login from "./routes/login";
 import People from "./routes/people";
+import NotFound from "./routes/not-found";
 import ResetPassword from "./routes/reset-password";
 import Search from "./routes/search";
 import Settings from "./routes/settings";
@@ -77,11 +78,21 @@ export default [
 						path: "usage",
 						element: <Usage />,
 					},
-					{
-						path: "trash",
-						element: <Trash />,
-					},
+{
+					path: "trash",
+					element: <Trash />,
+				},
 				],
+			},
+			// Not found page
+			{
+				path: "not-found",
+				element: <NotFound />,
+			},
+			// Catch-all 404 - must be last
+			{
+				path: "*",
+				element: <NotFound />,
 			},
 		],
 	},

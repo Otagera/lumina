@@ -505,7 +505,7 @@ const AlbumPage = () => {
 	};
 
 	return (
-		<MainContainer className="space-y-12" maxWidth="max-w-none">
+		<MainContainer className="space-y-12" maxWidth="max-w-6xl">
 			<BackButton label="Back to Dashboard" to="/home" />
 
 			<div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
@@ -522,9 +522,9 @@ const AlbumPage = () => {
 
 						{/* Title + Actions */}
 						<div className="flex flex-col items-start gap-2">
-							<div className="flex flex-wrap items-center gap-3 group">
+							<div className="flex flex-wrap items-center gap-3 group justify-between">
 								{isEditingName ? (
-									<div className="flex items-center gap-2">
+									<div className="flex items-center gap-2 flex-1">
 										<input
 											type="text"
 											value={editAlbumName}
@@ -543,7 +543,7 @@ const AlbumPage = () => {
 													setEditAlbumName(albumData?.data?.albumName || "");
 												}
 											}}
-											className="text-5xl md:text-6xl font-black text-zinc-900 dark:text-white bg-transparent border-b-2 border-sage focus:outline-none px-1"
+											className="flex-1 text-5xl md:text-6xl font-black text-zinc-900 dark:text-white bg-transparent border-b-2 border-sage focus:outline-none px-1"
 											autoFocus
 										/>
 										<Button
@@ -584,8 +584,7 @@ const AlbumPage = () => {
 										</button>
 									</>
 								)}
-								{/* Action Buttons - inline with title */}
-								<div className="flex items-center gap-1">
+								<div className="flex items-center gap-1 ml-auto">
 									<Button
 										variant="outline"
 										size="sm"
@@ -696,39 +695,39 @@ const AlbumPage = () => {
 					{/* View Tabs */}
 					{(albumData?.data?.settings?.is_event ||
 						albumData?.data?.settings?.requires_approval) ? (
-							<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner">
-								<button
-									type="button"
-									onClick={() => setView("gallery")}
-									className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "gallery"
-										? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
-										: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-										}`}
-								>
-									Gallery
-								</button>
-								<button
-									type="button"
-									onClick={() => setView("moderation")}
-									className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "moderation"
-										? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
-										: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-										}`}
-								>
-									Moderation
-								</button>
-								<button
-									type="button"
-									onClick={() => setView("duplicates")}
-									className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "duplicates"
-										? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
-										: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-										}`}
-								>
-									Duplicates
-								</button>
-							</div>
-						) : null}
+						<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner">
+							<button
+								type="button"
+								onClick={() => setView("gallery")}
+								className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "gallery"
+									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+									}`}
+							>
+								Gallery
+							</button>
+							<button
+								type="button"
+								onClick={() => setView("moderation")}
+								className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "moderation"
+									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+									}`}
+							>
+								Moderation
+							</button>
+							<button
+								type="button"
+								onClick={() => setView("duplicates")}
+								className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "duplicates"
+									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+									}`}
+							>
+								Duplicates
+							</button>
+						</div>
+					) : null}
 
 					{/* Grid/List Toggle */}
 					<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner ml-auto">

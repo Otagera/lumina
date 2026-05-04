@@ -13,6 +13,7 @@ const spec = joi.object({
 	limit: joi.alternatives().try(joi.number(), joi.string()).optional(),
 	nextCursor: joi.string().optional(),
 	paginationType: joi.string().optional(),
+	sortBy: joi.string().valid("newest", "oldest").optional(),
 	// Filters
 	startDate: joi.date().optional(),
 	endDate: joi.date().optional(),
@@ -28,6 +29,7 @@ const aliasSpec = {
 		limit: "limit",
 		nextCursor: "nextCursor",
 		paginationType: "paginationType",
+		sortBy: "sortBy",
 		startDate: "startDate",
 		endDate: "endDate",
 		uploaderId: "uploaderId",

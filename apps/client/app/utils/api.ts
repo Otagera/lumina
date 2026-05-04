@@ -82,6 +82,7 @@ export const fetchImagesInAlbum = async ({
 	startDate,
 	endDate,
 	uploaderId,
+	sortBy,
 }: {
 	albumId: string;
 	pageParam?: string | null;
@@ -89,6 +90,7 @@ export const fetchImagesInAlbum = async ({
 	startDate?: string;
 	endDate?: string;
 	uploaderId?: string;
+	sortBy?: string;
 }) => {
 	try {
 		let url = `/albums/${albumId}/images?paginationType=cursor&limit=25&status=${status}`;
@@ -96,6 +98,7 @@ export const fetchImagesInAlbum = async ({
 		if (startDate) url += `&startDate=${startDate}`;
 		if (endDate) url += `&endDate=${endDate}`;
 		if (uploaderId) url += `&uploaderId=${uploaderId}`;
+		if (sortBy) url += `&sortBy=${sortBy}`;
 
 		const response = await axiosAPI.get(url);
 		return response.data;
@@ -108,8 +111,12 @@ export const fetchAlbum = async (albumId: string) => {
 	try {
 		const response = await axiosAPI.get(`/albums/${albumId}`);
 		return response.data;
-	} catch (error) {
+	} catch (error: any) {
+		if (error.response?.status === 404) {
+			throw new Error("Album not found");
+		}
 		console.error("Error fetching album:", error);
+		throw error;
 	}
 };
 

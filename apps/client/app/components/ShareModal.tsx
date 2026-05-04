@@ -15,6 +15,7 @@ interface ShareModalProps {
 	coverImage?: string | null;
 	creationDate?: string | Date | null;
 	onClose: () => void;
+	isOpen: boolean;
 }
 
 export const ShareModal = ({

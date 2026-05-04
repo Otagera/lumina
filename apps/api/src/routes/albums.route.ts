@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
+import { NotFoundError } from "../../../../packages/utils/src/error.util.ts";
 import { checkAlbumPermissions } from "../../../../packages/utils/src/permissions.util.ts";
 import { addImagesToAlbumService } from "../services/albums/addImagesToAlbum.service.ts";
 import { getAlbumForUser } from "../services/albums/albums.lib";
@@ -110,7 +111,17 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			try {
 				const albumId = params.albumId;
 
+				// Validate UUID format before querying database
+				const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+				if (!uuidRegex.test(albumId)) {
+					throw new NotFoundError("Album not found");
+				}
+
 				const album = await getAlbumForUser(albumId, userId);
+
+				if (!album) {
+					throw new NotFoundError("Album not found");
+				}
 
 				let coverImage: { id: string | null; url: string | null } = { id: null, url: null };
 
@@ -490,6 +501,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				uploaderId: t.Optional(t.String()),
 				startDate: t.Optional(t.String()),
 				endDate: t.Optional(t.String()),
+				sortBy: t.Optional(t.String()),
 			}),
 		},
 	)
