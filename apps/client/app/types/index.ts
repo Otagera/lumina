@@ -81,6 +81,7 @@ export interface Album {
 	storageConfigId?: string | null;
 	shareToken?: string | null;
 	sharedLink?: string;
+	coverImage?: { id: string | null; url: string | null } | string | null;
 	coverImages?: string[];
 	imageCount?: number;
 	images?: number;

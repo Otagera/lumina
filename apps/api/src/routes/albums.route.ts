@@ -21,6 +21,7 @@ import { updateMemberRoleService } from "../services/albums/updateMemberRole.ser
 import { findDuplicatesService } from "../services/pictures/findDuplicates.service.ts";
 
 import { authDerivation } from "./middleware/auth.plugin.ts";
+import { normalizeImagePath } from "../../../../packages/utils/src/image.util.ts";
 
 const albumsRoutes = new Elysia({ prefix: "/albums" })
 	.derive(authDerivation)
@@ -111,6 +112,38 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 
 				const album = await getAlbumForUser(albumId, userId);
 
+				let coverImage: { id: string | null; url: string | null } = { id: null, url: null };
+
+				// MANUAL: if cover_image is set and not deleted
+				if (album.cover_image && !album.cover_image.deleted_at) {
+					coverImage = {
+						id: album.cover_image.image_id,
+						url: normalizeImagePath(
+							album.cover_image.image_path,
+							album.cover_image.storage_provider,
+							album.cover_image.storage_key,
+						),
+					};
+				}
+
+				// FALLBACK: first 4 images if no manual cover set
+				let coverImages: string[] = [];
+
+				if (!coverImage.url) {
+					//fetch album images
+					const albumImages = await fetchImagesInAlbumService({
+						albumId,
+						userId,
+						limit: "4",
+					});
+
+					if (albumImages && typeof albumImages === "object" && "imagesInAlbum" in albumImages) {
+						coverImages = albumImages.imagesInAlbum
+							.map((ai: any) => ai.images?.imagePath)
+							.filter(Boolean) || [];
+					}
+				}
+
 				const data = {
 					id: album.album_id,
 					albumName: album.album_name,
@@ -120,6 +153,9 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					shareToken: album.share_token,
 					settings: album.settings,
 					members: album.album_members,
+					coverImage,
+					coverImages,
+					storageConfig: album.storage_config,
 				};
 
 				set.status = HTTP_STATUS_CODES.OK;
@@ -174,6 +210,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			body: t.Object({
 				albumName: t.Optional(t.String()),
 				shareToken: t.Optional(t.Nullable(t.String())),
+				coverImageId: t.Optional(t.Nullable(t.String())),
 				settings: t.Optional(
 					t.Object({
 						is_event: t.Optional(t.Boolean()),

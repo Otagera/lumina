@@ -7,12 +7,14 @@ import {
 import {
 	CheckCircle,
 	Copy,
+	MoreVertical,
+	Pencil,
 	Settings2,
 	Trash2,
 	Upload,
 	XCircle,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useInView } from "react-intersection-observer";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -26,7 +28,6 @@ import { DuplicateReview } from "~/components/DuplicateReview";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
-import { UsageIndicator } from "~/components/UsageIndicator";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
 import ModerationGridItem from "~/Images/ModerationGridItem";
@@ -47,6 +48,8 @@ import {
 } from "../utils/api";
 import axiosAPI from "../utils/axios";
 import { useUpload } from "../utils/UploadContext";
+import { Card } from "~/components/standard/Card";
+import AlbumCover from "~/components/AlbumCover";
 
 const AlbumPage = () => {
 	const { albumId } = useParams();
@@ -60,9 +63,10 @@ const AlbumPage = () => {
 		useState(false);
 	const [isAlbumPermissionsModalOpen, setIsAlbumPermissionsModalOpen] =
 		useState(false);
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [confirmDeleteAlbum, setConfirmDeleteAlbum] = useState(false);
+	const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 	const [editAlbumName, setEditAlbumName] = useState("");
+	const [isEditingName, setIsEditingName] = useState(false);
 	const [files, setFiles] = useState<FileList | null>(null);
 
 	const [view, setView] = useState<"gallery" | "moderation" | "duplicates">(
@@ -122,6 +126,13 @@ const AlbumPage = () => {
 	const { ref, inView } = useInView({
 		rootMargin: "200px",
 	});
+
+	useEffect(() => {
+		if (!moreMenuOpen) return;
+		const handleClickOutside = () => setMoreMenuOpen(false);
+		document.addEventListener("click", handleClickOutside);
+		return () => document.removeEventListener("click", handleClickOutside);
+	}, [moreMenuOpen]);
 
 	useEffect(() => {
 		if (inView) {
@@ -343,7 +354,14 @@ const AlbumPage = () => {
 	const handleEditAlbum = () => {
 		if (!editAlbumName.trim() || !albumId) return;
 		editAlbumMutation.mutate({ albumId, albumName: editAlbumName });
-		setIsEditModalOpen(false);
+		setIsEditingName(false);
+	};
+
+	const handleSetCoverImage = (imageId: string) => {
+		const currentCoverId = albumData?.data?.coverImage?.id;
+		// Toggle: if already cover, set to null to remove, otherwise set the new image
+		const newCoverId = currentCoverId === imageId ? null : imageId;
+		editAlbumMutation.mutate({ albumId, coverImageId: newCoverId });
 	};
 
 	const handleDeleteImage = (imageId: string) => {
@@ -491,95 +509,237 @@ const AlbumPage = () => {
 			<BackButton label="Back to Dashboard" to="/home" />
 
 			<div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
+				{/* Left Section: Album Info + Actions */}
 				<div className="flex-1">
-					<div className="flex items-center space-x-3 mb-4">
-						<span className="px-3 py-1 bg-sage/10 text-sage rounded-full text-[10px] font-bold uppercase tracking-widest border border-sage/20">
-							Album
-						</span>
-						<p className="text-xs text-zinc-400 font-mono tracking-tighter opacity-50">
-							{albumId}
-						</p>
-					</div>
-					<div className="flex items-center gap-4 group">
-						<Heading level={1} className="text-5xl md:text-6xl">
-							{albumData?.data?.albumName}
-						</Heading>
-						<div className="flex gap-2">
-							<button
-								type="button"
-								onClick={() => setIsAlbumSettingsModalOpen(true)}
-								className="p-2 text-zinc-400 hover:text-sage transition-colors rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
-								title="Album Settings"
-							>
-								<Settings2 size={20} />
-							</button>
-							<button
-								type="button"
-								onClick={() => setConfirmDeleteAlbum(true)}
-								className="p-2 text-zinc-400 hover:text-plum transition-colors rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
-								title="Delete Album"
-							>
-								<Trash2 size={20} />
-							</button>
+					<div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 lg:gap-6">
+						{/* Cover Image - Stacks on mobile, side-by-side on desktop */}
+						<Card className="group relative w-28 md:w-32 aspect-[3/4] p-0 border-none overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+							<div className="w-full h-full">
+								<AlbumCover album={albumData?.data} />
+							</div>
+							<div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+						</Card>
+
+						{/* Title + Actions */}
+						<div className="flex flex-col items-start gap-2">
+							<div className="flex flex-wrap items-center gap-3 group">
+								{isEditingName ? (
+									<div className="flex items-center gap-2">
+										<input
+											type="text"
+											value={editAlbumName}
+											onChange={(e) => setEditAlbumName(e.target.value)}
+											onKeyDown={(e) => {
+												if (e.key === "Enter") {
+													handleEditAlbum();
+												} else if (e.key === "Escape") {
+													setIsEditingName(false);
+													setEditAlbumName(albumData?.data?.albumName || "");
+												}
+											}}
+											onBlur={() => {
+												if (!editAlbumName.trim()) {
+													setIsEditingName(false);
+													setEditAlbumName(albumData?.data?.albumName || "");
+												}
+											}}
+											className="text-5xl md:text-6xl font-black text-zinc-900 dark:text-white bg-transparent border-b-2 border-sage focus:outline-none px-1"
+											autoFocus
+										/>
+										<Button
+											size="sm"
+											onClick={handleEditAlbum}
+											disabled={!editAlbumName.trim() || editAlbumMutation.isPending}
+											className="text-sm"
+										>
+											{editAlbumMutation.isPending ? "..." : "Save"}
+										</Button>
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() => {
+												setIsEditingName(false);
+												setEditAlbumName(albumData?.data?.albumName || "");
+											}}
+											className="text-sm"
+										>
+											<XCircle size={16} />
+										</Button>
+									</div>
+								) : (
+									<>
+										<Heading level={1} className="text-5xl md:text-6xl">
+											{albumData?.data?.albumName}
+										</Heading>
+										<button
+											type="button"
+											onClick={() => {
+												setEditAlbumName(albumData?.data?.albumName || "");
+												setIsEditingName(true);
+											}}
+											className="p-2 text-zinc-400 hover:text-sage opacity-0 group-hover:opacity-100 transition-opacity"
+											title="Rename album"
+										>
+											<Pencil size={20} />
+										</button>
+									</>
+								)}
+								{/* Action Buttons - inline with title */}
+								<div className="flex items-center gap-1">
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={handleTriggerClustering}
+										className="text-sm"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											className="h-4 w-4 mr-1.5"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+											/>
+										</svg>
+										Group
+									</Button>
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => setIsAlbumPermissionsModalOpen(true)}
+										className="text-sm"
+									>
+										<Settings2 size={14} className="mr-1.5" />
+										<span className="hidden sm:inline">Permissions</span>
+									</Button>
+									<Button
+										variant="primary"
+										size="sm"
+										onClick={() => setIsUploadModalOpen(true)}
+										className="text-sm"
+									>
+										<Upload size={14} className="mr-1.5" />
+										Upload
+									</Button>
+								</div>
+								{/* More Actions Dropdown */}
+								<div className="relative">
+									<button
+										type="button"
+										onClick={(e) => {
+											e.stopPropagation();
+											setMoreMenuOpen(!moreMenuOpen);
+										}}
+										className="p-2 text-zinc-400 hover:text-sage transition-colors rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+										title="More actions"
+									>
+										<MoreVertical size={20} />
+									</button>
+									{moreMenuOpen && (
+										<div
+											className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-50"
+											onClick={(e) => e.stopPropagation()}
+										>
+											<button
+												type="button"
+												onClick={() => {
+													setIsAlbumSettingsModalOpen(true);
+													setMoreMenuOpen(false);
+												}}
+												className="w-full px-4 py-2 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
+											>
+												<Settings2 size={16} />
+												Album Settings
+											</button>
+											<button
+												type="button"
+												onClick={() => {
+													setIsShareModalOpen(true);
+													setMoreMenuOpen(false);
+												}}
+												className="w-full px-4 py-2 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
+											>
+												<Copy size={16} />
+												Share Album
+											</button>
+											<button
+												type="button"
+												onClick={() => {
+													setConfirmDeleteAlbum(true);
+													setMoreMenuOpen(false);
+												}}
+												className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+											>
+												<Trash2 size={16} />
+												Delete Album
+											</button>
+										</div>
+									)}
+								</div>
+							</div>
+							<p className="text-zinc-500 dark:text-zinc-400 mt-1">
+								{images.length} photos curated in this collection
+							</p>
 						</div>
 					</div>
-					<p className="text-zinc-500 dark:text-zinc-400 mt-4 max-w-2xl">
-						{images.length} photos curated in this collection. Organize, share,
-						and rediscover your memories.
-					</p>
 				</div>
+			</div>
 
-				<div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-					{/* Tab Toggle */}
+			<div className="mt-8">
+				{/* View Controls - positioned with images */}
+				<div className="flex items-center justify-between gap-4 mb-6">
+					{/* View Tabs */}
 					{(albumData?.data?.settings?.is_event ||
-						albumData?.data?.settings?.requires_approval) && (
-						<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner mr-4">
-							<button
-								type="button"
-								onClick={() => setView("gallery")}
-								className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-									view === "gallery"
+						albumData?.data?.settings?.requires_approval) ? (
+							<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner">
+								<button
+									type="button"
+									onClick={() => setView("gallery")}
+									className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "gallery"
 										? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
 										: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-								}`}
-							>
-								Gallery
-							</button>
-							<button
-								type="button"
-								onClick={() => setView("moderation")}
-								className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-									view === "moderation"
+										}`}
+								>
+									Gallery
+								</button>
+								<button
+									type="button"
+									onClick={() => setView("moderation")}
+									className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "moderation"
 										? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
 										: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-								}`}
-							>
-								Moderation
-							</button>
-							<button
-								type="button"
-								onClick={() => setView("duplicates")}
-								className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-									view === "duplicates"
+										}`}
+								>
+									Moderation
+								</button>
+								<button
+									type="button"
+									onClick={() => setView("duplicates")}
+									className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "duplicates"
 										? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
 										: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-								}`}
-							>
-								Duplicates
-							</button>
-						</div>
-					)}
+										}`}
+								>
+									Duplicates
+								</button>
+							</div>
+						) : null}
 
-					{/* View Toggle */}
-					<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner">
+					{/* Grid/List Toggle */}
+					<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner ml-auto">
 						<button
 							type="button"
 							onClick={() => setViewMode("grid")}
-							className={`p-2 rounded-xl transition-all ${
-								viewMode === "grid"
-									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
-									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-							}`}
+							className={`p-2 rounded-xl transition-all ${viewMode === "grid"
+								? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+								: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+								}`}
+							title="Grid view"
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -588,16 +748,16 @@ const AlbumPage = () => {
 								fill="currentColor"
 							>
 								<path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-							</svg>{" "}
+							</svg>
 						</button>
 						<button
 							type="button"
 							onClick={() => setViewMode("list")}
-							className={`p-2 rounded-xl transition-all ${
-								viewMode === "list"
-									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
-									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-							}`}
+							className={`p-2 rounded-xl transition-all ${viewMode === "list"
+								? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+								: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+								}`}
+							title="List view"
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -613,71 +773,8 @@ const AlbumPage = () => {
 							</svg>
 						</button>
 					</div>
-
-					<Button
-						variant="outline"
-						onClick={handleTriggerClustering}
-						className="flex-1 md:flex-none"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							className="h-4 w-4 mr-2"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-							/>
-						</svg>
-						Group Faces
-					</Button>
-
-					<Button
-						variant="outline"
-						onClick={() => setIsShareModalOpen(true)}
-						className="flex-1 md:flex-none"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							className="h-4 w-4 mr-2"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-							/>
-						</svg>
-						Share
-					</Button>
-
-					<Button
-						variant="outline"
-						onClick={() => setIsAlbumPermissionsModalOpen(true)}
-						className="flex-1 md:flex-none"
-					>
-						<Settings2 size={16} className="mr-2" />
-						Permissions
-					</Button>
-
-					<Button
-						variant="primary"
-						onClick={() => setIsUploadModalOpen(true)}
-						className="flex-1 md:flex-none"
-					>
-						Upload Photos
-					</Button>
 				</div>
-			</div>
 
-			<div className="mt-8">
 				{view === "duplicates" ? (
 					<DuplicateReview albumId={albumId!} />
 				) : (
@@ -693,7 +790,7 @@ const AlbumPage = () => {
 						)}
 
 						{(isImagesDataLoading || isPendingImagesLoading) &&
-						isAlbumDataLoading ? (
+							isAlbumDataLoading ? (
 							<div className="flex justify-center py-20">
 								<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage" />
 							</div>
@@ -756,6 +853,8 @@ const AlbumPage = () => {
 														handleToggleSelect(image.imageId)
 													}
 													onDelete={handleDeleteImage}
+													onSetCover={handleSetCoverImage}
+													isCover={albumData?.data?.coverImage?.id === image.imageId}
 													selectionMode={selectedIds.size > 0}
 												/>
 											)}
@@ -769,6 +868,10 @@ const AlbumPage = () => {
 								onImageClick={setSelectedImage}
 								selectedIds={selectedIds}
 								onToggleSelect={handleToggleSelect}
+								onSelectAll={toggleSelectAll}
+								onDelete={handleDeleteImage}
+								onSetCover={handleSetCoverImage}
+								coverImageId={albumData?.data?.coverImage?.id}
 							/>
 						)}
 					</>
@@ -958,6 +1061,10 @@ const AlbumPage = () => {
 					albumId={albumId!}
 					albumName={albumData?.data?.albumName}
 					shareToken={albumData?.data?.shareToken}
+					qrColor={albumData?.data?.qrColor}
+					qrLogoUrl={albumData?.data?.qrLogoUrl}
+					creationDate={albumData?.data?.createdAt}
+					coverImage={albumData?.data?.cover_image?.imagePath}
 				/>
 			)}
 		</MainContainer>

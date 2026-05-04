@@ -166,15 +166,18 @@ export const editAlbum = async ({
 	albumId,
 	albumName,
 	shareToken,
+	coverImageId,
 }: {
 	albumId: string;
 	albumName?: string;
 	shareToken?: string | null;
+	coverImageId?: string | null;
 }) => {
 	try {
 		const response = await axiosAPI.put(`/albums/${albumId}`, {
 			albumName,
 			shareToken,
+			coverImageId,
 		});
 		return response.data;
 	} catch (error) {

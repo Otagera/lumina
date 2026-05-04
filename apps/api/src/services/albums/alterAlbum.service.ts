@@ -11,6 +11,8 @@ const spec = joi.object({
 	album_name: joi.string().optional(),
 	share_token: joi.string().optional().allow(null),
 	cover_image_id: joi.string().uuid().optional().allow(null),
+	qr_color: joi.string().optional().allow(null),
+	qr_logo_url: joi.string().optional().allow(null),
 	settings: joi
 		.object({
 			is_event: joi.boolean().optional(),
@@ -29,6 +31,8 @@ const aliasSpec = {
 		albumName: "album_name",
 		shareToken: "share_token",
 		coverImageId: "cover_image_id",
+		qrColor: "qr_color",
+		qrLogoUrl: "qr_logo_url",
 		settings: "settings",
 	},
 	response: {
@@ -39,6 +43,8 @@ const aliasSpec = {
 		shared_link: "sharedLink",
 		share_token: "shareToken",
 		cover_image_id: "coverImageId",
+		qr_color: "qrColor",
+		qr_logo_url: "qrLogoUrl",
 		settings: "settings",
 	},
 };

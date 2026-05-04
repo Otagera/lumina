@@ -1,19 +1,30 @@
 import type React from "react";
+import { useState } from "react";
 import type { ImageFromDB } from "~/types";
+import { MoreHorizontal, Trash2, ImageIcon } from "lucide-react";
 
 interface CompactListViewProps {
 	images: ImageFromDB[];
 	selectedIds: Set<string>;
 	onToggleSelect: (id: string) => void;
+	onSelectAll?: () => void;
 	onImageClick: (image: ImageFromDB) => void;
+	onDelete: (imageId: string) => void;
+	onSetCover?: (imageId: string) => void;
+	coverImageId?: string;
 }
 
 export const CompactListView: React.FC<CompactListViewProps> = ({
 	images,
 	selectedIds,
 	onToggleSelect,
+	onSelectAll,
 	onImageClick,
+	onDelete,
+	onSetCover,
+	coverImageId,
 }) => {
+	const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 	return (
 		<div className="w-full bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
 			<table className="w-full text-left border-collapse">
@@ -21,7 +32,19 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 					<tr className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800">
 						<th className="p-4 w-12 text-center">
 							<div className="flex justify-center">
-								<div className="w-5 h-5 rounded border border-zinc-300 dark:border-zinc-700" />
+								<button
+									type="button"
+									onClick={onSelectAll}
+									className="w-5 h-5 rounded border-2 border-zinc-300 dark:border-zinc-600 hover:border-sage transition-colors flex items-center justify-center"
+								>
+									{images.length > 0 && selectedIds.size === images.length ? (
+										<svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-sage" viewBox="0 0 20 20" fill="currentColor">
+											<path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+										</svg>
+									) : selectedIds.size > 0 ? (
+										<div className="w-2 h-2 bg-sage/50 rounded-sm" />
+									) : null}
+								</button>
 							</div>
 						</th>
 						<th className="p-4 text-[10px] uppercase tracking-widest font-bold text-zinc-400">
@@ -117,34 +140,45 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 									</span>
 								</td>
 								<td className="p-4 text-right">
-									<button
-										className="p-2 text-zinc-400 hover:text-sage transition-colors"
-										onClick={(e) => {
-											e.stopPropagation();
-											onImageClick(image);
-										}}
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											className="h-5 w-5"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
+									<div className="relative inline-block">
+										<button
+											className="p-2 text-zinc-400 hover:text-sage transition-colors"
+											onClick={(e) => {
+												e.stopPropagation();
+												setOpenMenuId(openMenuId === image.imageId ? null : image.imageId);
+											}}
 										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-											/>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-											/>
-										</svg>
-									</button>
+											<MoreHorizontal size={20} />
+										</button>
+										{openMenuId === image.imageId && (
+											<div className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-20">
+												{onSetCover && (
+													<button
+														type="button"
+														onClick={() => {
+															onSetCover(image.imageId);
+															setOpenMenuId(null);
+														}}
+														className={`w-full px-3 py-2 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2 ${coverImageId === image.imageId ? "bg-sage/10" : ""}`}
+													>
+														<ImageIcon size={14} />
+														{coverImageId === image.imageId ? "Remove Cover" : "Set as Cover"}
+													</button>
+												)}
+												<button
+													type="button"
+													onClick={() => {
+														onDelete(image.imageId);
+														setOpenMenuId(null);
+													}}
+													className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+												>
+													<Trash2 size={14} />
+													Delete
+												</button>
+											</div>
+										)}
+									</div>
 								</td>
 							</tr>
 						);

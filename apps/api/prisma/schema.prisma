@@ -42,6 +42,8 @@ model albums {
   shared_link       String?
   share_token       String?               @unique
   deleted_at        DateTime?             @db.Timestamptz(6)
+  qr_color          String?
+  qr_logo_url       String?
   album_images      album_images[]
   album_members     album_members[]
   webhook_events    webhook_events[]

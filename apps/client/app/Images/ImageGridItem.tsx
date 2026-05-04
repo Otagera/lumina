@@ -1,5 +1,7 @@
 import type { HTMLAttributes } from "react";
+import { MoreHorizontal, Trash2, ImageIcon } from "lucide-react";
 import { cn } from "~/utils/cn";
+import { useState } from "react";
 
 interface ImageGridItemProps extends HTMLAttributes<HTMLImageElement> {
 	image: {
@@ -11,6 +13,8 @@ interface ImageGridItemProps extends HTMLAttributes<HTMLImageElement> {
 		status?: string;
 	};
 	onDelete: (imageId: string) => void;
+	onSetCover?: (imageId: string) => void;
+	isCover?: boolean;
 	shared?: boolean;
 	isSelected?: boolean;
 	onToggleSelect?: (imageId: string) => void;
@@ -23,6 +27,8 @@ const ImageGridItem = ({
 	className,
 	onClick,
 	onDelete,
+	onSetCover,
+	isCover,
 	isSelected,
 	onToggleSelect,
 	selectionMode,
@@ -30,6 +36,7 @@ const ImageGridItem = ({
 	shared = false,
 }: ImageGridItemProps) => {
 	const isQuotaExceeded = image.status === "QUOTA_EXCEEDED";
+	const [menuOpen, setMenuOpen] = useState(false);
 
 	return (
 		<div
@@ -109,32 +116,52 @@ const ImageGridItem = ({
 				</button>
 			</div>
 
-			{/* Delete Button - hide when in selection mode */}
+			{/* 3-dot Menu - hide when in selection mode */}
 			{!shared && !selectionMode && (
-				<button
-					type="button"
-					className="absolute top-4 right-4 p-2.5 bg-black/40 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-plum shadow-lg backdrop-blur-md border border-white/10 active:scale-90"
-					onClick={(e) => {
-						e.stopPropagation();
-						onDelete(image.id);
-					}}
-					title="Move to trash"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						className="h-5 w-5"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
+				<div className="absolute top-4 right-4 z-10">
+					<button
+						type="button"
+						className="p-2.5 bg-black/40 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/60 shadow-lg backdrop-blur-md border border-white/10 active:scale-90"
+						onClick={(e) => {
+							e.stopPropagation();
+							setMenuOpen(!menuOpen);
+						}}
+						title="More actions"
 					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={2.5}
-							d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-						/>
-					</svg>
-				</button>
+						<MoreHorizontal size={20} />
+					</button>
+					{menuOpen && (
+						<div
+							className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-20"
+							onClick={(e) => e.stopPropagation()}
+						>
+							{onSetCover && (
+								<button
+									type="button"
+									onClick={() => {
+										onSetCover(image.id);
+										setMenuOpen(false);
+									}}
+									className={`w-full px-3 py-2 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2 ${isCover ? "bg-sage/10" : ""}`}
+								>
+									<ImageIcon size={14} />
+									{isCover ? "Remove Cover" : "Set as Cover"}
+								</button>
+							)}
+							<button
+								type="button"
+								onClick={() => {
+									onDelete(image.id);
+									setMenuOpen(false);
+								}}
+								className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+							>
+								<Trash2 size={14} />
+								Delete
+							</button>
+						</div>
+					)}
+				</div>
 			)}
 		</div>
 	);

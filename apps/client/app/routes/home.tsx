@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HardDrive, QrCode, Search, Sparkles, Users, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { AlbumCard } from "~/components/AlbumCard";
+import AlbumCard from "~/components/AlbumCard";
 import { ConfirmModal } from "~/components/ConfirmModal";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
@@ -14,7 +14,6 @@ import {
 	deleteAlbum,
 	editAlbum,
 	fetchAlbums,
-	fetchSettings,
 } from "../utils/api";
 
 const Home = () => {
@@ -133,7 +132,8 @@ const Home = () => {
 									setConfirmDeleteAlbumId(albumId);
 								}}
 							/>
-						))}
+						)
+						)}
 					</div>
 				)}
 			</section>
