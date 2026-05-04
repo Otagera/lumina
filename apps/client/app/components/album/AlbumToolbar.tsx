@@ -1,0 +1,110 @@
+import type { ViewMode, DisplayMode } from "~/types";
+
+export interface AlbumToolbarProps {
+	view: ViewMode;
+	displayMode: DisplayMode;
+	onViewChange: (view: ViewMode) => void;
+	onDisplayModeChange: (mode: DisplayMode) => void;
+	showModeration?: boolean;
+	showDuplicates?: boolean;
+}
+
+export function AlbumToolbar({
+	view,
+	displayMode,
+	onViewChange,
+	onDisplayModeChange,
+	showModeration = false,
+	showDuplicates = false,
+}: AlbumToolbarProps) {
+	return (
+		<div className="flex items-center justify-between gap-4 mb-6">
+			{(showModeration || showDuplicates) && (
+				<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner">
+					<button
+						type="button"
+						onClick={() => onViewChange("gallery")}
+						className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+							view === "gallery"
+								? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+								: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+						}`}
+					>
+						Gallery
+					</button>
+					{showModeration && (
+						<button
+							type="button"
+							onClick={() => onViewChange("moderation")}
+							className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+								view === "moderation"
+									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+							}`}
+						>
+							Moderation
+						</button>
+					)}
+					{showDuplicates && (
+						<button
+							type="button"
+							onClick={() => onViewChange("duplicates")}
+							className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+								view === "duplicates"
+									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+							}`}
+						>
+							Duplicates
+						</button>
+					)}
+				</div>
+			)}
+
+			<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner ml-auto">
+				<button
+					type="button"
+					onClick={() => onDisplayModeChange("grid")}
+					className={`p-2 rounded-xl transition-all ${
+						displayMode === "grid"
+							? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+							: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+					}`}
+					title="Grid view"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						className="h-5 w-5"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+					>
+						<path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+					</svg>
+				</button>
+				<button
+					type="button"
+					onClick={() => onDisplayModeChange("list")}
+					className={`p-2 rounded-xl transition-all ${
+						displayMode === "list"
+							? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+							: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+					}`}
+					title="List view"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						className="h-5 w-5"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+					>
+						<path
+							fillRule="evenodd"
+							d="M3 4a1 1 0 011-1h14a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h14a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h14a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h14a1 1 0 110 2H4a1 1 0 01-1-1z"
+							clipRule="evenodd"
+						/>
+					</svg>
+				</button>
+			</div>
+		</div>
+	);
+}

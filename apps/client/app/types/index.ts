@@ -88,6 +88,10 @@ export interface Album {
 	_count?: {
 		images?: number;
 	};
+	members?: Array<{ userId: string; email: string; role: string }>;
+	qrColor?: string;
+	qrLogoUrl?: string;
+	cover_image?: { imagePath: string };
 }
 
 export type AlbumListItem = Pick<
@@ -136,4 +140,59 @@ export interface UsageStats {
 	storageLimitMB: number;
 	resetDate?: string;
 	plan?: "free" | "pro" | "business";
+}
+
+// ============== Album Image Types ==============
+
+export interface AlbumImage {
+	imageId: string;
+	imagePath: string;
+	originalSize?: { width: number; height: number };
+	takenAt?: string | null;
+	uploadDate?: string;
+	status?: "PENDING" | "APPROVED" | "REJECTED";
+	faces?: Face[];
+}
+
+export interface ImagesInAlbum {
+	images: AlbumImage;
+	imageId: string;
+}
+
+export interface ImagesInAlbumResponse {
+	imagesInAlbum: ImagesInAlbum[];
+	pagination: PaginationMeta;
+}
+
+export interface AlbumImageFilters {
+	startDate?: string;
+	endDate?: string;
+	uploaderId?: string;
+}
+
+export type ImageStatus = "APPROVED" | "PENDING" | "REJECTED";
+
+// ============== UI State Types ==============
+
+export type ViewMode = "gallery" | "moderation" | "duplicates";
+export type DisplayMode = "grid" | "list";
+
+export interface UIState {
+	modals: {
+		upload: boolean;
+		share: boolean;
+		settings: boolean;
+		permissions: boolean;
+		deleteAlbum: boolean;
+		addToAlbum: boolean;
+	};
+	selection: Set<string>;
+	view: ViewMode;
+	viewMode: DisplayMode;
+	isEditingName: boolean;
+	isBatchProcessing: boolean;
+	rejectModal: {
+		isOpen: boolean;
+		imageIds: string[];
+	};
 }
