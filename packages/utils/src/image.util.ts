@@ -34,7 +34,9 @@ const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 	if (env === "test" || env === "development") {
 		if (!image_path) return image_path;
 		const port = envConfig.elysia_port;
-		const baseUrl = port ? `${envConfig.base_api_url}:${port}` : envConfig.base_api_url;
+		const baseUrl = port
+			? `${envConfig.base_api_url}:${port}`
+			: envConfig.base_api_url;
 		const imagePathSplit = image_path.split("/");
 		const strucImagePath = image_path
 			? `${baseUrl}/api/uploads/${imagePathSplit[imagePathSplit.length - 1]}`
@@ -47,7 +49,8 @@ const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 		if (isLocalStorage) {
 			// For local storage, use API endpoint
 			if (image_path) {
-				const baseUrl = envConfig.base_api_url || "https://lumina-api.otagera.xyz";
+				const baseUrl =
+					envConfig.base_api_url || "https://lumina-api.otagera.xyz";
 				const filename = storage_key || image_path.split("/").pop();
 				return `${baseUrl}/api/uploads/${filename}`;
 			}
@@ -64,7 +67,8 @@ const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 
 		// Fallback to API endpoint for external storage
 		if (image_path) {
-			const baseUrl = envConfig.base_api_url || "https://lumina-api.otagera.xyz";
+			const baseUrl =
+				envConfig.base_api_url || "https://lumina-api.otagera.xyz";
 			const filename = storage_key || image_path.split("/").pop();
 			return `${baseUrl}/api/uploads/${filename}`;
 		}

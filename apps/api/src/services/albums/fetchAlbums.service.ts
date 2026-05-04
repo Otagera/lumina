@@ -41,7 +41,11 @@ const service = async (data) => {
 
 		// MANUAL: if cover_image is set and not deleted
 		if (album.cover_image && !album.cover_image.deleted_at) {
-			coverImage = normalizeImagePath(album.cover_image.image_path, album.cover_image.storage_provider, album.cover_image.storage_key);
+			coverImage = normalizeImagePath(
+				album.cover_image.image_path,
+				album.cover_image.storage_provider,
+				album.cover_image.storage_key,
+			);
 		}
 
 		// FALLBACK: first 4 images if no manual cover set
@@ -51,7 +55,13 @@ const service = async (data) => {
 					?.slice(0, 4)
 					.map((ai: any) => ai.images)
 					.filter(Boolean)
-					.map((img: any) => normalizeImagePath(img.image_path, img.storage_provider, img.storage_key)) || [];
+					.map((img: any) =>
+						normalizeImagePath(
+							img.image_path,
+							img.storage_provider,
+							img.storage_key,
+						),
+					) || [];
 
 		return {
 			...album,

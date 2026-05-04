@@ -84,7 +84,11 @@ const service = async (data) => {
 				height: _image.images.original_height,
 				width: _image.images.original_width,
 			},
-			image_path: normalizeImagePath(_image.images.image_path, _image.images.storage_provider, _image.images.storage_key),
+			image_path: normalizeImagePath(
+				_image.images.image_path,
+				_image.images.storage_provider,
+				_image.images.storage_key,
+			),
 		});
 
 		return {

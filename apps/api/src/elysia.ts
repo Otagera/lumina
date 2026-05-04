@@ -96,14 +96,16 @@ export const createElysiaApp = async () => {
 				console.log(`[${set.status}] ${request.method} ${safeUrl}`);
 			}
 		})
-		.use(cors({
-			origin:
-				config.env === "development"
-					? true
-					: envConfig.cors_origin
-						? envConfig.cors_origin.split(",")
-						: false,
-		}))
+		.use(
+			cors({
+				origin:
+					config.env === "development"
+						? true
+						: envConfig.cors_origin
+							? envConfig.cors_origin.split(",")
+							: false,
+			}),
+		)
 		.get("/api/health", () => ({
 			status: "ok",
 			timestamp: new Date().toISOString(),
@@ -120,7 +122,11 @@ export const createElysiaApp = async () => {
 			);
 			const fs = await import("node:fs/promises");
 
-			const localPath = path.resolve(process.cwd(), "src/uploads", normalizedKey);
+			const localPath = path.resolve(
+				process.cwd(),
+				"src/uploads",
+				normalizedKey,
+			);
 
 			try {
 				await fs.access(localPath);
@@ -141,7 +147,7 @@ export const createElysiaApp = async () => {
 						set.headers["content-type"] = contentTypes[ext];
 					}
 
-return buffer;
+					return buffer;
 				} catch (err) {
 					console.error(`[UPLOADS] Failed to fetch ${key} from storage:`, err);
 					set.status = 404;

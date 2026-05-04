@@ -79,7 +79,9 @@ export const UsageIndicator = () => {
 											? "bg-amber-500"
 											: "bg-sage"
 							}`}
-							style={{ width: isUnlimitedCompute ? "100%" : `${computePercentage}%` }}
+							style={{
+								width: isUnlimitedCompute ? "100%" : `${computePercentage}%`,
+							}}
 						/>
 					</div>
 				</div>

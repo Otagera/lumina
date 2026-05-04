@@ -128,6 +128,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 				albumId: t.Optional(t.String()),
 				threshold: t.Optional(t.Number()),
 				limit: t.Optional(t.Number()),
+				excludeSourceFace: t.Optional(t.Boolean()),
 			}),
 		},
 	)

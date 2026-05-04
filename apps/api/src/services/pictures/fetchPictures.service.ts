@@ -88,7 +88,11 @@ const service = async (data) => {
 				height: image.original_height,
 				width: image.original_width,
 			},
-			image_path: normalizeImagePath(image.image_path, image.storage_provider, image.storage_key),
+			image_path: normalizeImagePath(
+				image.image_path,
+				image.storage_provider,
+				image.storage_key,
+			),
 		});
 	});
 	const aliasPageInfo = aliaserSpec(aliasSpec.pagination, pagination);

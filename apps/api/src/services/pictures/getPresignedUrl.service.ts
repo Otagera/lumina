@@ -1,5 +1,5 @@
-import jwt from "jsonwebtoken";
 import Joi from "joi";
+import jwt from "jsonwebtoken";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
 import {

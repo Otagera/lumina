@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import jwt from "jsonwebtoken";
 import { Elysia, t } from "elysia";
+import jwt from "jsonwebtoken";
 import prisma from "../../../../packages/config/src/db.config.ts";
 import config from "../../../../packages/config/src/index.config.ts";
 import {

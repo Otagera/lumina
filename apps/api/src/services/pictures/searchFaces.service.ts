@@ -16,6 +16,7 @@ const spec = Joi.object({
 	albumId: Joi.string().uuid(),
 	threshold: Joi.number().min(0).max(1),
 	limit: Joi.number().integer().min(1).max(100),
+	excludeSourceFace: Joi.boolean().default(false),
 }).or("faceId", "personId");
 
 const aliasSpec = {
@@ -25,6 +26,7 @@ const aliasSpec = {
 		albumId: "albumId",
 		threshold: "threshold",
 		limit: "limit",
+		excludeSourceFace: "excludeSourceFace",
 	},
 	response: {
 		faces: "faces",
@@ -46,7 +48,11 @@ const service = async (data) => {
 				personId: face.person_id,
 				personName: face.people?.name || null,
 				imagePath: face.images
-					? normalizeImagePath(face.images.image_path, face.images.storage_provider, face.images.storage_key)
+					? normalizeImagePath(
+							face.images.image_path,
+							face.images.storage_provider,
+							face.images.storage_key,
+						)
 					: null,
 				boundingBox: face.bounding_box,
 				originalWidth: face.images?.original_width || null,
@@ -63,12 +69,17 @@ const service = async (data) => {
 		albumId: params.albumId,
 		threshold: params.threshold,
 		limit: params.limit,
+		excludeSourceFace: params.excludeSourceFace,
 	});
 
 	const aliasRes = aliaserSpec(aliasSpec.response, {
 		faces: similarFaces.map((f) => ({
 			...f,
-			imagePath: normalizeImagePath(f.imagePath, f.storageProvider, f.storageKey),
+			imagePath: normalizeImagePath(
+				f.imagePath,
+				f.storageProvider,
+				f.storageKey,
+			),
 		})),
 		sourceFace: sourceFaceData,
 	});

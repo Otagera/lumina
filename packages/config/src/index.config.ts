@@ -168,8 +168,7 @@ const config: IConfig = {
 	},
 	production: {
 		db_url: process.env.DB_URL,
-		base_api_url:
-			process.env.BASE_API_URL || "https://lumina-api.otagera.xyz",
+		base_api_url: process.env.BASE_API_URL || "https://lumina-api.otagera.xyz",
 		port: process.env.PORT || 5001,
 		secret: process.env.SESSION_SECRET,
 		redis_port: process.env.REDIS_PORT, // Redis port
@@ -197,7 +196,8 @@ const config: IConfig = {
 			app_name: process.env.CHATTERBOX_APP_NAME || "chatterbox",
 			api_secret: process.env.CHATTERBOX_API_SECRET,
 		},
-		ai_service_url: process.env.AI_SERVICE_URL || "https://lumina-api.otagera.xyz/",
+		ai_service_url:
+			process.env.AI_SERVICE_URL || "https://lumina-api.otagera.xyz/",
 		skip_tls_verify: process.env.SKIP_TLS_VERIFY === "true",
 
 		// Managed R2

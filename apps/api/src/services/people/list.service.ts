@@ -40,7 +40,11 @@ const service = async (user_id: string) => {
 				const isR2 =
 					image.storage_provider && image.storage_provider !== "local";
 				if (!isR2) {
-					base.faceUrl = normalizeImagePath(imagePath, image.storage_provider, image.storage_key);
+					base.faceUrl = normalizeImagePath(
+						imagePath,
+						image.storage_provider,
+						image.storage_key,
+					);
 				}
 
 				base.boundingBox = firstFace.bounding_box;

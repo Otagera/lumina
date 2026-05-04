@@ -71,8 +71,12 @@ export default function UsageDashboard() {
 	const isUnlimitedStorage = storageLimitMB === -1;
 	const isUnlimitedCompute = computeUnitsLimit === -1;
 
-	const storagePercentage = isUnlimitedStorage ? 0 : (storageUsedMB / storageLimitMB) * 100;
-	const computePercentage = isUnlimitedCompute ? 0 : (computeUnitsUsed / computeUnitsLimit) * 100;
+	const storagePercentage = isUnlimitedStorage
+		? 0
+		: (storageUsedMB / storageLimitMB) * 100;
+	const computePercentage = isUnlimitedCompute
+		? 0
+		: (computeUnitsUsed / computeUnitsLimit) * 100;
 
 	const isStorageWarning = !isUnlimitedStorage && storagePercentage >= 80;
 	const isComputeWarning = !isUnlimitedCompute && computePercentage >= 80;
@@ -195,12 +199,13 @@ export default function UsageDashboard() {
 								: `${storageUsedMB} MB`}
 						</div>
 						<div className="text-sm text-zinc-500 mb-4">
-							{isUnlimitedStorage 
+							{isUnlimitedStorage
 								? "Unlimited storage plan"
-								: `of ${storageLimitMB >= 1024
-										? `${(storageLimitMB / 1024).toFixed(0)} GB`
-										: `${storageLimitMB} MB`} limit`
-							}
+								: `of ${
+										storageLimitMB >= 1024
+											? `${(storageLimitMB / 1024).toFixed(0)} GB`
+											: `${storageLimitMB} MB`
+									} limit`}
 						</div>
 						<div className="w-full h-3 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
 							<div
@@ -213,7 +218,11 @@ export default function UsageDashboard() {
 												? "bg-amber-500"
 												: "bg-sage"
 								}`}
-								style={{ width: isUnlimitedStorage ? "100%" : `${Math.min(storagePercentage, 100)}%` }}
+								style={{
+									width: isUnlimitedStorage
+										? "100%"
+										: `${Math.min(storagePercentage, 100)}%`,
+								}}
 							/>
 						</div>
 						{!isUnlimitedStorage && (
@@ -275,7 +284,11 @@ export default function UsageDashboard() {
 												? "bg-amber-500"
 												: "bg-plum"
 								}`}
-								style={{ width: isUnlimitedCompute ? "100%" : `${Math.min(computePercentage, 100)}%` }}
+								style={{
+									width: isUnlimitedCompute
+										? "100%"
+										: `${Math.min(computePercentage, 100)}%`,
+								}}
 							/>
 						</div>
 						{!isUnlimitedCompute && (

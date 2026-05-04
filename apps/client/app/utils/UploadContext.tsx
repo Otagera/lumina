@@ -88,59 +88,59 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 		set(IDB_KEY, tasks);
 	}, [tasks]);
 
-const addUploads = useCallback(
-	async (
-		files: FileList,
-		albumId: string,
-		initialStatus?: "PENDING" | "APPROVED",
-		shareToken?: string,
-	) => {
-		// Skip quota check for guest uploads (shareToken present)
-		// Quota is charged to the host, not the guest
-		if (!shareToken) {
-			try {
-				const usageRes = await fetchUsage();
-				const usage = usageRes?.data;
-				const computeUsed = usage?.computeUnitsUsed || 0;
-				const computeLimit = usage?.computeUnitsLimit || 100;
+	const addUploads = useCallback(
+		async (
+			files: FileList,
+			albumId: string,
+			initialStatus?: "PENDING" | "APPROVED",
+			shareToken?: string,
+		) => {
+			// Skip quota check for guest uploads (shareToken present)
+			// Quota is charged to the host, not the guest
+			if (!shareToken) {
+				try {
+					const usageRes = await fetchUsage();
+					const usage = usageRes?.data;
+					const computeUsed = usage?.computeUnitsUsed || 0;
+					const computeLimit = usage?.computeUnitsLimit || 100;
 
-				// -1 means unlimited
-				if (computeLimit !== -1) {
-					const remaining = computeLimit - computeUsed;
+					// -1 means unlimited
+					if (computeLimit !== -1) {
+						const remaining = computeLimit - computeUsed;
 
-					if (remaining <= 0) {
-						toast.error(
-							`Monthly processing limit reached (${computeLimit} images). Your images will be uploaded but NOT processed by AI.`,
-							{ duration: 5000 },
-						);
-					} else if (files.length > remaining) {
-						toast.error(
-							`You only have ${remaining} processing units left. Only the first ${remaining} images will be processed by AI.`,
-							{ duration: 5000 },
-						);
+						if (remaining <= 0) {
+							toast.error(
+								`Monthly processing limit reached (${computeLimit} images). Your images will be uploaded but NOT processed by AI.`,
+								{ duration: 5000 },
+							);
+						} else if (files.length > remaining) {
+							toast.error(
+								`You only have ${remaining} processing units left. Only the first ${remaining} images will be processed by AI.`,
+								{ duration: 5000 },
+							);
+						}
 					}
+				} catch (error) {
+					console.error("Error checking quota:", error);
+					toast.error("Could not verify quota. Proceeding with upload.");
 				}
-			} catch (error) {
-				console.error("Error checking quota:", error);
-				toast.error("Could not verify quota. Proceeding with upload.");
 			}
-		}
 
-		const newTasks: UploadTask[] = Array.from(files).map((file) => ({
-			id: Math.random().toString(36).substring(2, 11),
-			fileName: file.name,
-			file,
-			progress: 0,
-			status: "pending",
-			albumId,
-			initialStatus,
-			shareToken,
-		}));
-		setTasks((prev) => [...prev, ...newTasks]);
-		setIsManagerOpen(true);
-	},
-	[],
-);
+			const newTasks: UploadTask[] = Array.from(files).map((file) => ({
+				id: Math.random().toString(36).substring(2, 11),
+				fileName: file.name,
+				file,
+				progress: 0,
+				status: "pending",
+				albumId,
+				initialStatus,
+				shareToken,
+			}));
+			setTasks((prev) => [...prev, ...newTasks]);
+			setIsManagerOpen(true);
+		},
+		[],
+	);
 
 	const processNextTask = useCallback(async () => {
 		if (processingRef.current) return;

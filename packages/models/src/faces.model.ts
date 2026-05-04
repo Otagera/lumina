@@ -6,7 +6,11 @@ const fetchFaceById = async (face_id) => {
 			face_id,
 		},
 		include: {
-			images: true,
+			images: {
+				include: {
+					album_images: true,
+				},
+			},
 			people: true,
 		},
 	});
@@ -108,6 +112,7 @@ const searchFaces = async ({
 	threshold = 0.8,
 	limit = 20,
 	imageIds,
+	excludeSourceFace = false,
 }: {
 	faceId?: number;
 	personId?: string;
@@ -115,6 +120,7 @@ const searchFaces = async ({
 	threshold?: number;
 	limit?: number;
 	imageIds?: string[];
+	excludeSourceFace?: boolean;
 }) => {
 	let targetEmbedding: number[] | null = null;
 	let targetPersonId = personId;
@@ -167,9 +173,9 @@ const searchFaces = async ({
 		ignoredJoin = "LEFT JOIN (SELECT NULL::int as id) ig ON false";
 	}
 
-	// Add faceId to avoid returning the same face if searching by faceId
+	// Add faceId to avoid returning the same face if searching by faceId and excludeSourceFace is true
 	let excludeClause = "";
-	if (faceId) {
+	if (faceId && excludeSourceFace) {
 		params.push(faceId);
 		excludeClause = `AND f.face_id != $${params.length}`;
 	}

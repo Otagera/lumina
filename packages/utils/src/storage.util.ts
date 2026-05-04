@@ -40,7 +40,7 @@ export interface StorageProvider {
 	upload(file: Buffer | Uint8Array, options: UploadOptions): Promise<string>;
 	delete(key: string): Promise<void>;
 	getSignedUrl(key: string, expires?: number): Promise<string>;
-		getUploadPresignedUrl(
+	getUploadPresignedUrl(
 		key: string,
 		contentType: string,
 		expires?: number,
@@ -78,7 +78,9 @@ export class LocalProvider implements StorageProvider {
 		this.baseDir = path.resolve(process.cwd(), "src/uploads");
 		const envConfig = config[config.env || "development"];
 		const port = envConfig.elysia_port;
-		const baseUrl = port ? `${envConfig.base_api_url}:${port}` : envConfig.base_api_url;
+		const baseUrl = port
+			? `${envConfig.base_api_url}:${port}`
+			: envConfig.base_api_url;
 		this.baseUrl = `${baseUrl}/api/uploads`;
 	}
 
@@ -118,10 +120,13 @@ export class LocalProvider implements StorageProvider {
 	): Promise<string> {
 		const envConfig = config[config.env || "development"];
 		const port = envConfig.elysia_port;
-		const baseUrl = port ? `${envConfig.base_api_url}:${port}` : envConfig.base_api_url;
+		const baseUrl = port
+			? `${envConfig.base_api_url}:${port}`
+			: envConfig.base_api_url;
 		const url = `${baseUrl}/api/v1/public/images/upload-direct-local?key=${key}`;
 		let finalUrl = shareToken ? `${url}&shareToken=${shareToken}` : url;
-		if (authToken) finalUrl += `${shareToken ? "&" : "?"}authToken=${authToken}`;
+		if (authToken)
+			finalUrl += `${shareToken ? "&" : "?"}authToken=${authToken}`;
 		return finalUrl;
 	}
 
