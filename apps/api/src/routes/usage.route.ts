@@ -5,7 +5,7 @@ import { authDerivation } from "./middleware/auth.plugin.ts";
 
 const usageRoutes = new Elysia({ prefix: "/usage" })
 	.derive(authDerivation)
-	.get("/", async ({ userId, set }) => {
+	.get("/", async ({ userId, set, query }) => {
 		try {
 			const data = await getUsageService({ userId });
 

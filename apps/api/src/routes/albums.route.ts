@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
 import { NotFoundError } from "../../../../packages/utils/src/error.util.ts";
+import { normalizeImagePath } from "../../../../packages/utils/src/image.util.ts";
 import { checkAlbumPermissions } from "../../../../packages/utils/src/permissions.util.ts";
 import { addImagesToAlbumService } from "../services/albums/addImagesToAlbum.service.ts";
 import { getAlbumForUser } from "../services/albums/albums.lib";
@@ -20,9 +21,7 @@ import { removeMemberService } from "../services/albums/removeMember.service.ts"
 import { resendInviteService } from "../services/albums/resendInvite.service.ts";
 import { updateMemberRoleService } from "../services/albums/updateMemberRole.service.ts";
 import { findDuplicatesService } from "../services/pictures/findDuplicates.service.ts";
-
 import { authDerivation } from "./middleware/auth.plugin.ts";
-import { normalizeImagePath } from "../../../../packages/utils/src/image.util.ts";
 
 const albumsRoutes = new Elysia({ prefix: "/albums" })
 	.derive(authDerivation)
@@ -112,7 +111,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				const albumId = params.albumId;
 
 				// Validate UUID format before querying database
-				const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+				const uuidRegex =
+					/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 				if (!uuidRegex.test(albumId)) {
 					throw new NotFoundError("Album not found");
 				}
@@ -123,7 +123,10 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					throw new NotFoundError("Album not found");
 				}
 
-				let coverImage: { id: string | null; url: string | null } = { id: null, url: null };
+				let coverImage: { id: string | null; url: string | null } = {
+					id: null,
+					url: null,
+				};
 
 				// MANUAL: if cover_image is set and not deleted
 				if (album.cover_image && !album.cover_image.deleted_at) {
@@ -148,10 +151,15 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 						limit: "4",
 					});
 
-					if (albumImages && typeof albumImages === "object" && "imagesInAlbum" in albumImages) {
-						coverImages = albumImages.imagesInAlbum
-							.map((ai: any) => ai.images?.imagePath)
-							.filter(Boolean) || [];
+					if (
+						albumImages &&
+						typeof albumImages === "object" &&
+						"imagesInAlbum" in albumImages
+					) {
+						coverImages =
+							albumImages.imagesInAlbum
+								.map((ai: any) => ai.images?.imagePath)
+								.filter(Boolean) || [];
 					}
 				}
 

@@ -1,13 +1,16 @@
 import crypto from "node:crypto";
+import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
-import Joi from "joi";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const envConfig = config[config.env || "development"];
 const spec = Joi.object({
-	albumId: Joi.string().uuid().required(),
-	eventType: Joi.string().required(),
+	album_id: Joi.string().uuid().required(),
+	event_type: Joi.string().required(),
 	payload: Joi.object().required(),
 });
 
@@ -26,11 +29,14 @@ export const dispatchWebhook = async (
 	payload: any,
 ) => {
 	try {
-		const params = validateSpec(spec, aliaserSpec(aliasSpec.request, {
-			albumId,
-			eventType,
-			payload,
-		}));
+		const params = validateSpec(
+			spec,
+			aliaserSpec(aliasSpec.request, {
+				albumId,
+				eventType,
+				payload,
+			}),
+		);
 
 		const albumSettings = await prisma.album_settings.findUnique({
 			where: { album_id: params.album_id },
@@ -52,7 +58,12 @@ export const dispatchWebhook = async (
 
 		// In a production system, this would be queued in BullMQ.
 		// For now, we will attempt synchronous delivery, and mark it.
-		await sendWebhook(event.id, albumSettings.webhook_url, params.event_type, params.payload);
+		await sendWebhook(
+			event.id,
+			albumSettings.webhook_url,
+			params.event_type,
+			params.payload,
+		);
 		return aliaserSpec(aliasSpec.response, { success: true });
 	} catch (error) {
 		console.error("Failed to dispatch webhook:", error);

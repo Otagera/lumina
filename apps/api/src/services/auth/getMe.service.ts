@@ -1,6 +1,11 @@
 import Joi from "joi";
+import { verify } from "jsonwebtoken";
+import config from "../../../../../packages/config/src/index.config.ts";
 import { getUser } from "../../../../../packages/models/src/users.lib.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
 	token: Joi.string().required(),
@@ -9,7 +14,7 @@ const spec = Joi.object({
 const aliasSpec = {
 	request: {},
 	response: {
-		user_id: "userId",
+		user_id: "id",
 		email: "email",
 		plan_name: "planName",
 	},
@@ -18,9 +23,13 @@ const aliasSpec = {
 const service = async (token: string) => {
 	const params = validateSpec(spec, { token });
 
+	const env = config.env || "development";
+	const secret = config[env].secret || "default_secret";
+
 	try {
-		const decoded = verify(token, config[config.env || "development"].secret || "default_secret") as any;
-		const user = await getUser(decoded.userId);
+		const decoded = verify(token, secret) as any;
+
+		const user = await getUser({ user_id: decoded.userId });
 
 		if (!user) {
 			throw new Error("User not found.");

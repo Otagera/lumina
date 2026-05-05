@@ -1,6 +1,9 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({});
 
@@ -19,7 +22,8 @@ const service = async () => {
 	return aliaserSpec(aliasSpec.response, {
 		plans: plans.map((p) => ({
 			...p,
-			features: typeof p.features === "string" ? JSON.parse(p.features) : p.features,
+			features:
+				typeof p.features === "string" ? JSON.parse(p.features) : p.features,
 		})),
 	});
 };

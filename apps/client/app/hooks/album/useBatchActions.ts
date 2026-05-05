@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import toast from "react-hot-toast";
+import { deleteImage } from "~/utils/api";
 import axiosAPI from "~/utils/axios";
 import { imageKeys } from "~/utils/queryKeys";
-import { deleteImage } from "~/utils/api";
 
 export interface UseBatchActionsOptions {
 	albumId: string;
@@ -53,7 +53,9 @@ export function useBatchActions({
 				imageIds,
 			});
 			queryClient.invalidateQueries({ queryKey: imageKeys.album(albumId) });
-			queryClient.invalidateQueries({ queryKey: imageKeys.album(targetAlbumId) });
+			queryClient.invalidateQueries({
+				queryKey: imageKeys.album(targetAlbumId),
+			});
 			toast.success(`Successfully moved ${imageIds.length} photos.`);
 		} catch (error) {
 			console.error("Batch add to album failed:", error);
@@ -119,9 +121,12 @@ export function useBatchActions({
 		} catch (error: unknown) {
 			const err = error as Error;
 			console.error("Bulk Download Error:", error);
-			toast.error(err.message || "Failed to prepare download. Please try again.", {
-				id: toastId,
-			});
+			toast.error(
+				err.message || "Failed to prepare download. Please try again.",
+				{
+					id: toastId,
+				},
+			);
 		}
 	};
 

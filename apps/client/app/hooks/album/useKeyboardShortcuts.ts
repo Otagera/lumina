@@ -1,6 +1,5 @@
-import { useEffect, useCallback } from "react";
-import type { AlbumImage } from "~/types";
-import type { ImageStatus } from "~/types";
+import { useCallback, useEffect } from "react";
+import type { AlbumImage, ImageStatus } from "~/types";
 
 export interface UseKeyboardShortcutsOptions {
 	view: "gallery" | "moderation" | "duplicates";
@@ -36,7 +35,8 @@ export function useKeyboardShortcuts({
 			);
 			if (currentIndex < 0) return;
 
-			const nextIndex = direction === "next" ? currentIndex + 1 : currentIndex - 1;
+			const nextIndex =
+				direction === "next" ? currentIndex + 1 : currentIndex - 1;
 			if (nextIndex < 0 || nextIndex >= images.length) return;
 
 			const nextImage = images[nextIndex];

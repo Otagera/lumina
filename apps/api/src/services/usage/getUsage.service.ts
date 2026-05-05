@@ -1,10 +1,13 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import { getUserPlanLimits } from "../../../../../packages/models/src/usage.model.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
-	userId: Joi.string().uuid().required(),
+	user_id: Joi.string().uuid().required(),
 });
 
 const aliasSpec = {
@@ -19,8 +22,8 @@ const aliasSpec = {
 };
 
 const service = async (data: any) => {
-	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
-
+	const aliasReq = aliaserSpec(aliasSpec.request, data);
+	const params = validateSpec(spec, aliasReq);
 	// Get user plan and limits
 	const { plan, storageLimitMB, computeLimit } = await getUserPlanLimits(
 		params.user_id,

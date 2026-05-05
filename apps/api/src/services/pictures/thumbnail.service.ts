@@ -2,12 +2,15 @@ import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
 import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 import { storage } from "../../../../../packages/utils/src/storage.util.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
-	imageId: Joi.string().uuid().required(),
-	faceId: Joi.string().optional(),
+	image_id: Joi.string().uuid().required(),
+	face_id: Joi.string().optional(),
 });
 
 const aliasSpec = {
@@ -87,7 +90,10 @@ const service = async (data: any) => {
 		const scaleX = actualWidth / (image.original_width || 2084);
 		const scaleY = actualHeight / (image.original_height || 4624);
 
-		let faceLeft: number, faceTop: number, faceWidth: number, faceHeight: number;
+		let faceLeft: number,
+			faceTop: number,
+			faceWidth: number,
+			faceHeight: number;
 
 		if (left < 1 && right <= 1 && top < 1 && bottom <= 1) {
 			// Normalized coordinates (0-1)
@@ -110,8 +116,14 @@ const service = async (data: any) => {
 		// Calculate padded coordinates, respecting image bounds
 		const paddedLeft = Math.max(0, faceLeft - paddingX);
 		const paddedTop = Math.max(0, faceTop - paddingY);
-		const paddedWidth = Math.min(faceWidth + paddingX * 2, actualWidth - paddedLeft);
-		const paddedHeight = Math.min(faceHeight + paddingY * 2, actualHeight - paddedTop);
+		const paddedWidth = Math.min(
+			faceWidth + paddingX * 2,
+			actualWidth - paddedLeft,
+		);
+		const paddedHeight = Math.min(
+			faceHeight + paddingY * 2,
+			actualHeight - paddedTop,
+		);
 
 		imageProcessor = imageProcessor.extract({
 			left: paddedLeft,

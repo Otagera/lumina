@@ -1,5 +1,8 @@
 import Joi from "joi";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({});
 const aliasSpec = { request: {}, response: {} };

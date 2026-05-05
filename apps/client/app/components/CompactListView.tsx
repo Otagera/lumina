@@ -1,7 +1,7 @@
+import { ImageIcon, MoreHorizontal, Trash2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import type { ImageFromDB } from "~/types";
-import { MoreHorizontal, Trash2, ImageIcon } from "lucide-react";
 
 interface CompactListViewProps {
 	images: ImageFromDB[];
@@ -38,8 +38,17 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 									className="w-5 h-5 rounded border-2 border-zinc-300 dark:border-zinc-600 hover:border-sage transition-colors flex items-center justify-center"
 								>
 									{images.length > 0 && selectedIds.size === images.length ? (
-										<svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-sage" viewBox="0 0 20 20" fill="currentColor">
-											<path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											className="h-3.5 w-3.5 text-sage"
+											viewBox="0 0 20 20"
+											fill="currentColor"
+										>
+											<path
+												fillRule="evenodd"
+												d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+												clipRule="evenodd"
+											/>
 										</svg>
 									) : selectedIds.size > 0 ? (
 										<div className="w-2 h-2 bg-sage/50 rounded-sm" />
@@ -145,7 +154,9 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 											className="p-2 text-zinc-400 hover:text-sage transition-colors"
 											onClick={(e) => {
 												e.stopPropagation();
-												setOpenMenuId(openMenuId === image.imageId ? null : image.imageId);
+												setOpenMenuId(
+													openMenuId === image.imageId ? null : image.imageId,
+												);
 											}}
 										>
 											<MoreHorizontal size={20} />
@@ -162,7 +173,9 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 														className={`w-full px-3 py-2 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2 ${coverImageId === image.imageId ? "bg-sage/10" : ""}`}
 													>
 														<ImageIcon size={14} />
-														{coverImageId === image.imageId ? "Remove Cover" : "Set as Cover"}
+														{coverImageId === image.imageId
+															? "Remove Cover"
+															: "Set as Cover"}
 													</button>
 												)}
 												<button

@@ -56,8 +56,8 @@ const createService = (serviceName: string, options: any) => {
   const libFileName = `${serviceName}.lib.ts`;
 
   const dirPath = path.join(".", "src", "services");
-  let filePath = "";
-  let libPath = "";
+  const filePath = "";
+  const libPath = "";
 
   if (options?.dir) {
     const targetDir = path.join(dirPath, options.dir);

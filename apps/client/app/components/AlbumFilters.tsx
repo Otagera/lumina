@@ -1,5 +1,5 @@
-import { Calendar, ChevronDown, X, ArrowUpDown } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { ArrowUpDown, Calendar, ChevronDown, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "./standard/Button";
 
 interface AlbumFiltersProps {
@@ -37,7 +37,10 @@ export const AlbumFilters = ({
 			if (dateRef.current && !dateRef.current.contains(e.target as Node)) {
 				setShowDateMenu(false);
 			}
-			if (uploaderRef.current && !uploaderRef.current.contains(e.target as Node)) {
+			if (
+				uploaderRef.current &&
+				!uploaderRef.current.contains(e.target as Node)
+			) {
 				setShowUploaderMenu(false);
 			}
 			if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
@@ -63,12 +66,12 @@ export const AlbumFilters = ({
 		return `${start.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${end.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 	};
 
-const applyDatePreset = (preset: string) => {
+	const applyDatePreset = (preset: string) => {
 		const today = new Date();
 		const todayStr = today.toISOString().split("T")[0];
 
 		// Format: YYYY-MM-DD for database comparison
-		const formatDate = (d: string | undefined) => d ? d : undefined;
+		const formatDate = (d: string | undefined) => (d ? d : undefined);
 
 		switch (preset) {
 			case "today":
@@ -79,7 +82,7 @@ const applyDatePreset = (preset: string) => {
 					endDate: formatDate(todayStr),
 				});
 				break;
-			case "week":
+			case "week": {
 				const weekAgo = new Date(today);
 				weekAgo.setDate(today.getDate() - 7);
 				onFilterChange({
@@ -88,7 +91,8 @@ const applyDatePreset = (preset: string) => {
 					endDate: formatDate(todayStr),
 				});
 				break;
-			case "month":
+			}
+			case "month": {
 				const monthAgo = new Date(today);
 				monthAgo.setMonth(today.getMonth() - 1);
 				onFilterChange({
@@ -97,6 +101,7 @@ const applyDatePreset = (preset: string) => {
 					endDate: formatDate(todayStr),
 				});
 				break;
+			}
 		}
 		setShowDateMenu(false);
 	};
@@ -161,7 +166,10 @@ const applyDatePreset = (preset: string) => {
 					>
 						<Calendar size={14} />
 						{getDatePresetLabel()}
-						<ChevronDown size={12} className={`transition-transform ${showDateMenu ? "rotate-180" : ""}`} />
+						<ChevronDown
+							size={12}
+							className={`transition-transform ${showDateMenu ? "rotate-180" : ""}`}
+						/>
 					</button>
 					{showDateMenu && (
 						<div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-20">
@@ -251,8 +259,13 @@ const applyDatePreset = (preset: string) => {
 									d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
 								/>
 							</svg>
-							{members.find((m) => m.user_id === filters.uploaderId)?.user?.email?.split("@")[0] || "Uploader"}
-							<ChevronDown size={12} className={`transition-transform ${showUploaderMenu ? "rotate-180" : ""}`} />
+							{members
+								.find((m) => m.user_id === filters.uploaderId)
+								?.user?.email?.split("@")[0] || "Uploader"}
+							<ChevronDown
+								size={12}
+								className={`transition-transform ${showUploaderMenu ? "rotate-180" : ""}`}
+							/>
 						</button>
 						{showUploaderMenu && (
 							<div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-20 max-h-60 overflow-y-auto">
@@ -271,7 +284,10 @@ const applyDatePreset = (preset: string) => {
 										type="button"
 										key={member.user_id}
 										onClick={() => {
-											onFilterChange({ ...filters, uploaderId: member.user_id });
+											onFilterChange({
+												...filters,
+												uploaderId: member.user_id,
+											});
 											setShowUploaderMenu(false);
 										}}
 										className={`w-full px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 ${
@@ -302,7 +318,10 @@ const applyDatePreset = (preset: string) => {
 						>
 							<ArrowUpDown size={14} />
 							{getSortLabel()}
-							<ChevronDown size={12} className={`transition-transform ${showSortMenu ? "rotate-180" : ""}`} />
+							<ChevronDown
+								size={12}
+								className={`transition-transform ${showSortMenu ? "rotate-180" : ""}`}
+							/>
 						</button>
 						{showSortMenu && (
 							<div className="absolute top-full right-0 mt-2 w-36 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-20">

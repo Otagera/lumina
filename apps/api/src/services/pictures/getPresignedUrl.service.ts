@@ -9,26 +9,26 @@ import {
 import { storage } from "../../../../../packages/utils/src/storage.util.ts";
 
 const spec = Joi.object({
-	userId: Joi.string().optional(),
-	albumId: Joi.string().optional(),
-	shareToken: Joi.string().optional(),
-	fileName: Joi.string().required(),
-	contentType: Joi.string().required(),
-	isMultipart: Joi.boolean().optional(),
-	uploadId: Joi.string().optional(),
-	partNumber: Joi.number().optional(),
+	user_id: Joi.string().optional(),
+	album_id: Joi.string().optional(),
+	share_token: Joi.string().optional(),
+	file_name: Joi.string().required(),
+	content_type: Joi.string().required(),
+	is_multipart: Joi.boolean().optional(),
+	upload_id: Joi.string().optional(),
+	part_number: Joi.number().optional(),
 });
 
 const aliasSpec = {
 	request: {
-		userId: "userId",
-		albumId: "albumId",
-		shareToken: "shareToken",
-		fileName: "fileName",
-		contentType: "contentType",
-		isMultipart: "isMultipart",
-		uploadId: "uploadId",
-		partNumber: "partNumber",
+		userId: "user_id",
+		albumId: "album_id",
+		shareToken: "share_token",
+		fileName: "file_name",
+		contentType: "content_type",
+		isMultipart: "is_multipart",
+		uploadId: "upload_id",
+		partNumber: "part_number",
 	},
 	response: {
 		uploadUrl: "uploadUrl",
@@ -39,19 +39,19 @@ const aliasSpec = {
 };
 
 const service = async (data: any) => {
-	const params = validateSpec(spec, data);
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
-	const key = params.key || `${Date.now()}-${params.fileName}`;
+	const key = params.key || `${Date.now()}-${params.file_name}`;
 	let currentStorage = storage;
 	let storageProvider: string | undefined = storage.getProviderName();
 	let authToken: string | undefined;
 
 	// Use album's storage if specified
-	if (params.albumId || params.shareToken) {
+	if (params.album_id || params.share_token) {
 		const album = await prisma.albums.findUnique({
-			where: params.albumId
-				? { album_id: params.albumId, created_by: params.userId }
-				: { share_token: params.shareToken },
+			where: params.album_id
+				? { album_id: params.album_id, created_by: params.user_id }
+				: { share_token: params.share_token },
 			include: { storage_config: true },
 		});
 
@@ -102,25 +102,25 @@ const service = async (data: any) => {
 	}
 
 	try {
-		if (params.isMultipart) {
-			if (params.uploadId && params.partNumber) {
+		if (params.is_multipart) {
+			if (params.upload_id && params.part_number) {
 				// Requesting a URL for a specific part
 				const uploadUrl = await currentStorage.getUploadPartPresignedUrl(
 					key,
-					params.uploadId,
-					params.partNumber,
+					params.upload_id,
+					params.part_number,
 				);
 				return aliaserSpec(aliasSpec.response, {
 					uploadUrl,
 					key,
 					storageProvider,
-					uploadId: params.uploadId,
+					uploadId: params.upload_id,
 				});
 			} else {
 				// Initializing a new multipart upload
 				const uploadId = await currentStorage.createMultipartUpload(
 					key,
-					params.contentType,
+					params.content_type,
 				);
 				return aliaserSpec(aliasSpec.response, {
 					key,
@@ -133,7 +133,7 @@ const service = async (data: any) => {
 		// Single file upload (default)
 		if (storageProvider === "local") {
 			authToken = jwt.sign(
-				{ key, userId: params.userId, shareToken: params.shareToken },
+				{ key, userId: params.user_id, shareToken: params.share_token },
 				config[config.env || "development"].secret || "default_secret",
 				{ expiresIn: "1h" },
 			);
@@ -141,9 +141,9 @@ const service = async (data: any) => {
 
 		const uploadUrl = await (currentStorage as any).getUploadPresignedUrl(
 			key,
-			params.contentType,
+			params.content_type,
 			3600,
-			params.shareToken,
+			params.share_token,
 			authToken,
 		);
 

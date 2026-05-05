@@ -9,7 +9,7 @@ import {
 } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = joi.object({
-	userId: joi.string().required(),
+	user_id: joi.string().required(),
 	configId: joi.string().required(),
 });
 

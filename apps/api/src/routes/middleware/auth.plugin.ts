@@ -24,10 +24,14 @@ export const authDerivation = async ({
 	}
 
 	try {
-		const decoded = verify(token, config[config.env].secret) as {
-			userId: string;
-		};
+		const env = config.env || "development";
+		const secret = config[env].secret;
+		const decoded = verify(token, secret) as any;
+
 		const userId = decoded.userId;
+		if (!userId) {
+			throw new AuthError("Unauthorized: Invalid token payload");
+		}
 
 		const validUser = await getUser({ user_id: userId });
 
@@ -43,8 +47,6 @@ export const authDerivation = async ({
 		if (error instanceof AuthError) {
 			throw error;
 		}
-
-		console.error("[AUTH] Authentication failed:", error.message);
 
 		if (
 			error.name === "JsonWebTokenError" ||

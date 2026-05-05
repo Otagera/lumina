@@ -1,10 +1,10 @@
 import { Elysia, t } from "elysia";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
+import { ignoreFaceService } from "../services/faces/ignoreFace.service.ts";
+import { unignoreFaceService } from "../services/faces/unignoreFace.service.ts";
 import fetchFaceService from "../services/pictures/fetchFace.service.ts";
 import searchFacesService from "../services/pictures/searchFaces.service.ts";
 import updateFaceService from "../services/pictures/updateFace.service.ts";
-import { ignoreFaceService } from "../services/faces/ignoreFace.service.ts";
-import { unignoreFaceService } from "../services/faces/unignoreFace.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 import { guestPlugin } from "./middleware/guest.plugin.ts";
 import { checkTaggingPolicy } from "./middleware/policy.middleware.ts";

@@ -1,11 +1,14 @@
 import Joi from "joi";
 import { deleteFacesByImageId } from "../../../../../packages/models/src/faces.model.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 import { getImage } from "./pictures.lib.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
-	userId: Joi.string().uuid().required(),
-	imageId: Joi.string().uuid().required(),
+	user_id: Joi.string().uuid().required(),
+	image_id: Joi.string().uuid().required(),
 });
 
 const aliasSpec = {
@@ -18,7 +21,10 @@ export const reprocessPictureService = async (data: any) => {
 
 	// 1. Verify user owns the image and get the raw database record
 	// The `getImage` lib handles the verification and throws NotFoundError if it fails.
-	const image = await getImage({ image_id: params.user_id, uploaded_by: params.image_id });
+	const image = await getImage({
+		image_id: params.image_id,
+		uploaded_by: params.user_id,
+	});
 
 	// 2. Delete existing faces for this image
 	await deleteFacesByImageId(params.image_id);

@@ -11,22 +11,22 @@ import {
 } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
-	faceId: Joi.number().optional(),
-	personId: Joi.string().uuid().optional(),
-	albumId: Joi.string().uuid(),
+	face_id: Joi.number().optional(),
+	person_id: Joi.string().uuid().optional(),
+	album_id: Joi.string().uuid(),
 	threshold: Joi.number().min(0).max(1),
 	limit: Joi.number().integer().min(1).max(100),
-	excludeSourceFace: Joi.boolean().default(false),
-}).or("faceId", "personId");
+	exclude_source_face: Joi.boolean().default(false),
+}).or("face_id", "person_id");
 
 const aliasSpec = {
 	request: {
-		faceId: "faceId",
-		personId: "personId",
-		albumId: "albumId",
+		faceId: "face_id",
+		personId: "person_id",
+		albumId: "album_id",
 		threshold: "threshold",
 		limit: "limit",
-		excludeSourceFace: "excludeSourceFace",
+		excludeSourceFace: "exclude_source_face",
 	},
 	response: {
 		faces: "faces",
@@ -40,8 +40,8 @@ const service = async (data) => {
 
 	let sourceFaceData: any = null;
 
-	if (params.faceId) {
-		const face = await fetchFaceById(params.faceId);
+	if (params.face_id) {
+		const face = await fetchFaceById(params.face_id);
 		if (face) {
 			sourceFaceData = {
 				faceId: face.face_id,
@@ -58,18 +58,18 @@ const service = async (data) => {
 				originalWidth: face.images?.original_width || null,
 				originalHeight: face.images?.original_height || null,
 			};
-		} else if (!params.personId) {
+		} else if (!params.person_id) {
 			throw new NotFoundError("Face not found.");
 		}
 	}
 
 	const similarFaces = await searchFaces({
-		faceId: params.faceId,
-		personId: params.personId,
-		albumId: params.albumId,
+		faceId: params.face_id,
+		personId: params.person_id,
+		albumId: params.album_id,
 		threshold: params.threshold,
 		limit: params.limit,
-		excludeSourceFace: params.excludeSourceFace,
+		excludeSourceFace: params.exclude_source_face,
 	});
 
 	const aliasRes = aliaserSpec(aliasSpec.response, {

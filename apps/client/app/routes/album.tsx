@@ -1,19 +1,35 @@
-import { useState, useMemo, useCallback, Fragment } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle, Upload, XCircle } from "lucide-react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { CheckCircle, XCircle, Upload } from "lucide-react";
-import { MainContainer } from "~/components/MainContainer";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { AddToAlbumModal } from "~/components/AddToAlbumModal";
+import { AlbumSettingsModal } from "~/components/AlbumSettingsModal";
+import { AlbumHeader, AlbumToolbar } from "~/components/album";
 import { BackButton } from "~/components/BackButton";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { CompactListView } from "~/components/CompactListView";
 import { ConfirmModal } from "~/components/ConfirmModal";
 import { DuplicateReview } from "~/components/DuplicateReview";
+import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
+import { useAlbumImages } from "~/hooks/album/useAlbumImages";
+import { useBatchActions } from "~/hooks/album/useBatchActions";
+import { useInfiniteScroll } from "~/hooks/album/useInfiniteScroll";
+import { useKeyboardShortcuts } from "~/hooks/album/useKeyboardShortcuts";
+import { useModeration } from "~/hooks/album/useModeration";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
 import ModerationGridItem from "~/Images/ModerationGridItem";
+import type {
+	Album,
+	AlbumImage,
+	ApiResponse,
+	DisplayMode,
+	ImageStatus,
+	ViewMode,
+} from "~/types";
 import { getBentoSpanClass } from "~/utils/bento";
 import { groupImagesByDate } from "~/utils/dateGrouping";
 import { imageKeys } from "~/utils/queryKeys";
@@ -21,17 +37,11 @@ import { AlbumFilters } from "../components/AlbumFilters";
 import { AlbumPermissionsModal } from "../components/AlbumPermissionsModal";
 import { RejectReasonModal } from "../components/RejectReasonModal";
 import { ShareModal } from "../components/ShareModal";
-import { AddToAlbumModal } from "~/components/AddToAlbumModal";
-import { AlbumSettingsModal } from "~/components/AlbumSettingsModal";
-import { useAlbumImages } from "~/hooks/album/useAlbumImages";
-import { useModeration } from "~/hooks/album/useModeration";
-import { useBatchActions } from "~/hooks/album/useBatchActions";
-import { useKeyboardShortcuts } from "~/hooks/album/useKeyboardShortcuts";
-import { useInfiniteScroll } from "~/hooks/album/useInfiniteScroll";
-import { AlbumHeader, AlbumToolbar } from "~/components/album";
+import {
+	deleteAlbum as deleteAlbumApi,
+	editAlbum as editAlbumApi,
+} from "../utils/api";
 import { useUpload } from "../utils/UploadContext";
-import { deleteAlbum as deleteAlbumApi, editAlbum as editAlbumApi } from "../utils/api";
-import type { ViewMode, DisplayMode, ImageStatus, AlbumImage, Album, ApiResponse } from "~/types";
 
 const AlbumPage = () => {
 	const { albumId } = useParams();
@@ -42,7 +52,9 @@ const AlbumPage = () => {
 	const [view, setView] = useState<ViewMode>("gallery");
 	const [displayMode, setDisplayMode] = useState<DisplayMode>("grid");
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-	const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+	const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+		new Set(),
+	);
 	const [moderationFilters, setModerationFilters] = useState<{
 		startDate?: string;
 		endDate?: string;
@@ -51,8 +63,10 @@ const AlbumPage = () => {
 
 	const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 	const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-	const [isAlbumSettingsModalOpen, setIsAlbumSettingsModalOpen] = useState(false);
-	const [isAlbumPermissionsModalOpen, setIsAlbumPermissionsModalOpen] = useState(false);
+	const [isAlbumSettingsModalOpen, setIsAlbumSettingsModalOpen] =
+		useState(false);
+	const [isAlbumPermissionsModalOpen, setIsAlbumPermissionsModalOpen] =
+		useState(false);
 	const [confirmDeleteAlbum, setConfirmDeleteAlbum] = useState(false);
 	const [isAddToAlbumOpen, setIsAddToAlbumOpen] = useState(false);
 	const [editAlbumName, setEditAlbumName] = useState("");
@@ -87,8 +101,12 @@ const AlbumPage = () => {
 		albumId: albumId!,
 	});
 
-	const { batchDelete, batchMove, batchDownload, isProcessing: isBatchProcessing } =
-		useBatchActions({ albumId: albumId! });
+	const {
+		batchDelete,
+		batchMove,
+		batchDownload,
+		isProcessing: isBatchProcessing,
+	} = useBatchActions({ albumId: albumId! });
 
 	const { ref: infiniteScrollRef } = useInfiniteScroll({
 		view,
@@ -136,8 +154,15 @@ const AlbumPage = () => {
 	const queryClient = useQueryClient();
 
 	const editAlbumMutation = useMutation({
-		mutationFn: ({ albumId, albumName, coverImageId }: { albumId: string; albumName?: string; coverImageId?: string | null }) =>
-			editAlbumApi({ albumId, albumName, coverImageId }),
+		mutationFn: ({
+			albumId,
+			albumName,
+			coverImageId,
+		}: {
+			albumId: string;
+			albumName?: string;
+			coverImageId?: string | null;
+		}) => editAlbumApi({ albumId, albumName, coverImageId }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: imageKeys.album(albumId!) });
 			toast.success("Album updated");
@@ -288,10 +313,13 @@ const AlbumPage = () => {
 		const toastId = toast.loading("Starting face clustering...");
 		try {
 			await fetch(`/api/albums/${albumId}/cluster`, { method: "POST" });
-			toast.success("Face clustering started! The UI will update when finished.", {
-				id: toastId,
-				duration: 5000,
-			});
+			toast.success(
+				"Face clustering started! The UI will update when finished.",
+				{
+					id: toastId,
+					duration: 5000,
+				},
+			);
 		} catch {
 			toast.error("Failed to start clustering.", { id: toastId });
 		}
@@ -359,8 +387,8 @@ const AlbumPage = () => {
 							</div>
 						) : displayMode === "grid" ? (
 							<div className="space-y-6">
-								{view === "gallery" && dateSections.length > 0
-									? dateSections.map((section) => {
+								{view === "gallery" && dateSections.length > 0 ? (
+									dateSections.map((section) => {
 										const isCollapsed = collapsedSections.has(section.key);
 										return (
 											<div key={section.key} className="space-y-2">
@@ -370,8 +398,9 @@ const AlbumPage = () => {
 													className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
 												>
 													<span
-														className={`text-zinc-400 transition-transform duration-200 ${isCollapsed ? "" : "rotate-90"
-															}`}
+														className={`text-zinc-400 transition-transform duration-200 ${
+															isCollapsed ? "" : "rotate-90"
+														}`}
 													>
 														›
 													</span>
@@ -383,8 +412,11 @@ const AlbumPage = () => {
 													</span>
 												</button>
 												<div
-													className={`overflow-hidden transition-all duration-300 ease-out ${isCollapsed ? "max-h-0 opacity-0" : "max-h-[2000px] opacity-100"
-														}`}
+													className={`overflow-hidden transition-all duration-300 ease-out ${
+														isCollapsed
+															? "max-h-0 opacity-0"
+															: "max-h-[2000px] opacity-100"
+													}`}
 												>
 													<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 auto-rows-[200px]">
 														{section.images.map((image, idx) => {
@@ -392,7 +424,12 @@ const AlbumPage = () => {
 															const height = image.originalSize?.height || 0;
 															const area = width * height;
 															const isFeatured = area > 2000000;
-															const spanClass = getBentoSpanClass(width, height, idx, isFeatured);
+															const spanClass = getBentoSpanClass(
+																width,
+																height,
+																idx,
+																isFeatured,
+															);
 															return (
 																<div
 																	key={image.imageId}
@@ -409,10 +446,15 @@ const AlbumPage = () => {
 																		}}
 																		onClick={() => setSelectedImage(image)}
 																		isSelected={selectedIds.has(image.imageId)}
-																		onToggleSelect={() => handleToggleSelect(image.imageId)}
+																		onToggleSelect={() =>
+																			handleToggleSelect(image.imageId)
+																		}
 																		onDelete={handleDeleteImage}
 																		onSetCover={handleSetCoverImage}
-																		isCover={albumData?.data?.coverImage?.id === image.imageId}
+																		isCover={
+																			albumData?.data?.coverImage?.id ===
+																			image.imageId
+																		}
 																		selectionMode={selectedIds.size > 0}
 																	/>
 																</div>
@@ -423,58 +465,68 @@ const AlbumPage = () => {
 											</div>
 										);
 									})
-									: (
-										<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 auto-rows-[200px]">
-											{images.map((image, index) => {
-												const width = image.originalSize?.width || 0;
-												const height = image.originalSize?.height || 0;
-												const area = width * height;
-												const isFeatured = area > 2000000;
-												const spanClass = getBentoSpanClass(width, height, index, isFeatured);
+								) : (
+									<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 auto-rows-[200px]">
+										{images.map((image, index) => {
+											const width = image.originalSize?.width || 0;
+											const height = image.originalSize?.height || 0;
+											const area = width * height;
+											const isFeatured = area > 2000000;
+											const spanClass = getBentoSpanClass(
+												width,
+												height,
+												index,
+												isFeatured,
+											);
 
-												return (
-													<div
-														key={image.imageId}
-														className={`relative ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500`}
-														style={{ animationDelay: `${index * 50}ms` }}
-													>
-														{view === "moderation" ? (
-															<ModerationGridItem
-																image={{
-																	...image,
-																	id: image.imageId,
-																	url: image.imagePath,
-																	alt: image.imagePath,
-																}}
-																onClick={() => setSelectedImage(image)}
-																isSelected={selectedIds.has(image.imageId)}
-																onToggleSelect={() => handleToggleSelect(image.imageId)}
-															/>
-														) : (
-															<ImageGridItem
-																image={{
-																	id: image.imageId,
-																	width: width,
-																	height: height,
-																	url: image.imagePath,
-																	alt: image.imagePath,
-																}}
-																onClick={() => setSelectedImage(image)}
-																isSelected={selectedIds.has(image.imageId)}
-																onToggleSelect={() =>
-																	handleToggleSelect(image.imageId)
-																}
-																onDelete={handleDeleteImage}
-																onSetCover={handleSetCoverImage}
-																isCover={albumData?.data?.coverImage?.id === image.imageId}
-																selectionMode={selectedIds.size > 0}
-															/>
-														)}
-													</div>
-												);
-											})}
-										</div>
-									)}
+											return (
+												<div
+													key={image.imageId}
+													className={`relative ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500`}
+													style={{ animationDelay: `${index * 50}ms` }}
+												>
+													{view === "moderation" ? (
+														<ModerationGridItem
+															image={{
+																...image,
+																id: image.imageId,
+																url: image.imagePath,
+																alt: image.imagePath,
+															}}
+															onClick={() => setSelectedImage(image)}
+															isSelected={selectedIds.has(image.imageId)}
+															onToggleSelect={() =>
+																handleToggleSelect(image.imageId)
+															}
+														/>
+													) : (
+														<ImageGridItem
+															image={{
+																id: image.imageId,
+																width: width,
+																height: height,
+																url: image.imagePath,
+																alt: image.imagePath,
+															}}
+															onClick={() => setSelectedImage(image)}
+															isSelected={selectedIds.has(image.imageId)}
+															onToggleSelect={() =>
+																handleToggleSelect(image.imageId)
+															}
+															onDelete={handleDeleteImage}
+															onSetCover={handleSetCoverImage}
+															isCover={
+																albumData?.data?.coverImage?.id ===
+																image.imageId
+															}
+															selectionMode={selectedIds.size > 0}
+														/>
+													)}
+												</div>
+											);
+										})}
+									</div>
+								)}
 							</div>
 						) : (
 							<CompactListView

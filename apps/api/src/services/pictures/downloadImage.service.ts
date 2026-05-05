@@ -1,12 +1,15 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 import { storage } from "../../../../../packages/utils/src/storage.util.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
-	imageId: Joi.string().uuid().required(),
-	userId: Joi.string().uuid().required(),
+	image_id: Joi.string().uuid().required(),
+	user_id: Joi.string().uuid().required(),
 });
 
 const aliasSpec = {

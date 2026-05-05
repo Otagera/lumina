@@ -6,12 +6,12 @@ import {
 } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = joi.object({
-	userId: joi.string().required(),
+	user_id: joi.string().required(),
 });
 
 const aliasSpec = {
 	request: {
-		userId: "userId",
+		userId: "user_id",
 	},
 	response: {
 		computeUnitsUsed: "imagesUsed",
@@ -23,9 +23,10 @@ const aliasSpec = {
 };
 
 const service = async (data: any) => {
-	const params = validateSpec(spec, data);
+	const aliasReq = aliaserSpec(aliasSpec.request, data);
+	const params = validateSpec(spec, aliasReq);
 
-	const stats = await getUserUsageStats(params.userId);
+	const stats = await getUserUsageStats(params.user_id);
 
 	const startOfMonth = new Date();
 	startOfMonth.setDate(1);

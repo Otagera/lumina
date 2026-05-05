@@ -9,7 +9,7 @@ export const guestPlugin = new Elysia({ name: "guest-plugin" }).derive(
 			guestSessionId.set({
 				value: newId,
 				httpOnly: true,
-				secure: true,
+				secure: process.env.NODE_ENV === "production",
 				sameSite: "lax",
 				path: "/",
 				maxAge: 365 * 24 * 60 * 60, // 1 year

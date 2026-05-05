@@ -285,10 +285,11 @@ const ImageGallery: FC = () => {
 					<button
 						type="button"
 						onClick={() => setViewMode("grid")}
-						className={`p-2 rounded-xl transition-all ${viewMode === "grid"
+						className={`p-2 rounded-xl transition-all ${
+							viewMode === "grid"
 								? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
 								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-							}`}
+						}`}
 						title="Bento Grid"
 					>
 						<svg
@@ -306,10 +307,11 @@ const ImageGallery: FC = () => {
 					<button
 						type="button"
 						onClick={() => setViewMode("list")}
-						className={`p-2 rounded-xl transition-all ${viewMode === "list"
+						className={`p-2 rounded-xl transition-all ${
+							viewMode === "list"
 								? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
 								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-							}`}
+						}`}
 						title="List View"
 					>
 						<svg

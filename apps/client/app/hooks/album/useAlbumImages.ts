@@ -1,10 +1,14 @@
-import { useMemo } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import type { AlbumImage, AlbumImageFilters } from "~/types";
-import { imageKeys, albumKeys, settingsKeys } from "~/utils/queryKeys";
+import { useMemo } from "react";
+import type {
+	Album,
+	AlbumImage,
+	AlbumImageFilters,
+	ApiResponse,
+	ImagesInAlbumResponse,
+} from "~/types";
 import { fetchAlbum, fetchImagesInAlbum, fetchSettings } from "~/utils/api";
-import type { ApiResponse } from "~/types";
-import type { Album, ImagesInAlbumResponse } from "~/types";
+import { albumKeys, imageKeys, settingsKeys } from "~/utils/queryKeys";
 
 export interface UseAlbumImagesOptions {
 	albumId: string;
@@ -25,7 +29,9 @@ export interface UseAlbumImagesReturn {
 	isFetchingPendingNext: boolean;
 	albumData: ApiResponse<Album> | undefined;
 	isAlbumLoading: boolean;
-	settingsData: { data: { usage: { imagesUsed: number; imagesLimit: number } } } | undefined;
+	settingsData:
+		| { data: { usage: { imagesUsed: number; imagesLimit: number } } }
+		| undefined;
 }
 
 export function useAlbumImages({
@@ -73,7 +79,8 @@ export function useAlbumImages({
 		return (
 			approvedQuery.data?.pages.flatMap(
 				(page: ApiResponse<ImagesInAlbumResponse>) =>
-					page?.data?.imagesInAlbum?.map((ia: ImagesInAlbum) => ia.images) || [],
+					page?.data?.imagesInAlbum?.map((ia: ImagesInAlbum) => ia.images) ||
+					[],
 			) || []
 		);
 	}, [approvedQuery.data]);
@@ -82,7 +89,8 @@ export function useAlbumImages({
 		return (
 			pendingQuery.data?.pages.flatMap(
 				(page: ApiResponse<ImagesInAlbumResponse>) =>
-					page?.data?.imagesInAlbum?.map((ia: ImagesInAlbum) => ia.images) || [],
+					page?.data?.imagesInAlbum?.map((ia: ImagesInAlbum) => ia.images) ||
+					[],
 			) || []
 		);
 	}, [pendingQuery.data]);
@@ -100,6 +108,8 @@ export function useAlbumImages({
 		isFetchingPendingNext: pendingQuery.isFetchingNextPage,
 		albumData: albumQuery.data as ApiResponse<Album> | undefined,
 		isAlbumLoading: albumQuery.isLoading,
-		settingsData: settingsQuery.data as { data: { usage: { imagesUsed: number; imagesLimit: number } } } | undefined,
+		settingsData: settingsQuery.data as
+			| { data: { usage: { imagesUsed: number; imagesLimit: number } } }
+			| undefined,
 	};
 }

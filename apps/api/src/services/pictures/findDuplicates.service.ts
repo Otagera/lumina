@@ -7,12 +7,17 @@ import {
 } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
-	albumId: Joi.string().uuid().required(),
-	userId: Joi.string().uuid().required(),
+	album_id: Joi.string().uuid().required(),
+	user_id: Joi.string().uuid().required(),
 	threshold: Joi.number().min(0).max(64).default(5), // Hamming distance threshold
 });
 
 const aliasSpec = {
+	request: {
+		albumId: "album_id",
+		userId: "user_id",
+		threshold: "threshold",
+	},
 	image: {
 		image_id: "imageId",
 		image_path: "imagePath",
@@ -41,12 +46,12 @@ const getHammingDistance = (h1: string, h2: string) => {
 };
 
 const service = async (data: any) => {
-	const params = validateSpec(spec, data);
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
 	// 1. Fetch all images in the album that have a perceptual hash
 	const albumImages = await prisma.album_images.findMany({
 		where: {
-			album_id: params.albumId,
+			album_id: params.album_id,
 			images: {
 				deleted_at: null,
 				perceptual_hash: { not: null },

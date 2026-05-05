@@ -1,5 +1,4 @@
 import { Elysia, t } from "elysia";
-import { verify } from "jsonwebtoken";
 import {
 	forgotPasswordService,
 	loginService,
@@ -12,6 +11,28 @@ import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util
 import { getMeService } from "../services/auth/getMe.service.ts";
 import { unsubscribeService } from "../services/auth/unsubscribe.service.ts";
 import { strictPublicRateLimit } from "./middleware/rate-limit.plugin.ts";
+
+const unsubscribeRoutes = new Elysia({ prefix: "/unsubscribe" }).post(
+	"/",
+	async ({ body, set }) => {
+		try {
+			const data = await unsubscribeService(body);
+			return data;
+		} catch (error: any) {
+			set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+			return {
+				status: "error",
+				message: error.message || "Failed to unsubscribe",
+			};
+		}
+	},
+	{
+		body: t.Object({
+			email: t.String(),
+			type: t.Optional(t.String()),
+		}),
+	},
+);
 
 const authRoutes = new Elysia({ prefix: "/auth" })
 	.group("", (app) =>
@@ -26,7 +47,7 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 						accessToken.set({
 							value: data.accessToken,
 							httpOnly: true,
-							secure: true,
+							secure: config.env === "production",
 							sameSite: "lax",
 							path: "/",
 							maxAge: 24 * 60 * 60, // 24 hours
@@ -35,7 +56,7 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 						refreshToken.set({
 							value: data.refreshToken,
 							httpOnly: true,
-							secure: true,
+							secure: config.env === "production",
 							sameSite: "lax",
 							path: "/",
 							maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -76,7 +97,7 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 						accessToken.set({
 							value: data.accessToken,
 							httpOnly: true,
-							secure: true,
+							secure: config.env === "production",
 							sameSite: "lax",
 							path: "/",
 							maxAge: 24 * 60 * 60,
@@ -85,7 +106,7 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 						refreshToken.set({
 							value: data.refreshToken,
 							httpOnly: true,
-							secure: true,
+							secure: config.env === "production",
 							sameSite: "lax",
 							path: "/",
 							maxAge: 30 * 24 * 60 * 60,
@@ -188,7 +209,7 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 			accessToken.set({
 				value: data.accessToken,
 				httpOnly: true,
-				secure: true,
+				secure: config.env === "production",
 				sameSite: "lax",
 				path: "/",
 				maxAge: 24 * 60 * 60,
@@ -197,7 +218,7 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 			refreshToken.set({
 				value: data.refreshToken,
 				httpOnly: true,
-				secure: true,
+				secure: config.env === "production",
 				sameSite: "lax",
 				path: "/",
 				maxAge: 30 * 24 * 60 * 60,
@@ -215,66 +236,36 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 			};
 		}
 	})
-	.get("/me", async ({ cookie: { accessToken }, set }) => {
-		if (!accessToken.value) {
-			set.status = HTTP_STATUS_CODES.UNAUTHORIZED;
-			return { status: "error", message: "Not authenticated" };
-		}
-
-		try {
-			const decoded = verify(accessToken.value, config[config.env].secret) as {
-				userId: string;
-			};
-			const validUser = await getUser({ user_id: decoded.userId });
-
-			if (!validUser) {
+	.get(
+		"/me",
+		async ({ cookie: { accessToken }, set }) => {
+			if (!accessToken.value) {
 				set.status = HTTP_STATUS_CODES.UNAUTHORIZED;
-				return { status: "error", message: "Invalid user" };
+				return { status: "error", message: "Not authenticated" };
 			}
 
-			return {
-				status: "completed",
-				data: {
-					id: validUser.user_id,
-					email: validUser.email,
-				},
-			};
-		} catch (error) {
-			set.status = HTTP_STATUS_CODES.UNAUTHORIZED;
-			return { status: "error", message: "Invalid token" };
-		}
-	});
-
-const unsubscribeRoutes = new Elysia({ prefix: "/unsubscribe" })
-	.use(strictPublicRateLimit)
-	.post(
-		"/",
-		async ({ body, set }) => {
 			try {
-				const data = await unsubscribeService(body);
+				const data = await getMeService(accessToken.value);
 
 				set.status = HTTP_STATUS_CODES.OK;
-				return data;
+				return {
+					status: "completed",
+					message: "User fetched successfully.",
+					data,
+				};
 			} catch (error: any) {
-				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode || HTTP_STATUS_CODES.UNAUTHORIZED;
 				return {
 					status: "error",
-					message: error.message || "Failed to unsubscribe",
+					message: error?.message || "Invalid token",
 				};
 			}
 		},
 		{
-			body: t.Object({
-				email: t.String(),
-				type: t.Optional(
-					t.Union([
-						t.Literal("welcome"),
-						t.Literal("photoApproved"),
-						t.Literal("clustering"),
-						t.Literal("marketing"),
-					]),
-				),
-			}),
+			detail: {
+				summary: "Get current user",
+				description: "Returns the authenticated user's details",
+			},
 		},
 	);
 

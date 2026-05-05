@@ -8,15 +8,15 @@ import {
 } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = joi.object({
-	userId: joi.string().required(),
+	user_id: joi.string().required(),
 });
 
 const aliasSpec = {
 	request: {
-		userId: "userId",
+		userId: "user_id",
 	},
 	response: {
-		user_id: "userId",
+		user_id: "id",
 		email: "email",
 		preferences: "preferences",
 		storage_configs: "storageConfigs",
@@ -35,8 +35,10 @@ const aliasSpec = {
 };
 
 const service = async (data: any) => {
-	const params = validateSpec(spec, data);
-	const user = await fetchUserById(params.userId);
+	const aliasReq = aliaserSpec(aliasSpec.request, data);
+	const params = validateSpec(spec, aliasReq);
+
+	const user = await fetchUserById(params.user_id);
 
 	if (!user) throw new Error("User not found");
 
@@ -44,7 +46,7 @@ const service = async (data: any) => {
 		aliaserSpec(aliasSpec.storageConfig, config),
 	);
 
-	const usage = await getUserUsageStats(params.userId);
+	const usage = await getUserUsageStats(params.user_id);
 
 	return aliaserSpec(aliasSpec.response, {
 		...user,

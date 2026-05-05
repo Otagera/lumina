@@ -27,7 +27,7 @@ const aliasSpec = {
 		password: "password",
 	},
 	response: {
-		id: "id",
+		user_id: "id",
 		email: "email",
 		accessToken: "accessToken",
 		refreshToken: "refreshToken",

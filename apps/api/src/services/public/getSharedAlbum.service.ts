@@ -2,7 +2,10 @@ import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
 import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
 	token: Joi.string().required(),
@@ -55,7 +58,8 @@ const service = async (data: any) => {
 
 	if (params.startDate || params.endDate) {
 		imageFilter.upload_date = {};
-		if (params.startDate) imageFilter.upload_date.gte = new Date(params.startDate);
+		if (params.startDate)
+			imageFilter.upload_date.gte = new Date(params.startDate);
 		if (params.endDate) imageFilter.upload_date.lte = new Date(params.endDate);
 	}
 
@@ -78,10 +82,12 @@ const service = async (data: any) => {
 
 	if (!album) throw new NotFoundError("Album not found or link expired.");
 
-	const isCollaborative = album.settings?.is_event && album.settings?.allow_guest_uploads;
+	const isCollaborative =
+		album.settings?.is_event && album.settings?.allow_guest_uploads;
 	const canUpload =
 		isCollaborative &&
-		(!album.settings?.expires_at || new Date(album.settings.expires_at) > new Date());
+		(!album.settings?.expires_at ||
+			new Date(album.settings.expires_at) > new Date());
 
 	const images = album.album_images
 		.map((ai) => ai.images)
@@ -89,7 +95,11 @@ const service = async (data: any) => {
 		.map((img) => ({
 			...img,
 			imageId: img.image_id,
-			imagePath: normalizeImagePath(img.image_path, img.storage_provider, img.storage_key),
+			imagePath: normalizeImagePath(
+				img.image_path,
+				img.storage_provider,
+				img.storage_key,
+			),
 			originalSize: { width: img.original_width, height: img.original_height },
 			isPending: img.status === "PENDING",
 		}));

@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { imageKeys } from "~/utils/queryKeys";
-import { moderateImages } from "~/utils/api";
 import type { ImageStatus } from "~/types";
+import { moderateImages } from "~/utils/api";
+import { imageKeys } from "~/utils/queryKeys";
 
 export interface UseModerationOptions {
 	albumId: string;
@@ -10,11 +10,17 @@ export interface UseModerationOptions {
 
 export interface UseModerationReturn {
 	moderate: (status: ImageStatus, imageIds: string[], reason?: string) => void;
-	moderateSingle: (status: ImageStatus, imageId: string, reason?: string) => void;
+	moderateSingle: (
+		status: ImageStatus,
+		imageId: string,
+		reason?: string,
+	) => void;
 	isPending: boolean;
 }
 
-export function useModeration({ albumId }: UseModerationOptions): UseModerationReturn {
+export function useModeration({
+	albumId,
+}: UseModerationOptions): UseModerationReturn {
 	const queryClient = useQueryClient();
 
 	const mutation = useMutation({
@@ -36,16 +42,24 @@ export function useModeration({ albumId }: UseModerationOptions): UseModerationR
 		},
 	});
 
-	const moderate = (status: ImageStatus, imageIds: string[], reason?: string) => {
+	const moderate = (
+		status: ImageStatus,
+		imageIds: string[],
+		reason?: string,
+	) => {
 		if (imageIds.length === 0) return;
-		mutation.mutate({ 
-			imageIds, 
-			status: status === "REJECTED" ? "REJECTED" : "APPROVED", 
-			reason 
+		mutation.mutate({
+			imageIds,
+			status: status === "REJECTED" ? "REJECTED" : "APPROVED",
+			reason,
 		});
 	};
 
-	const moderateSingle = (status: ImageStatus, imageId: string, reason?: string) => {
+	const moderateSingle = (
+		status: ImageStatus,
+		imageId: string,
+		reason?: string,
+	) => {
 		moderate(status, [imageId], reason);
 	};
 

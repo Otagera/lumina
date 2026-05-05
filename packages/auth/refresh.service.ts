@@ -24,7 +24,9 @@ export const refreshService = async (token: string) => {
 	}
 
 	try {
-		const decoded = jwt.verify(token, config[config.env].secret) as any;
+		const env = config.env || "development";
+		const secret = config[env].secret;
+		const decoded = jwt.verify(token, secret) as any;
 		if (
 			decoded.type !== "refresh" ||
 			decoded.userId !== existingToken.user_id

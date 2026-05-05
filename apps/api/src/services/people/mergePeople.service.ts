@@ -4,12 +4,15 @@ import {
 	BadRequestError,
 	NotFoundError,
 } from "../../../../../packages/utils/src/error.util.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
 	sourcePersonId: Joi.string().uuid().required(),
 	targetPersonId: Joi.string().uuid().required(),
-	userId: Joi.string().uuid().required(),
+	user_id: Joi.string().uuid().required(),
 });
 
 const aliasSpec = {
@@ -81,7 +84,10 @@ const service = async (data: any) => {
 		});
 	});
 
-	return aliaserSpec(aliasSpec.response, { success: true, targetPersonId: params.targetPersonId });
+	return aliaserSpec(aliasSpec.response, {
+		success: true,
+		targetPersonId: params.targetPersonId,
+	});
 };
 
 export const mergePeopleService = service;

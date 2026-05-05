@@ -1,19 +1,28 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 import { storage } from "../../../../../packages/utils/src/storage.util.ts";
 
 const spec = Joi.object({
-	userId: Joi.string().optional(),
-	albumId: Joi.string().optional(),
-	shareToken: Joi.string().optional(),
+	user_id: Joi.string().optional(),
+	album_id: Joi.string().optional(),
+	share_token: Joi.string().optional(),
 	key: Joi.string().required(),
-	uploadId: Joi.string().required(),
+	upload_id: Joi.string().required(),
 });
 
 const aliasSpec = {
-	request: {},
+	request: {
+		userId: "user_id",
+		albumId: "album_id",
+		shareToken: "share_token",
+		key: "key",
+		uploadId: "upload_id",
+	},
 	response: { success: "success" },
 };
 
@@ -23,11 +32,11 @@ export const abortMultipartUploadService = async (data: any) => {
 	let currentStorage = storage;
 
 	// Determine storage provider
-	if (params.albumId || params.shareToken) {
+	if (params.album_id || params.share_token) {
 		const album = await prisma.albums.findUnique({
-			where: params.albumId
-				? { album_id: params.albumId, created_by: params.userId }
-				: { share_token: params.shareToken },
+			where: params.album_id
+				? { album_id: params.album_id, created_by: params.user_id }
+				: { share_token: params.share_token },
 			include: { storage_config: true },
 		});
 
@@ -54,7 +63,7 @@ export const abortMultipartUploadService = async (data: any) => {
 	}
 
 	try {
-		await currentStorage.abortMultipartUpload(params.key, params.uploadId);
+		await currentStorage.abortMultipartUpload(params.key, params.upload_id);
 		return aliaserSpec(aliasSpec.response, { success: true });
 	} catch (err: any) {
 		console.error("Abort multipart upload failed:", err);

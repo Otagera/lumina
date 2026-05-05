@@ -1,10 +1,13 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 import { queueServices } from "../../../../worker/src/queue/queue.service.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
-	userId: Joi.string().uuid().required(),
+	user_id: Joi.string().uuid().required(),
 	imageIds: Joi.array().items(Joi.string().uuid()).required(),
 });
 
@@ -19,8 +22,8 @@ const service = async (data: any) => {
 	// Verify ownership
 	const images = await prisma.images.findMany({
 		where: {
-			image_id: { in: params.user_id },
-			uploaded_by: params.imageIds,
+			image_id: { in: params.imageIds },
+			uploaded_by: params.user_id,
 		},
 		select: { image_id: true },
 	});

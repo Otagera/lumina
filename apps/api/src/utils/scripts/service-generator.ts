@@ -6,7 +6,7 @@
  * Usage: bun run service-generator.ts --name createUser --category auth
  */
 
-import { writeFileSync, mkdirSync, existsSync } from "fs";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 
 const args = process.argv.slice(2);
@@ -14,8 +14,10 @@ const nameIndex = args.indexOf("--name");
 const categoryIndex = args.indexOf("--category");
 
 if (nameIndex === -1 || categoryIndex === -1) {
-  console.error("Usage: bun run service-generator.ts --name <serviceName> --category <category>");
-  process.exit(1);
+	console.error(
+		"Usage: bun run service-generator.ts --name <serviceName> --category <category>",
+	);
+	process.exit(1);
 }
 
 const serviceName = args[nameIndex + 1];
@@ -27,7 +29,7 @@ const libFileName = `${category}.lib.ts`;
 
 // Ensure directory exists
 if (!existsSync(serviceDir)) {
-  mkdirSync(serviceDir, { recursive: true });
+	mkdirSync(serviceDir, { recursive: true });
 }
 
 const serviceContent = `import { joi } from "@lumina/utils";
@@ -82,8 +84,8 @@ console.log(`Created: ${join(serviceDir, serviceFileName)}`);
 // Create lib file if it doesn't exist
 const libPath = join(serviceDir, libFileName);
 if (!existsSync(libPath)) {
-  writeFileSync(libPath, libContent);
-  console.log(`Created: ${libPath}`);
+	writeFileSync(libPath, libContent);
+	console.log(`Created: ${libPath}`);
 }
 
 console.log("\\nService generated successfully!");

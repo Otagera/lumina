@@ -2,8 +2,8 @@ import { Edit2, MoreVertical, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Album } from "~/types";
-import { Card } from "./standard/Card";
 import AlbumCover from "./AlbumCover";
+import { Card } from "./standard/Card";
 
 interface AlbumCardProps {
 	album: Album;

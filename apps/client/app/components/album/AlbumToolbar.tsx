@@ -1,4 +1,4 @@
-import type { ViewMode, DisplayMode } from "~/types";
+import type { DisplayMode, ViewMode } from "~/types";
 
 export interface AlbumToolbarProps {
 	view: ViewMode;

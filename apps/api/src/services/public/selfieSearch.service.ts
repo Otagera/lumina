@@ -1,30 +1,32 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import Joi from "joi";
 import axios from "axios";
+import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
 import { searchFacesByEmbedding } from "../../../../../packages/models/src/faces.model.ts";
 import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
 import { validateFileFromBuffer } from "../../../../../packages/utils/src/file-validator.ts";
 import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 import { storage } from "../../../../../packages/utils/src/storage.util.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
-	token: Joi.string().required(),
+	share_token: Joi.string().required(),
 	selfie: Joi.any().required(),
 });
 
 const aliasSpec = {
-	request: { token: "share_token" },
+	request: { token: "share_token", selfie: "selfie" },
 	response: { faces: "faces" },
 };
 
 const service = async (data: any) => {
-	const aliasReq = aliaserSpec(aliasSpec.request, data);
-	const params = validateSpec(spec, aliasReq);
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
 	// 1. Verify the share token and get albumId
 	const album = await prisma.albums.findUnique({
@@ -42,6 +44,8 @@ const service = async (data: any) => {
 	await validateFileFromBuffer(fileBuffer, params.selfie.name);
 
 	// Save locally for AI service to access
+	// Note: UPLOADS_DIR should be defined or imported. Assuming it is available or needs to be src/uploads
+	const UPLOADS_DIR = "src/uploads";
 	const tempPath = path.resolve(process.cwd(), UPLOADS_DIR, tempKey);
 	await fs.writeFile(tempPath, fileBuffer);
 
@@ -64,7 +68,9 @@ const service = async (data: any) => {
 	const faceData = aiResponse.data;
 
 	// Cleanup temp file
-	try { await fs.unlink(tempPath); } catch (_e) {}
+	try {
+		await fs.unlink(tempPath);
+	} catch (_e) {}
 
 	// Also cleanup from storage if using R2/S3
 	if (storage.getProviderName() !== "local") {

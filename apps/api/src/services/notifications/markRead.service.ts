@@ -1,9 +1,12 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
-	userId: Joi.string().uuid().required(),
+	user_id: Joi.string().uuid().required(),
 	notificationIds: Joi.array().items(Joi.string().uuid()).optional(),
 	markAll: Joi.boolean().default(false),
 });

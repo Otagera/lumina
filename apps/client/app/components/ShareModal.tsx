@@ -209,10 +209,10 @@ export const ShareModal = ({
 	const qrLogo = qrLogoUrl || "/favicon-camera-color.svg";
 	const formattedDate = creationDate
 		? new Date(creationDate).toLocaleDateString("en-US", {
-			month: "long",
-			day: "numeric",
-			year: "numeric",
-		})
+				month: "long",
+				day: "numeric",
+				year: "numeric",
+			})
 		: null;
 
 	return (
@@ -264,14 +264,16 @@ export const ShareModal = ({
 						<button
 							onClick={handleToggleShare}
 							disabled={shareMutation.isPending}
-							className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all focus:outline-none ${shareToken
-								? "bg-sage shadow-lg shadow-sage/20"
-								: "bg-zinc-200 dark:bg-zinc-800"
-								}`}
+							className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all focus:outline-none ${
+								shareToken
+									? "bg-sage shadow-lg shadow-sage/20"
+									: "bg-zinc-200 dark:bg-zinc-800"
+							}`}
 						>
 							<span
-								className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 ${shareToken ? "translate-x-7 shadow-sm" : "translate-x-1"
-									}`}
+								className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 ${
+									shareToken ? "translate-x-7 shadow-sm" : "translate-x-1"
+								}`}
 							/>
 						</button>
 					</div>

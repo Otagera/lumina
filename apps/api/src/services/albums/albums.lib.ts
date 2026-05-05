@@ -192,7 +192,8 @@ export const getAlbumForUser = async (albumId: string, userId: string) => {
 	}
 
 	// Validate UUID format - throw NotFoundError for invalid format
-	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+	const uuidRegex =
+		/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 	if (!uuidRegex.test(albumId)) {
 		throw new NotFoundError("Album not found");
 	}
@@ -318,9 +319,10 @@ export const getAlbumLinks = async (where, options = {}) => {
 	filter.images = imageFilter;
 
 	// Handle sorting - default to newest first
-	const orderBy = sortBy === "oldest"
-		? { images: { upload_date: "asc" } }
-		: { images: { upload_date: "desc" } };
+	const orderBy =
+		sortBy === "oldest"
+			? { images: { upload_date: "asc" } }
+			: { images: { upload_date: "desc" } };
 
 	const album = await fetchAlbumImages(filter, { ...options, orderBy });
 

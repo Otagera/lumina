@@ -10,16 +10,16 @@ import {
 } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
-	faceId: Joi.number().required(),
-	personId: Joi.string().uuid().allow(null),
-	userId: Joi.string().uuid().required(),
+	face_id: Joi.number().required(),
+	person_id: Joi.string().uuid().allow(null),
+	user_id: Joi.string().uuid().required(),
 });
 
 const aliasSpec = {
 	request: {
-		faceId: "faceId",
-		personId: "personId",
-		userId: "userId",
+		faceId: "face_id",
+		personId: "person_id",
+		userId: "user_id",
 	},
 	response: {
 		face_id: "faceId",
@@ -31,15 +31,15 @@ const service = async (data) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const params = validateSpec(spec, aliasReq);
 
-	const face = await fetchFaceById(params.faceId);
+	const face = await fetchFaceById(params.face_id);
 	if (!face) {
 		throw new NotFoundError("Face not found.");
 	}
 
 	const updatedFace = await updateFacePerson(
-		params.faceId,
-		params.personId,
-		params.userId,
+		params.face_id,
+		params.person_id,
+		params.user_id,
 	);
 
 	return aliaserSpec(aliasSpec.response, updatedFace);

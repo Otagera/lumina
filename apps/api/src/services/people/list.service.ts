@@ -2,7 +2,10 @@ import Joi from "joi";
 import config from "../../../../../packages/config/src/index.config.ts";
 import { getPeople } from "../../../../../packages/models/src/people.model.ts";
 import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
 	user_id: Joi.string().uuid().required(),
@@ -44,7 +47,8 @@ const service = async (user_id: string) => {
 				const imagePath = image.optimized_path || image.image_path;
 
 				// Fallback for local storage or if thumbnail API fails
-				const isR2 = image.storage_provider && image.storage_provider !== "local";
+				const isR2 =
+					image.storage_provider && image.storage_provider !== "local";
 				if (!isR2) {
 					base.faceUrl = normalizeImagePath(
 						imagePath,

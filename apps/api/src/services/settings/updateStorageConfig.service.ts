@@ -10,21 +10,22 @@ import {
 } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = joi.object({
-	userId: joi.string().required(),
-	configId: joi.string().required(),
+	user_id: joi.string().required(),
+	config_id: joi.string().required(),
 	provider: joi.string().valid("r2", "s3"),
 	name: joi.string(),
-	accessKeyId: joi.string(),
-	secretAccessKey: joi.string(),
+	access_key_id: joi.string(),
+	secret_access_key: joi.string(),
 	bucket: joi.string(),
 	endpoint: joi.string(),
 	region: joi.string().optional(),
-	isActive: joi.boolean().optional(),
+	is_active: joi.boolean().optional(),
 });
 
 const aliasSpec = {
 	request: {
 		userId: "user_id",
+		configId: "config_id",
 		provider: "provider",
 		name: "name",
 		accessKeyId: "access_key_id",
@@ -43,27 +44,26 @@ const aliasSpec = {
 };
 
 const service = async (data: any) => {
-	const params = validateSpec(spec, data);
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
 	// Verify ownership
-	const configs = await fetchStorageConfigs(params.userId);
-	const hasConfig = configs.some((c) => c.id === params.configId);
+	const configs = await fetchStorageConfigs(params.user_id);
+	const hasConfig = configs.some((c) => c.id === params.config_id);
 
 	if (!hasConfig) {
 		throw new Error("Storage configuration not found or unauthorized");
 	}
 
 	const updateData: any = { ...params };
-	delete updateData.userId;
-	delete updateData.configId;
+	delete updateData.user_id;
+	delete updateData.config_id;
 
-	if (updateData.accessKeyId)
-		updateData.accessKeyId = encrypt(updateData.accessKeyId);
-	if (updateData.secretAccessKey)
-		updateData.secretAccessKey = encrypt(updateData.secretAccessKey);
+	if (updateData.access_key_id)
+		updateData.access_key_id = encrypt(updateData.access_key_id);
+	if (updateData.secret_access_key)
+		updateData.secret_access_key = encrypt(updateData.secret_access_key);
 
-	const aliasReq = aliaserSpec(aliasSpec.request, updateData);
-	const result = await updateStorageConfig(params.configId, aliasReq);
+	const result = await updateStorageConfig(params.config_id, updateData);
 
 	return aliaserSpec(aliasSpec.response, result);
 };

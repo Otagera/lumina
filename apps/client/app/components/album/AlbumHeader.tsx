@@ -1,10 +1,17 @@
-import { MoreVertical, Pencil, Settings2, Trash2, Upload, XCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import {
+	MoreVertical,
+	Pencil,
+	Settings2,
+	Trash2,
+	Upload,
+	XCircle,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Button } from "~/components/standard/Button";
-import { Heading } from "~/components/standard/Heading";
-import { Card } from "~/components/standard/Card";
 import AlbumCover from "~/components/AlbumCover";
+import { Button } from "~/components/standard/Button";
+import { Card } from "~/components/standard/Card";
+import { Heading } from "~/components/standard/Heading";
 import type { Album } from "~/types";
 
 export interface AlbumHeaderProps {

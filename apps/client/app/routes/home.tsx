@@ -9,12 +9,7 @@ import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
 import ImageGallery from "~/Images/ImageGallery";
 import type { Album } from "~/types";
-import {
-	createAlbum,
-	deleteAlbum,
-	editAlbum,
-	fetchAlbums,
-} from "../utils/api";
+import { createAlbum, deleteAlbum, editAlbum, fetchAlbums } from "../utils/api";
 
 const Home = () => {
 	const queryClient = useQueryClient();
@@ -132,8 +127,7 @@ const Home = () => {
 									setConfirmDeleteAlbumId(albumId);
 								}}
 							/>
-						)
-						)}
+						))}
 					</div>
 				)}
 			</section>

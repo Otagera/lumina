@@ -96,8 +96,24 @@ export const createElysiaApp = async () => {
 				console.log(`[${set.status}] ${request.method} ${safeUrl}`);
 			}
 		})
+		.onError(({ code, error, set, request }) => {
+			console.error(
+				`[GLOBAL ERROR] Code: ${code}, URL: ${request.url}, Method: ${request.method}`,
+			);
+			console.error(`[GLOBAL ERROR] Message: ${error.message}`);
+			if (error.stack) console.error(`[GLOBAL ERROR] Stack: ${error.stack}`);
+
+			if (code === "VALIDATION") {
+				return {
+					status: "error",
+					message: error.message,
+					data: (error as any).all,
+				};
+			}
+		})
 		.use(
 			cors({
+				credentials: true,
 				origin:
 					config.env === "development"
 						? true

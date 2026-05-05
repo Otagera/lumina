@@ -7,15 +7,15 @@ import {
 } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = joi.object({
-	userId: joi.string().required(),
+	user_id: joi.string().required(),
 	provider: joi.string().valid("r2", "s3").required(),
 	name: joi.string().required(),
-	accessKeyId: joi.string().required(),
-	secretAccessKey: joi.string().required(),
+	access_key_id: joi.string().required(),
+	secret_access_key: joi.string().required(),
 	bucket: joi.string().required(),
 	endpoint: joi.string().required(),
 	region: joi.string().optional(),
-	isActive: joi.boolean().optional(),
+	is_active: joi.boolean().optional(),
 });
 
 const aliasSpec = {
@@ -39,19 +39,13 @@ const aliasSpec = {
 };
 
 const service = async (data: any) => {
-	const params = validateSpec(spec, data);
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
 	// Encrypt sensitive keys
-	const encryptedAccessKey = encrypt(params.accessKeyId);
-	const encryptedSecretKey = encrypt(params.secretAccessKey);
+	params.access_key_id = encrypt(params.access_key_id);
+	params.secret_access_key = encrypt(params.secret_access_key);
 
-	const aliasReq = aliaserSpec(aliasSpec.request, {
-		...params,
-		accessKeyId: encryptedAccessKey,
-		secretAccessKey: encryptedSecretKey,
-	});
-
-	const result = await createStorageConfig(params.userId, aliasReq);
+	const result = await createStorageConfig(params.user_id, params);
 
 	return aliaserSpec(aliasSpec.response, result);
 };

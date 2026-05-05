@@ -1,6 +1,6 @@
-import Joi from "joi";
 import fs from "node:fs";
 import path from "node:path";
+import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
 import {
@@ -8,17 +8,17 @@ import {
 	getUserUsage,
 	logUsage,
 } from "../../../../../packages/models/src/usage.model.ts";
+import { UPLOADS_DIR } from "../../../../../packages/utils/src/constants.util.ts";
 import {
 	getImageSize,
 	isImageCorrupted,
 	normalizeImagePath,
 } from "../../../../../packages/utils/src/image.util.ts";
-import { storage } from "../../../../../packages/utils/src/storage.util.ts";
-import { UPLOADS_DIR } from "../../../../../packages/utils/src/constants.util.ts";
 import {
 	aliaserSpec,
 	validateSpec,
 } from "../../../../../packages/utils/src/specValidator.util.ts";
+import { storage } from "../../../../../packages/utils/src/storage.util.ts";
 import { queueServices } from "../../../../worker/src/queue/queue.service.ts";
 import { createImage, getImagesByIds } from "./pictures.lib";
 
@@ -29,7 +29,9 @@ const fileSchema = Joi.object({
 	originalname: Joi.string().optional(),
 	type: Joi.string().optional(),
 	mimetype: Joi.string().optional(),
-	size: Joi.number().max(500 * 1024 * 1024).optional(),
+	size: Joi.number()
+		.max(500 * 1024 * 1024)
+		.optional(),
 }).or("existingKey", "name"); // Must have either existingKey or name
 
 const spec = Joi.object({
@@ -172,7 +174,8 @@ const service = async (data) => {
 	// Process files - upload to storage and prepare for DB
 	const processedFiles = await Promise.all(
 		params.files.map(async (file: any) => {
-			const filename = file.existingKey || `${Date.now()}-${file.name || file.originalname}`;
+			const filename =
+				file.existingKey || `${Date.now()}-${file.name || file.originalname}`;
 			let filePath: string;
 			let fileSize: number;
 			let storageKey: string;
@@ -181,8 +184,14 @@ const service = async (data) => {
 				// File already exists in storage
 				if (useExternalStorage) {
 					const imageBuffer = await currentStorage.getObject(file.existingKey);
-					const absolutePath = path.resolve(process.cwd(), UPLOADS_DIR, file.existingKey);
-					await fs.promises.mkdir(path.dirname(absolutePath), { recursive: true });
+					const absolutePath = path.resolve(
+						process.cwd(),
+						UPLOADS_DIR,
+						file.existingKey,
+					);
+					await fs.promises.mkdir(path.dirname(absolutePath), {
+						recursive: true,
+					});
 					await fs.promises.writeFile(absolutePath, imageBuffer);
 					filePath = absolutePath;
 					fileSize = imageBuffer.length;

@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { Home, Search } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
 

@@ -4,8 +4,8 @@ import { createStorageConfigService } from "../services/settings/createStorageCo
 import { deleteStorageConfigService } from "../services/settings/deleteStorageConfig.service.ts";
 import { fetchSettingsService } from "../services/settings/fetchSettings.service.ts";
 import { fetchUsageService } from "../services/settings/fetchUsage.service.ts";
-import { updateStorageConfigService } from "../services/settings/updateStorageConfig.service.ts";
 import { updateEmailPreferencesService } from "../services/settings/updateEmailPreferences.service.ts";
+import { updateStorageConfigService } from "../services/settings/updateStorageConfig.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 import { strictPublicRateLimit } from "./middleware/rate-limit.plugin.ts";
 
@@ -136,49 +136,49 @@ const settingsRoutes = new Elysia({ prefix: "/settings" })
 		},
 	)
 	.get("/email-preferences", async ({ set, userId }) => {
-			try {
-				const data = await fetchSettingsService({ userId });
+		try {
+			const data = await fetchSettingsService({ userId });
 
-				set.status = HTTP_STATUS_CODES.OK;
-				return {
-					status: "completed",
-					data: {
-						welcome: data.email_preferences?.welcome ?? true,
-						photoApproved: data.email_preferences?.photoApproved ?? true,
-						clustering: data.email_preferences?.clustering ?? true,
-						marketing: data.email_preferences?.marketing ?? false,
-					},
-				};
-			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-				return {
-					status: "error",
-					message: error?.message || "Internal server error",
-					data: null,
-				};
-			}
-		})
+			set.status = HTTP_STATUS_CODES.OK;
+			return {
+				status: "completed",
+				data: {
+					welcome: data.email_preferences?.welcome ?? true,
+					photoApproved: data.email_preferences?.photoApproved ?? true,
+					clustering: data.email_preferences?.clustering ?? true,
+					marketing: data.email_preferences?.marketing ?? false,
+				},
+			};
+		} catch (error: any) {
+			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+			return {
+				status: "error",
+				message: error?.message || "Internal server error",
+				data: null,
+			};
+		}
+	})
 	.put("/email-preferences", async ({ body, set, userId }) => {
-			try {
-				const data = await updateEmailPreferencesService({
-					...body,
-					userId,
-				});
+		try {
+			const data = await updateEmailPreferencesService({
+				...body,
+				userId,
+			});
 
-				set.status = HTTP_STATUS_CODES.OK;
-				return {
-					status: "completed",
-					message: "Email preferences updated.",
-					data,
-				};
-			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-				return {
-					status: "error",
-					message: error?.message || "Failed to update preferences",
-					data: null,
-				};
-			}
-		});
+			set.status = HTTP_STATUS_CODES.OK;
+			return {
+				status: "completed",
+				message: "Email preferences updated.",
+				data,
+			};
+		} catch (error: any) {
+			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+			return {
+				status: "error",
+				message: error?.message || "Failed to update preferences",
+				data: null,
+			};
+		}
+	});
 
 export default settingsRoutes;

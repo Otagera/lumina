@@ -1,18 +1,27 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
+import axios from "axios";
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
-import { searchFaces, searchFacesByEmbedding } from "../../../../../packages/models/src/faces.model.ts";
-import { HTTP_STATUS_CODES, UPLOADS_DIR } from "../../../../../packages/utils/src/constants.util.ts";
+import {
+	searchFaces,
+	searchFacesByEmbedding,
+} from "../../../../../packages/models/src/faces.model.ts";
+import {
+	HTTP_STATUS_CODES,
+	UPLOADS_DIR,
+} from "../../../../../packages/utils/src/constants.util.ts";
 import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
 import { validateFileFromBuffer } from "../../../../../packages/utils/src/file-validator.ts";
 import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 import { storage } from "../../../../../packages/utils/src/storage.util.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 import { uploadPicturesService } from "../pictures/uploadPictures.service.ts";
-import axios from "axios";
 
 const spec = Joi.object({
 	token: Joi.string().required(),
@@ -49,11 +58,16 @@ const service = async (data: any) => {
 
 	if (!album) throw new NotFoundError("Album not found.");
 
-	const isCollaborative = album.settings?.is_event && album.settings?.allow_guest_uploads;
-	const isExpired = album.settings?.expires_at && new Date(album.settings.expires_at) < new Date();
+	const isCollaborative =
+		album.settings?.is_event && album.settings?.allow_guest_uploads;
+	const isExpired =
+		album.settings?.expires_at &&
+		new Date(album.settings.expires_at) < new Date();
 
 	if (!isCollaborative || isExpired) {
-		throw new Error("Guest uploads are not allowed or have expired for this event.");
+		throw new Error(
+			"Guest uploads are not allowed or have expired for this event.",
+		);
 	}
 
 	// 2. Determine storage provider
@@ -81,7 +95,10 @@ const service = async (data: any) => {
 	} else {
 		// Check if images have external storage
 		const firstImage = album.album_images[0]?.images;
-		if (firstImage?.storage_provider && firstImage.storage_provider !== "local") {
+		if (
+			firstImage?.storage_provider &&
+			firstImage.storage_provider !== "local"
+		) {
 			const envConfig = config[config.env || "development"];
 			const r2 = (envConfig as any)?.r2;
 			if (r2?.access_key_id && r2?.bucket) {
@@ -105,7 +122,10 @@ const service = async (data: any) => {
 	const files = params.files || [];
 	const existingKey = params.key;
 
-	if (!existingKey && (!files || (Array.isArray(files) && files.length === 0))) {
+	if (
+		!existingKey &&
+		(!files || (Array.isArray(files) && files.length === 0))
+	) {
 		throw new Error("Either files or an existing key is required");
 	}
 
@@ -120,7 +140,8 @@ const service = async (data: any) => {
 
 		if (useExternalStorage) {
 			const imageBuffer = await currentStorage.getObject(existingKey);
-			const { type: _fileType, hash: hashResult } = await validateFileFromBuffer(imageBuffer, existingKey);
+			const { type: _fileType, hash: hashResult } =
+				await validateFileFromBuffer(imageBuffer, existingKey);
 			fileHash = hashResult;
 
 			// Duplicate check
@@ -133,7 +154,10 @@ const service = async (data: any) => {
 			});
 
 			if (existingImage) {
-				return { images: [{ imageId: existingImage.image_id, isDuplicate: true }], duplicateCount: 1 };
+				return {
+					images: [{ imageId: existingImage.image_id, isDuplicate: true }],
+					duplicateCount: 1,
+				};
 			}
 
 			const absolutePath = path.resolve(process.cwd(), UPLOADS_DIR, secureKey);
@@ -148,7 +172,8 @@ const service = async (data: any) => {
 			fileSize = stats.size;
 
 			const fullBuffer = await fs.readFile(oldPath);
-			const { type: _fileType, hash: hashResult } = await validateFileFromBuffer(fullBuffer, existingKey);
+			const { type: _fileType, hash: hashResult } =
+				await validateFileFromBuffer(fullBuffer, existingKey);
 			fileHash = hashResult;
 
 			// Duplicate check
@@ -161,7 +186,10 @@ const service = async (data: any) => {
 			});
 
 			if (existingImage) {
-				return { images: [{ imageId: existingImage.image_id, isDuplicate: true }], duplicateCount: 1 };
+				return {
+					images: [{ imageId: existingImage.image_id, isDuplicate: true }],
+					duplicateCount: 1,
+				};
 			}
 
 			const absolutePath = path.resolve(process.cwd(), UPLOADS_DIR, secureKey);
@@ -183,7 +211,10 @@ const service = async (data: any) => {
 		const filesArray = Array.isArray(files) ? files : [files];
 		for (const file of filesArray) {
 			const fileBuffer = Buffer.from(await file.arrayBuffer());
-			const { type: fileType, hash: fileHash } = await validateFileFromBuffer(fileBuffer, file.name);
+			const { type: fileType, hash: fileHash } = await validateFileFromBuffer(
+				fileBuffer,
+				file.name,
+			);
 
 			// Duplicate check
 			const existingImage = await prisma.images.findFirst({
@@ -195,7 +226,10 @@ const service = async (data: any) => {
 			});
 
 			if (existingImage) {
-				processedFiles.push({ imageId: existingImage.image_id, isDuplicate: true });
+				processedFiles.push({
+					imageId: existingImage.image_id,
+					isDuplicate: true,
+				});
 				continue;
 			}
 

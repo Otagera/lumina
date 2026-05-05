@@ -7,7 +7,7 @@ import { restoreImages } from "./pictures.lib.ts";
 
 const spec = Joi.object({
 	imageIds: Joi.array().items(Joi.string().uuid()).required(),
-	userId: Joi.string().uuid().required(),
+	user_id: Joi.string().uuid().required(),
 });
 
 const aliasSpec = {

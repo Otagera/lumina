@@ -1,11 +1,11 @@
 import { Elysia, t } from "elysia";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
-import { listTrashService } from "../services/trash/listTrash.service.ts";
-import { permanentDeleteImagesService } from "../services/trash/permanentDeleteImages.service.ts";
-import { permanentDeleteAlbumsService } from "../services/trash/permanentDeleteAlbums.service.ts";
-import { emptyTrashService } from "../services/trash/emptyTrash.service.ts";
 import { restoreAlbumService } from "../services/albums/restoreAlbum.service.ts";
 import restorePictureService from "../services/pictures/restorePicture.service.ts";
+import { emptyTrashService } from "../services/trash/emptyTrash.service.ts";
+import { listTrashService } from "../services/trash/listTrash.service.ts";
+import { permanentDeleteAlbumsService } from "../services/trash/permanentDeleteAlbums.service.ts";
+import { permanentDeleteImagesService } from "../services/trash/permanentDeleteImages.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 
 const trashRoutes = new Elysia({ prefix: "/trash" })

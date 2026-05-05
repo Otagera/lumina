@@ -32,7 +32,7 @@ export const csrfPlugin = new Elysia({ name: "csrf-plugin" }).onBeforeHandle(
 			cookie.csrfToken.set({
 				value: crypto.randomBytes(32).toString("hex"),
 				httpOnly: true,
-				secure: true,
+				secure: process.env.NODE_ENV === "production",
 				sameSite: "strict",
 				path: "/",
 				maxAge: 24 * 60 * 60,

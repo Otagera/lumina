@@ -1,7 +1,7 @@
+import { ImageIcon, MoreHorizontal, Trash2 } from "lucide-react";
 import type { HTMLAttributes } from "react";
-import { MoreHorizontal, Trash2, ImageIcon } from "lucide-react";
-import { cn } from "~/utils/cn";
 import { useState } from "react";
+import { cn } from "~/utils/cn";
 
 interface ImageGridItemProps extends HTMLAttributes<HTMLImageElement> {
 	image: {

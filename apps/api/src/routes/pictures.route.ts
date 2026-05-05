@@ -6,8 +6,10 @@ import {
 } from "../../../../packages/utils/src/constants.util.ts";
 import { queueServices } from "../../../worker/src/queue/queue.service";
 import { abortMultipartUploadService } from "../services/pictures/abortMultipartUpload.service.ts";
+import { bulkDownloadService } from "../services/pictures/bulkDownload.service.ts";
 import { completeMultipartUploadService } from "../services/pictures/completeMultipartUpload.service.ts";
 import deletePictureService from "../services/pictures/deletePicture.service.ts";
+import { downloadImageService } from "../services/pictures/downloadImage.service.ts";
 import fetchFacesService from "../services/pictures/fetchFaces.service.ts";
 import fetchPictureService from "../services/pictures/fetchPicture.service.ts";
 import fetchPicturesService from "../services/pictures/fetchPictures.service.ts";
@@ -15,8 +17,6 @@ import { getPresignedUrlService } from "../services/pictures/getPresignedUrl.ser
 import { moderatePicturesService } from "../services/pictures/moderatePictures.service.ts";
 import { reprocessPictureService } from "../services/pictures/reprocessPicture.service.ts";
 import { uploadPicturesService } from "../services/pictures/uploadPictures.service.ts";
-import { bulkDownloadService } from "../services/pictures/bulkDownload.service.ts";
-import { downloadImageService } from "../services/pictures/downloadImage.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 import { guestPlugin } from "./middleware/guest.plugin.ts";
 import { checkQuota } from "./middleware/quota.middleware.ts";
@@ -133,7 +133,11 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					albumId: body.albumId,
 					userId: userId,
 					guestSessionId,
-					files: body.uploadedImages ? (Array.isArray(body.uploadedImages) ? body.uploadedImages : [body.uploadedImages]) : [],
+					files: body.uploadedImages
+						? Array.isArray(body.uploadedImages)
+							? body.uploadedImages
+							: [body.uploadedImages]
+						: [],
 					status: body.status,
 					existingKey: body.key,
 				});
@@ -468,7 +472,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 			params: t.Object({
 				imageId: t.String(),
 			}),
-		}
+		},
 	)
 	.patch(
 		"/moderate",
@@ -502,7 +506,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 		},
 	);
 
-	const publicPicturesRoutes = new Elysia({ prefix: "/images" })
+const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 	.put(
 		"/upload-direct-local",
 		async ({ query, set, headers, request }) => {

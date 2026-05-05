@@ -1,10 +1,15 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
 	email: Joi.string().email().required(),
-	type: Joi.string().valid("welcome", "photoApproved", "clustering", "marketing").optional(),
+	type: Joi.string()
+		.valid("welcome", "photoApproved", "clustering", "marketing")
+		.optional(),
 });
 
 const aliasSpec = {
@@ -25,7 +30,10 @@ const service = async (data: any) => {
 	});
 
 	if (!user) {
-		return { status: "completed", message: "If this email exists, unsubscribed successfully." };
+		return {
+			status: "completed",
+			message: "If this email exists, unsubscribed successfully.",
+		};
 	}
 
 	const current = (user.email_preferences as any) || {};

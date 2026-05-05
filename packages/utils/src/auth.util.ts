@@ -9,68 +9,64 @@ const comparePasswords = async (password, userPassword) => {
 	return await Bun.password.verify(password, userPassword);
 };
 
-const createAdminToken = (adminId) => {
-	const adminToken = jwt.sign(
-		{ adminId, type: "admin" },
-		config[config.env].secret,
-		{ expiresIn: "24h" },
-	);
+const createAdminToken = () => {
+	const env = config.env || "development";
+	const secret = config[env].secret;
+	const adminToken = jwt.sign({ userId: "admin", type: "admin" }, secret, {
+		expiresIn: "1h",
+	});
 	return adminToken;
 };
 
 const createUserAuthToken = async (userId) => {
-	const accessToken = jwt.sign(
-		{ userId, type: "access" },
-		config[config.env].secret,
-		{ expiresIn: "24h" },
-	);
-	const refreshToken = jwt.sign(
-		{ userId, type: "refresh" },
-		config[config.env].secret,
-		{ expiresIn: "720h" },
-	);
+	const env = config.env || "development";
+	const secret = config[env].secret;
 
+	const accessToken = jwt.sign({ userId, type: "access" }, secret, {
+		expiresIn: "24h",
+	});
+	const refreshToken = jwt.sign({ userId, type: "refresh" }, secret, {
+		expiresIn: "30d",
+	});
 	return { accessToken, refreshToken };
 };
 
 const createUserResetPasswordToken = (email, userId) => {
-	const token = jwt.sign(
-		{ userId, email, type: "resetPassword" },
-		config[config.env].secret,
-		{ expiresIn: "24h" },
-	);
+	const env = config.env || "development";
+	const secret = config[env].secret;
+	const token = jwt.sign({ userId, email, type: "resetPassword" }, secret, {
+		expiresIn: "24h",
+	});
 	return token;
 };
 
 const createCompanyAuthToken = async (companyId) => {
-	const accessToken = jwt.sign(
-		{ companyId, type: "access" },
-		config[config.env].secret,
-		{ expiresIn: "24h" },
-	);
-	const refreshToken = jwt.sign(
-		{ companyId, type: "refresh" },
-		config[config.env].secret,
-		{ expiresIn: "720h" },
-	);
+	const env = config.env || "development";
+	const secret = config[env].secret;
+	const accessToken = jwt.sign({ companyId, type: "access" }, secret, {
+		expiresIn: "24h",
+	});
+	const refreshToken = jwt.sign({ companyId, type: "refresh" }, secret, {
+		expiresIn: "30d",
+	});
 	return { accessToken, refreshToken };
 };
 
 const createCompanyActivationToken = (email, companyId) => {
-	const token = jwt.sign(
-		{ companyId, email, type: "activate" },
-		config[config.env].secret,
-		{ expiresIn: "24h" },
-	);
+	const env = config.env || "development";
+	const secret = config[env].secret;
+	const token = jwt.sign({ companyId, email, type: "activation" }, secret, {
+		expiresIn: "48h",
+	});
 	return token;
 };
 
 const createCompanyResetPasswordToken = (email, companyId) => {
-	const token = jwt.sign(
-		{ companyId, email, type: "resetPassword" },
-		config[config.env].secret,
-		{ expiresIn: "24h" },
-	);
+	const env = config.env || "development";
+	const secret = config[env].secret;
+	const token = jwt.sign({ companyId, email, type: "resetPassword" }, secret, {
+		expiresIn: "24h",
+	});
 	return token;
 };
 

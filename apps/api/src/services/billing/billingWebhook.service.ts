@@ -1,6 +1,9 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
-import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import {
+	aliaserSpec,
+	validateSpec,
+} from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
 	event: Joi.string().required(),
@@ -12,7 +15,11 @@ const spec = Joi.object({
 });
 
 const aliasSpec = {
-	request: { userId: "user_id" },
+	request: {
+		userId: "user_id",
+		computeUnitsUsed: "compute_units_used",
+		storageMbUsed: "storage_mb_used",
+	},
 	response: { success: "success" },
 };
 
@@ -69,7 +76,9 @@ const service = async (data: any) => {
 					},
 				},
 			});
-			console.log(`[Billing Webhook] Metering report for user ${params.user_id}`);
+			console.log(
+				`[Billing Webhook] Metering report for user ${params.user_id}`,
+			);
 			break;
 
 		default:

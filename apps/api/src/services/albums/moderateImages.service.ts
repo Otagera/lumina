@@ -9,14 +9,14 @@ import {
 import { dispatchWebhook } from "../webhook/webhook.service.ts";
 
 const spec = Joi.object({
-	albumId: Joi.string().uuid().required(),
-	imageIds: Joi.array().items(Joi.string().uuid()).required(),
+	album_id: Joi.string().uuid().required(),
+	image_ids: Joi.array().items(Joi.string().uuid()).required(),
 	status: Joi.string().valid("APPROVED", "REJECTED").required(),
 	reason: Joi.string().optional(),
 });
 
 const aliasSpec = {
-	request: { albumId: "album_id" },
+	request: { albumId: "album_id", imageIds: "image_ids" },
 	response: { count: "count", status: "status" },
 };
 
@@ -27,7 +27,7 @@ const service = async (data: any) => {
 	const albumImages = await prisma.album_images.findMany({
 		where: {
 			album_id: params.album_id,
-			image_id: { in: params.imageIds },
+			image_id: { in: params.image_ids },
 		},
 	});
 

@@ -1,14 +1,33 @@
 import path from "node:path";
 import dotenv from "dotenv";
 
-// 1. Try loading from apps/api/.env (where the main backend config resides)
-dotenv.config({ path: path.join(import.meta.dir, "../../../apps/api/.env") });
+// Load .env from multiple possible locations
+const envPaths = [
+	path.join(import.meta.dir, "../../../apps/api/.env"),
+	path.join(import.meta.dir, "../../../.env"),
+	path.resolve(".env"),
+	path.resolve("apps/api/.env"),
+];
 
-// 2. Try loading from the monorepo root (relative to this file in packages/config/src/)
-dotenv.config({ path: path.join(import.meta.dir, "../../../.env") });
+let loadedEnv: Record<string, string> = {};
 
-// 3. Try loading from the current working directory
-dotenv.config();
+for (const envPath of envPaths) {
+	try {
+		const result = dotenv.config({ path: envPath, override: true });
+		if (result.parsed) {
+			loadedEnv = { ...loadedEnv, ...result.parsed };
+			console.log(`[Config] SUCCESS: Loaded .env from: ${envPath}`);
+			break;
+		}
+	} catch (e) {
+		console.log(`[Config] FAILED: Could not load .env from: ${envPath}`);
+	}
+}
+
+// Helper to get env value
+const getEnv = (key: string): string | undefined => {
+	return loadedEnv[key] || process.env[key];
+};
 
 interface IConfig {
 	env: "development" | "test" | "production";
@@ -19,24 +38,24 @@ interface IConfig {
 }
 
 const config: IConfig = {
-	env: (process.env.NODE_ENV || "development") as
+	env: (getEnv("NODE_ENV") || "development") as
 		| "development"
 		| "test"
 		| "production",
-	app_name: process.env.APP_NAME || "Lumina",
+	app_name: getEnv("APP_NAME") || "Lumina",
 	development: {
 		// DB
-		db_user: process.env.PG_USERNAME,
-		db_host: process.env.PG_HOSTNAME,
-		database: process.env.PG_DATABASE,
-		db_password: process.env.PG_PASSWORD,
+		db_user: getEnv("PG_USERNAME"),
+		db_host: getEnv("PG_HOSTNAME"),
+		database: getEnv("PG_DATABASE"),
+		db_password: getEnv("PG_PASSWORD"),
 		db_port: 5432,
-		db_url: `${process.env.DB_URL}${process.env.DB_NAME}`,
-		base_api_url: process.env.BASE_API_URL || "http://localhost",
-		port: process.env.PORT || 5001,
-		worker_port: process.env.WORKER_PORT || 5002,
-		elysia_port: process.env.ELYSIA_PORT || 3005,
-		secret: process.env.SESSION_SECRET,
+		db_url: `${getEnv("DB_URL")}/${getEnv("DB_NAME")}`,
+		base_api_url: getEnv("BASE_API_URL") || "http://localhost",
+		port: getEnv("PORT") || 5001,
+		worker_port: getEnv("WORKER_PORT") || 5002,
+		elysia_port: getEnv("ELYSIA_PORT") || 3005,
+		secret: getEnv("SESSION_SECRET"),
 
 		// Redis
 		redis_port: process.env.REDIS_PORT,
@@ -80,12 +99,12 @@ const config: IConfig = {
 
 		// Managed R2
 		r2: {
-			access_key_id: process.env.R2_ACCESS_KEY_ID,
-			secret_access_key: process.env.R2_SECRET_ACCESS_KEY,
-			bucket: process.env.R2_BUCKET,
-			endpoint: process.env.R2_ENDPOINT,
-			region: process.env.R2_REGION || "auto",
-			public_url: process.env.R2_PUBLIC_URL,
+			access_key_id: getEnv("R2_ACCESS_KEY_ID"),
+			secret_access_key: getEnv("R2_SECRET_ACCESS_KEY"),
+			bucket: getEnv("R2_BUCKET"),
+			endpoint: getEnv("R2_ENDPOINT"),
+			region: getEnv("R2_REGION") || "auto",
+			public_url: getEnv("R2_PUBLIC_URL"),
 		},
 
 		// Email
@@ -116,11 +135,12 @@ const config: IConfig = {
 		},
 	},
 	test: {
-		db_url: `${process.env.TEST_DB_URL}${process.env.TEST_DB_NAME}`,
-		base_api_url: process.env.TEST_BASE_API_URL || "http://localhost",
-		port: process.env.TEST_PORT || 5001,
-		elysia_port: process.env.TEST_ELYSIA_PORT || 3005,
-		secret: process.env.TEST_SESSION_SECRET,
+		db_url: `${getEnv("TEST_DB_URL")}/${getEnv("TEST_DB_NAME")}`,
+		base_api_url: getEnv("TEST_BASE_API_URL") || "http://localhost",
+		port: getEnv("TEST_PORT") || 5001,
+		worker_port: getEnv("TEST_WORKER_PORT") || 5002,
+		elysia_port: getEnv("TEST_ELYSIA_PORT") || 3005,
+		secret: getEnv("TEST_SESSION_SECRET"),
 		redis_port: process.env.TEST_REDIS_PORT, // Redis port
 		redis_host: process.env.TEST_REDIS_HOSTNAME, // Redis host
 		redis_username: process.env.TEST_REDIS_USERNAME || "default", // needs Redis >= 6
@@ -167,10 +187,10 @@ const config: IConfig = {
 		is_api: process.env.IS_API === "true",
 	},
 	production: {
-		db_url: process.env.DB_URL,
-		base_api_url: process.env.BASE_API_URL || "https://lumina-api.otagera.xyz",
-		port: process.env.PORT || 5001,
-		secret: process.env.SESSION_SECRET,
+		db_url: getEnv("DB_URL"),
+		base_api_url: getEnv("BASE_API_URL") || "https://lumina-api.otagera.xyz",
+		port: getEnv("PORT") || 5001,
+		secret: getEnv("SESSION_SECRET"),
 		redis_port: process.env.REDIS_PORT, // Redis port
 		redis_host: process.env.REDIS_HOSTNAME, // Redis host
 		redis_username: process.env.REDIS_USERNAME || "default", // needs Redis >= 6

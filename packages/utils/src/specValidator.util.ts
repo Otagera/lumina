@@ -28,10 +28,11 @@ export const aliaserSpec = (
 ) => {
 	if (!data || typeof data !== "object" || Array.isArray(data)) return data;
 
-	const mappedObj: { [key: string]: any } = {};
+	const mappedObj: { [key: string]: any } = { ...data };
 	Object.entries(spec).forEach(([key, value]) => {
 		if (key in data) {
 			mappedObj[value] = data[key];
+			if (key !== value) delete mappedObj[key];
 		}
 	});
 
