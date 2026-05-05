@@ -1,7 +1,7 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
-import { validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 import { storage } from "../../../../../packages/utils/src/storage.util.ts";
 
 const spec = Joi.object({
@@ -12,8 +12,13 @@ const spec = Joi.object({
 	uploadId: Joi.string().required(),
 });
 
+const aliasSpec = {
+	request: {},
+	response: { success: "success" },
+};
+
 export const abortMultipartUploadService = async (data: any) => {
-	const params = validateSpec(spec, data);
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
 	let currentStorage = storage;
 
@@ -50,7 +55,7 @@ export const abortMultipartUploadService = async (data: any) => {
 
 	try {
 		await currentStorage.abortMultipartUpload(params.key, params.uploadId);
-		return { success: true };
+		return aliaserSpec(aliasSpec.response, { success: true });
 	} catch (err: any) {
 		console.error("Abort multipart upload failed:", err);
 		throw new Error(`Failed to abort upload: ${err.message}`);

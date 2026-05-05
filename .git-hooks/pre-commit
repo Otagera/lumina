@@ -1,0 +1,17 @@
+#!/bin/sh
+# Pre-commit hook to validate service standards
+
+echo "🔍 Running service standard validation..."
+
+# Run the validation script
+cd apps/api
+bun run validate:services
+
+# Check exit code
+if [ $? -ne 0 ]; then
+  echo "❌ Service validation failed. Please fix the issues before committing."
+  exit 1
+fi
+
+echo "✅ Service validation passed!"
+exit 0

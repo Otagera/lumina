@@ -1,6 +1,6 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
-import { validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
 	userId: Joi.string().uuid().required(),
@@ -8,29 +8,37 @@ const spec = Joi.object({
 	offset: Joi.number().default(0),
 });
 
+const aliasSpec = {
+	request: { userId: "user_id" },
+	response: {
+		notifications: "notifications",
+		pagination: "pagination",
+	},
+};
+
 const service = async (data: any) => {
-	const params = validateSpec(spec, data);
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
 	const [notifications, total] = await Promise.all([
 		prisma.notifications.findMany({
-			where: { user_id: params.userId },
+			where: { user_id: params.user_id },
 			orderBy: { created_at: "desc" },
 			take: params.limit,
 			skip: params.offset,
 		}),
 		prisma.notifications.count({
-			where: { user_id: params.userId },
+			where: { user_id: params.user_id },
 		}),
 	]);
 
-	return {
+	return aliaserSpec(aliasSpec.response, {
 		notifications,
 		pagination: {
 			total,
 			limit: params.limit,
 			offset: params.offset,
 		},
-	};
+	});
 };
 
 export const listNotificationsService = service;

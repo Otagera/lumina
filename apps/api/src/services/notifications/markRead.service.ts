@@ -1,6 +1,6 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
-import { validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
 	userId: Joi.string().uuid().required(),
@@ -8,10 +8,15 @@ const spec = Joi.object({
 	markAll: Joi.boolean().default(false),
 });
 
-const service = async (data: any) => {
-	const params = validateSpec(spec, data);
+const aliasSpec = {
+	request: { userId: "user_id" },
+	response: { count: "count" },
+};
 
-	const where: any = { user_id: params.userId };
+const service = async (data: any) => {
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
+
+	const where: any = { user_id: params.user_id };
 
 	if (!params.markAll && params.notificationIds) {
 		where.id = { in: params.notificationIds };
@@ -22,7 +27,7 @@ const service = async (data: any) => {
 		data: { is_read: true },
 	});
 
-	return { count: result.count };
+	return aliaserSpec(aliasSpec.response, { count: result.count });
 };
 
 export const markReadService = service;

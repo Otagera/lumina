@@ -1,0 +1,106 @@
+import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
+import Joi from "joi";
+import axios from "axios";
+import prisma from "../../../../../packages/config/src/db.config.ts";
+import config from "../../../../../packages/config/src/index.config.ts";
+import { searchFacesByEmbedding } from "../../../../../packages/models/src/faces.model.ts";
+import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
+import { validateFileFromBuffer } from "../../../../../packages/utils/src/file-validator.ts";
+import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
+import { storage } from "../../../../../packages/utils/src/storage.util.ts";
+import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+
+const spec = Joi.object({
+	token: Joi.string().required(),
+	selfie: Joi.any().required(),
+});
+
+const aliasSpec = {
+	request: { token: "share_token" },
+	response: { faces: "faces" },
+};
+
+const service = async (data: any) => {
+	const aliasReq = aliaserSpec(aliasSpec.request, data);
+	const params = validateSpec(spec, aliasReq);
+
+	// 1. Verify the share token and get albumId
+	const album = await prisma.albums.findUnique({
+		where: { share_token: params.share_token },
+		include: { album_images: true },
+	});
+
+	if (!album) throw new NotFoundError("Invalid share token.");
+
+	// 2. Save temporary selfie locally AND to storage
+	const tempKey = `temp-selfie-${Date.now()}-${crypto.randomUUID()}`;
+	const fileBuffer = Buffer.from(await params.selfie.arrayBuffer());
+
+	// Validate file type
+	await validateFileFromBuffer(fileBuffer, params.selfie.name);
+
+	// Save locally for AI service to access
+	const tempPath = path.resolve(process.cwd(), UPLOADS_DIR, tempKey);
+	await fs.writeFile(tempPath, fileBuffer);
+
+	// Also upload to storage if using R2/S3
+	const currentStorage = storage.getProviderName();
+	if (currentStorage !== "local") {
+		await storage.upload(fileBuffer, {
+			key: tempKey,
+			contentType: params.selfie.type,
+		});
+	}
+
+	// 3. Call AI service to get embedding
+	const aiServiceUrl = config[config.env].ai_service_url;
+	const aiResponse = await axios.post(`${aiServiceUrl}/process`, {
+		image_path: tempPath,
+		image_id: crypto.randomUUID(),
+	});
+
+	const faceData = aiResponse.data;
+
+	// Cleanup temp file
+	try { await fs.unlink(tempPath); } catch (_e) {}
+
+	// Also cleanup from storage if using R2/S3
+	if (storage.getProviderName() !== "local") {
+		await storage.delete(tempKey);
+	}
+
+	if (
+		!faceData.results ||
+		faceData.results.length === 0 ||
+		faceData.results[0].faces.length === 0
+	) {
+		throw new Error("No face detected in the selfie. Please try again.");
+	}
+
+	const searchEmbedding = faceData.results[0].faces[0].embedding;
+
+	// 4. Perform scoped vector search
+	const albumImageIds = album.album_images.map((ai) => ai.image_id);
+	const searchResults = await searchFacesByEmbedding({
+		embedding: searchEmbedding,
+		threshold: 0.6,
+		limit: 50,
+		imageIds: albumImageIds as string[],
+	});
+
+	// 5. Transform results
+	const formattedResults = searchResults.map((result) => ({
+		...result,
+		imagePath: normalizeImagePath(
+			result.imagePath,
+			result.storageProvider,
+			result.storageKey,
+		),
+	}));
+
+	return { faces: formattedResults };
+};
+
+export const selfieSearchService = service;

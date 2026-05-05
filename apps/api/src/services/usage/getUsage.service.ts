@@ -1,18 +1,29 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import { getUserPlanLimits } from "../../../../../packages/models/src/usage.model.ts";
-import { validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
 	userId: Joi.string().uuid().required(),
 });
 
+const aliasSpec = {
+	request: { userId: "user_id" },
+	response: {
+		storageUsedMB: "storageUsedMB",
+		storageLimitMB: "storageLimitMB",
+		computeUnitsUsed: "computeUnitsUsed",
+		computeUnitsLimit: "computeUnitsLimit",
+		plan: "plan",
+	},
+};
+
 const service = async (data: any) => {
-	const params = validateSpec(spec, data);
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
 	// Get user plan and limits
 	const { plan, storageLimitMB, computeLimit } = await getUserPlanLimits(
-		params.userId,
+		params.user_id,
 	);
 
 	// Get start of current month
@@ -22,7 +33,7 @@ const service = async (data: any) => {
 	// === STORAGE USAGE (calculated from images table) ===
 	// Count all images (including soft-deleted in trash) - storage is freed when permanently deleted
 	const userImages = await prisma.images.findMany({
-		where: { uploaded_by: params.userId },
+		where: { uploaded_by: params.user_id },
 		select: {
 			size: true,
 			optimized_size: true,
@@ -76,7 +87,7 @@ const service = async (data: any) => {
 	// === COMPUTE USAGE (current month) ===
 	const computeLogs = await prisma.usage_logs.findMany({
 		where: {
-			user_id: params.userId,
+			user_id: params.user_id,
 			resource: "compute",
 			timestamp: { gte: startOfMonth },
 		},
@@ -91,7 +102,7 @@ const service = async (data: any) => {
 	const computeByOperationRaw = await prisma.usage_logs.groupBy({
 		by: ["operation"],
 		where: {
-			user_id: params.userId,
+			user_id: params.user_id,
 			resource: "compute",
 			timestamp: { gte: startOfMonth },
 		},
@@ -120,7 +131,7 @@ const service = async (data: any) => {
 
 	const historyRaw = await prisma.usage_logs.findMany({
 		where: {
-			user_id: params.userId,
+			user_id: params.user_id,
 			timestamp: { gte: thirtyDaysAgo },
 		},
 		select: {
@@ -168,7 +179,7 @@ const service = async (data: any) => {
 
 	// === RECENT LOGS ===
 	const recentLogs = await prisma.usage_logs.findMany({
-		where: { user_id: params.userId },
+		where: { user_id: params.user_id },
 		orderBy: { timestamp: "desc" },
 		take: 20,
 		select: {
@@ -181,7 +192,7 @@ const service = async (data: any) => {
 		},
 	});
 
-	return {
+	return aliaserSpec(aliasSpec.response, {
 		// Current usage
 		storageUsedMB,
 		storageLimitMB,
@@ -198,7 +209,7 @@ const service = async (data: any) => {
 
 		// Recent activity
 		recentLogs,
-	};
+	});
 };
 
 export const getUsageService = service;

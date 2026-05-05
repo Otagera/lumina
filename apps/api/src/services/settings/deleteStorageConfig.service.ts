@@ -13,11 +13,16 @@ const spec = joi.object({
 	configId: joi.string().required(),
 });
 
+const aliasSpec = {
+	request: { userId: "user_id" },
+	response: { success: "success" },
+};
+
 const service = async (data: any) => {
-	const params = validateSpec(spec, data);
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
 	// Verify ownership
-	const configs = await fetchStorageConfigs(params.userId);
+	const configs = await fetchStorageConfigs(params.user_id);
 	const hasConfig = configs.some((c) => c.id === params.configId);
 
 	if (!hasConfig) {
@@ -26,7 +31,7 @@ const service = async (data: any) => {
 
 	await deleteStorageConfig(params.configId);
 
-	return { success: true };
+	return aliaserSpec(aliasSpec.response, { success: true });
 };
 
 export const deleteStorageConfigService = service;

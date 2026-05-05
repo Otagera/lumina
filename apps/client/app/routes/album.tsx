@@ -328,6 +328,7 @@ const AlbumPage = () => {
 					onViewChange={setView}
 					onDisplayModeChange={setDisplayMode}
 					showModeration={showModeration}
+					showDuplicates={true}
 				/>
 
 				{view === "duplicates" ? (
@@ -356,7 +357,7 @@ const AlbumPage = () => {
 										: "No photos in this album yet. Start by uploading some!"}
 								</p>
 							</div>
-) : displayMode === "grid" ? (
+						) : displayMode === "grid" ? (
 							<div className="space-y-6">
 								{view === "gallery" && dateSections.length > 0
 									? dateSections.map((section) => {
@@ -369,9 +370,8 @@ const AlbumPage = () => {
 													className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
 												>
 													<span
-														className={`text-zinc-400 transition-transform duration-200 ${
-															isCollapsed ? "" : "rotate-90"
-														}`}
+														className={`text-zinc-400 transition-transform duration-200 ${isCollapsed ? "" : "rotate-90"
+															}`}
 													>
 														›
 													</span>
@@ -383,9 +383,8 @@ const AlbumPage = () => {
 													</span>
 												</button>
 												<div
-													className={`overflow-hidden transition-all duration-300 ease-out ${
-														isCollapsed ? "max-h-0 opacity-0" : "max-h-[2000px] opacity-100"
-													}`}
+													className={`overflow-hidden transition-all duration-300 ease-out ${isCollapsed ? "max-h-0 opacity-0" : "max-h-[2000px] opacity-100"
+														}`}
 												>
 													<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 auto-rows-[200px]">
 														{section.images.map((image, idx) => {

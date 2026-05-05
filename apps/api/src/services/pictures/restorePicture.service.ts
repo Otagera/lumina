@@ -10,12 +10,17 @@ const spec = Joi.object({
 	userId: Joi.string().uuid().required(),
 });
 
+const aliasSpec = {
+	request: { userId: "user_id" },
+	response: { success: "success" },
+};
+
 const service = async (data: any) => {
-	const params = validateSpec(spec, data);
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
-	await restoreImages(params.imageIds);
+	await restoreImages(params.user_id, params.imageIds);
 
-	return { success: true };
+	return aliaserSpec(aliasSpec.response, { success: true });
 };
 
 export default service;

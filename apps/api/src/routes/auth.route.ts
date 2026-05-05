@@ -5,13 +5,12 @@ import {
 	loginService,
 	logoutService,
 	refreshService,
-	resetPasswordService,
 	signupService,
 } from "../../../../packages/auth/index.ts";
-import prisma from "../../../../packages/config/src/db.config.ts";
 import config from "../../../../packages/config/src/index.config.ts";
-import { getUser } from "../../../../packages/models/src/users.lib.ts";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
+import { getMeService } from "../services/auth/getMe.service.ts";
+import { unsubscribeService } from "../services/auth/unsubscribe.service.ts";
 import { strictPublicRateLimit } from "./middleware/rate-limit.plugin.ts";
 
 const authRoutes = new Elysia({ prefix: "/auth" })
@@ -252,47 +251,10 @@ const unsubscribeRoutes = new Elysia({ prefix: "/unsubscribe" })
 		"/",
 		async ({ body, set }) => {
 			try {
-				const { email, type } = body as { email?: string; type?: string };
-
-				if (!email) {
-					set.status = HTTP_STATUS_CODES.BAD_REQUEST;
-					return { status: "error", message: "Email is required" };
-				}
-
-				const user = await prisma.users.findUnique({
-					where: { email },
-					select: { email_preferences: true },
-				});
-
-				if (!user) {
-					set.status = HTTP_STATUS_CODES.OK;
-					return {
-						status: "completed",
-						message: "If this email exists, unsubscribed successfully.",
-					};
-				}
-
-				const current = (user.email_preferences as any) || {};
-				const allTypes = [
-					"welcome",
-					"photoApproved",
-					"clustering",
-					"marketing",
-				];
-
-				if (type && allTypes.includes(type)) {
-					current[type] = false;
-				} else {
-					allTypes.forEach((t) => (current[t] = false));
-				}
-
-				await prisma.users.update({
-					where: { email },
-					data: { email_preferences: current as any },
-				});
+				const data = await unsubscribeService(body);
 
 				set.status = HTTP_STATUS_CODES.OK;
-				return { status: "completed", message: "Unsubscribed successfully." };
+				return data;
 			} catch (error: any) {
 				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
 				return {

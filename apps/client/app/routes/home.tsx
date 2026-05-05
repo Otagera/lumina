@@ -7,7 +7,7 @@ import { ConfirmModal } from "~/components/ConfirmModal";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
-import ImagesList from "~/Images/ImageGallery";
+import ImageGallery from "~/Images/ImageGallery";
 import type { Album } from "~/types";
 import {
 	createAlbum,
@@ -148,7 +148,7 @@ const Home = () => {
 						Your latest memories across all albums
 					</p>
 				</div>
-				<ImagesList />
+				<ImageGallery />
 			</section>
 
 			{/* Modals */}

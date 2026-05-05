@@ -20,6 +20,7 @@
 		"./redisClient.util": "./src/redisClient.util",
 		"./runPythonScript.util": "./src/runPythonScript.util",
 		"./specValidator.util": "./src/specValidator.util",
+		"./base.service": "./src/base.service",
 		"./web.util": "./src/web.util"
 	},
 	"scripts": {

@@ -1,9 +1,9 @@
 import { Elysia, t } from "elysia";
-import { updatePerson } from "../../../../packages/models/src/people.model.ts";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
 import createPersonService from "../services/people/create.service.ts";
 import listPeopleService from "../services/people/list.service.ts";
 import { mergePeopleService } from "../services/people/mergePeople.service.ts";
+import { updatePersonService } from "../services/people/updatePerson.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 
 const peopleRoutes = new Elysia({ prefix: "/people" })
@@ -61,14 +61,14 @@ const peopleRoutes = new Elysia({ prefix: "/people" })
 		"/:personId",
 		async ({ params, body, set, userId }) => {
 			try {
-				const { name } = body as { name: string };
-
-				const result = await updatePerson(params.personId, userId, {
-					name,
+				const data = await updatePersonService({
+					...body,
+					personId: params.personId,
+					userId,
 				});
 
-				if (result.count === 0) {
-					set.status = HTTP_STATUS_CODES.NOTFOUND;
+				if (data.count === 0) {
+					set.status = HTTP_STATUS_CODES.NOT_FOUND;
 					return {
 						status: "error",
 						message: "Person not found",

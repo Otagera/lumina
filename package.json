@@ -15,7 +15,9 @@
 		"dev:worker": "bun run --cwd apps/worker dev",
 		"dev:ai": "./venv/bin/uvicorn ai_service:app --port 8000 --reload --app-dir apps/ai",
 		"dev:all": "concurrently -c \"blue,green,magenta,yellow\" -n \"CLIENT,API,WORKER,AI\" \"bun run dev\" \"bun run dev:api\" \"bun run dev:worker\" \"bun run dev:ai\"",
-		"seed:api": "bun run --cwd apps/api prisma db seed"
+		"seed:api": "bun run --cwd apps/api prisma db seed",
+		"validate:services": "bun run --cwd apps/api validate:services",
+		"setup:hooks": "git config core.hooksPath .git-hooks"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.11",

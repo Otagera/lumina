@@ -1,15 +1,9 @@
-import fs from "node:fs";
-import path from "node:path";
 import { Elysia, t } from "elysia";
 import jwt from "jsonwebtoken";
-import prisma from "../../../../packages/config/src/db.config.ts";
-import config from "../../../../packages/config/src/index.config.ts";
 import {
 	BULL_QUEUE_NAMES,
 	HTTP_STATUS_CODES,
-	UPLOADS_DIR,
 } from "../../../../packages/utils/src/constants.util.ts";
-import { storage } from "../../../../packages/utils/src/storage.util.ts";
 import { queueServices } from "../../../worker/src/queue/queue.service";
 import { abortMultipartUploadService } from "../services/pictures/abortMultipartUpload.service.ts";
 import { completeMultipartUploadService } from "../services/pictures/completeMultipartUpload.service.ts";
@@ -21,6 +15,8 @@ import { getPresignedUrlService } from "../services/pictures/getPresignedUrl.ser
 import { moderatePicturesService } from "../services/pictures/moderatePictures.service.ts";
 import { reprocessPictureService } from "../services/pictures/reprocessPicture.service.ts";
 import { uploadPicturesService } from "../services/pictures/uploadPictures.service.ts";
+import { bulkDownloadService } from "../services/pictures/bulkDownload.service.ts";
+import { downloadImageService } from "../services/pictures/downloadImage.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 import { guestPlugin } from "./middleware/guest.plugin.ts";
 import { checkQuota } from "./middleware/quota.middleware.ts";
@@ -32,36 +28,16 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 		"/bulk-download",
 		async ({ body, set, userId }) => {
 			try {
-				const { imageIds } = body;
-
-				// Verify ownership
-				const images = await prisma.images.findMany({
-					where: {
-						image_id: { in: imageIds },
-						uploaded_by: userId,
-					},
-					select: { image_id: true },
+				const data = await bulkDownloadService({
+					...body,
+					userId,
 				});
-
-				if (images.length === 0) {
-					throw new Error("No authorized images found for download.");
-				}
-
-				const job = await queueServices.bulkDownloadQueueLib.addJob(
-					"bulkDownload",
-					{
-						imageIds: images.map((img) => img.image_id),
-						userId,
-						worker: "bulkDownload",
-					},
-					{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
-				);
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
 					status: "completed",
 					message: "Bulk download job initiated.",
-					data: { jobId: job.id },
+					data: { jobId: data.jobId },
 				};
 			} catch (error: any) {
 				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
@@ -153,168 +129,13 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 		"/",
 		async ({ body, set, userId, guestSessionId }) => {
 			try {
-				const files = body.uploadedImages;
-				const albumId = body.albumId;
-				const existingKey = body.key;
-
-				if (
-					!existingKey &&
-					(!files || (Array.isArray(files) && files.length === 0))
-				) {
-					set.status = HTTP_STATUS_CODES.BAD_REQUEST;
-					return {
-						status: "error",
-						message: "Either files or an existing key is required",
-						data: null,
-					};
-				}
-
-				let convertedFiles = [];
-				let useExternalStorage = false;
-				let currentStorage = storage;
-				let storageProvider: string | undefined = storage.getProviderName();
-
-				// 1. Determine which storage provider to use
-				if (albumId && albumId !== "undefined" && albumId !== "null") {
-					const album = await prisma.albums.findUnique({
-						where: { album_id: albumId, created_by: userId },
-						include: { storage_config: true },
-					});
-
-					if (album?.storage_config) {
-						// Album has its own storage configuration (BYOS)
-						currentStorage = storage.getProvider({
-							provider: album.storage_config.provider as any,
-							credentials: {
-								accessKeyId: album.storage_config.access_key_id,
-								secretAccessKey: album.storage_config.secret_access_key,
-								bucket: album.storage_config.bucket,
-								endpoint: album.storage_config.endpoint,
-								region: album.storage_config.region || undefined,
-							},
-							skip_tls_verify:
-								album.storage_config.provider !== "local"
-									? (config[config.env || "development"] as any).skip_tls_verify
-									: false,
-						}) as any;
-						storageProvider = album.storage_config.provider;
-					}
-				}
-
-				// Default to local storage if no provider set
-				if (!storageProvider || storageProvider === "local") {
-					currentStorage = storage;
-				} else {
-					// Use configured external storage (e.g., Managed R2)
-					const envConfig = config[config.env || "development"];
-					const r2 = envConfig?.r2;
-					if (r2) {
-						currentStorage = storage.getProvider({
-							provider: "r2",
-							credentials: {
-								accessKeyId: r2.access_key_id,
-								secretAccessKey: r2.secret_access_key,
-								bucket: r2.bucket,
-								endpoint: r2.endpoint,
-								region: r2.region,
-							},
-							skip_tls_verify: (envConfig as any).skip_tls_verify,
-						}) as any;
-					}
-				}
-
-				useExternalStorage = storageProvider !== "local";
-
-				if (existingKey) {
-					let filePath: string;
-					let fileSize = 0;
-
-					if (useExternalStorage) {
-						const imageBuffer = await currentStorage.getObject(existingKey);
-						const absolutePath = path.resolve(
-							process.cwd(),
-							UPLOADS_DIR,
-							existingKey,
-						);
-						await fs.promises.mkdir(path.dirname(absolutePath), {
-							recursive: true,
-						});
-						await fs.promises.writeFile(absolutePath, imageBuffer);
-						filePath = absolutePath;
-						fileSize = imageBuffer.length;
-					} else {
-						filePath = path.resolve(process.cwd(), UPLOADS_DIR, existingKey);
-						const stats = await fs.promises.stat(filePath);
-						fileSize = stats.size;
-					}
-
-					convertedFiles = [
-						{
-							mimetype: "image/jpeg",
-							originalname: existingKey,
-							fieldname: "uploadedImages",
-							encoding: "7bit",
-							destination: UPLOADS_DIR,
-							filename: existingKey,
-							path: filePath,
-							size: fileSize,
-							storage_provider: useExternalStorage ? storageProvider : "local",
-							storage_key: existingKey,
-						},
-					];
-				} else {
-					convertedFiles = await Promise.all(
-						(Array.isArray(files) ? files : [files]).map(async (file) => {
-							const filename = `${Date.now()}-${file.name}`;
-
-							const fileBuffer = Buffer.from(await file.arrayBuffer());
-							const storedKey = await currentStorage.upload(fileBuffer, {
-								key: filename,
-								contentType: file.type,
-							});
-
-							let filePath: string;
-							const fileSize = file.size;
-
-							if (useExternalStorage) {
-								const tempPath = path.resolve(
-									process.cwd(),
-									UPLOADS_DIR,
-									storedKey,
-								);
-								await fs.promises.mkdir(path.dirname(tempPath), {
-									recursive: true,
-								});
-								await fs.promises.writeFile(tempPath, fileBuffer);
-								filePath = tempPath;
-							} else {
-								filePath = path.resolve(process.cwd(), UPLOADS_DIR, storedKey);
-							}
-
-							return {
-								mimetype: file.type,
-								originalname: file.name,
-								fieldname: "uploadedImages",
-								encoding: "7bit",
-								destination: UPLOADS_DIR,
-								filename: filename,
-								path: filePath,
-								size: fileSize,
-								storage_provider: useExternalStorage
-									? storageProvider
-									: "local",
-								storage_key: storedKey,
-							};
-						}),
-					);
-				}
-
 				const data = await uploadPicturesService({
 					albumId: body.albumId,
 					userId: userId,
 					guestSessionId,
-					files: convertedFiles,
+					files: body.uploadedImages ? (Array.isArray(body.uploadedImages) ? body.uploadedImages : [body.uploadedImages]) : [],
 					status: body.status,
+					existingKey: body.key,
 				});
 
 				set.status = HTTP_STATUS_CODES.CREATED;
@@ -623,46 +444,22 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 		"/:imageId/download",
 		async ({ params, set, userId }) => {
 			try {
-				const imageId = params.imageId;
-
-				// Verify ownership
-				const image = await prisma.images.findFirst({
-					where: { image_id: imageId, uploaded_by: userId },
+				const data = await downloadImageService({
+					imageId: params.imageId,
+					userId,
 				});
-
-				if (!image) {
-					throw new Error("Image not found or unauthorized.");
-				}
-
-				// Generate presigned URL
-				const downloadUrl = await storage.getSignedUrl(
-					image.storage_key || image.image_path,
-					3600,
-				);
-
-				// Track download for analytics
-				await prisma.usage_logs
-					.create({
-						data: {
-							user_id: userId!,
-							resource: "download",
-							operation: "single_image_download",
-							quantity: 1,
-						},
-					})
-					.catch(() => {});
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
 					status: "completed",
 					message: "Download URL generated.",
-					data: { downloadUrl },
+					data,
 				};
 			} catch (error: any) {
-				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
-					message: error.message || "Failed to generate download URL.",
+					message: error?.message || "Failed to generate download URL.",
 					data: null,
 				};
 			}
@@ -671,7 +468,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 			params: t.Object({
 				imageId: t.String(),
 			}),
-		},
+		}
 	)
 	.patch(
 		"/moderate",
@@ -705,7 +502,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 		},
 	);
 
-const publicPicturesRoutes = new Elysia({ prefix: "/images" })
+	const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 	.put(
 		"/upload-direct-local",
 		async ({ query, set, headers, request }) => {
@@ -717,7 +514,7 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 
 				if (!key) throw new Error("Key is required");
 
-				// 1. Authorization Check: JWT token, valid shareToken, or auth header
+				// Verify authorization
 				let isAuthorized = false;
 
 				if (authToken) {
@@ -733,10 +530,8 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 				} else if (authHeader) {
 					isAuthorized = true;
 				} else if (shareToken) {
-					const album = await prisma.albums.findUnique({
-						where: { share_token: shareToken },
-					});
-					if (album) isAuthorized = true;
+					const result = await verifyShareTokenService({ shareToken, key });
+					isAuthorized = result.authorized;
 				}
 
 				if (!isAuthorized) {
@@ -753,23 +548,11 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 					return { error: "Invalid key" };
 				}
 
-				console.log("[LOCAL UPLOAD] Writing to:", filePath);
-				console.log("[LOCAL UPLOAD] cwd:", process.cwd());
-
-				// Ensure directory exists
+				// Write file
 				await fs.promises.mkdir(uploadsDir, { recursive: true });
-
 				const arrayBuffer = await request.arrayBuffer();
 				const buffer = Buffer.from(arrayBuffer);
-
 				await Bun.write(filePath, buffer);
-
-				// Verify file was written
-				const exists = await fs.promises
-					.access(filePath)
-					.then(() => true)
-					.catch(() => false);
-				console.log("[LOCAL UPLOAD] File exists:", exists);
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
@@ -800,10 +583,7 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 		async ({ body, set }) => {
 			try {
 				// Verify share token
-				const album = await prisma.albums.findUnique({
-					where: { share_token: body.shareToken },
-				});
-				if (!album) throw new Error("Invalid share token");
+				await verifyShareTokenService({ shareToken: body.shareToken, key: "" });
 
 				const data = await completeMultipartUploadService({
 					...body,
@@ -816,7 +596,7 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -832,7 +612,7 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 				parts: t.Array(
 					t.Object({
 						ETag: t.String(),
-						PartNumber: t.Numeric(),
+						PartNumber: t.Number(),
 					}),
 				),
 			}),
@@ -843,10 +623,7 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 		async ({ body, set }) => {
 			try {
 				// Verify share token
-				const album = await prisma.albums.findUnique({
-					where: { share_token: body.shareToken },
-				});
-				if (!album) throw new Error("Invalid share token");
+				await verifyShareTokenService({ shareToken: body.shareToken, key: "" });
 
 				const data = await abortMultipartUploadService({
 					...body,
@@ -859,7 +636,7 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",

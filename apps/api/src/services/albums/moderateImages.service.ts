@@ -15,13 +15,18 @@ const spec = Joi.object({
 	reason: Joi.string().optional(),
 });
 
+const aliasSpec = {
+	request: { albumId: "album_id" },
+	response: { count: "count", status: "status" },
+};
+
 const service = async (data: any) => {
-	const params = validateSpec(spec, data);
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
 	// Verify images belong to the album
 	const albumImages = await prisma.album_images.findMany({
 		where: {
-			album_id: params.albumId,
+			album_id: params.album_id,
 			image_id: { in: params.imageIds },
 		},
 	});
@@ -42,18 +47,18 @@ const service = async (data: any) => {
 
 	// Dispatch webhooks for each moderated image
 	for (const imageId of validImageIds) {
-		await dispatchWebhook(params.albumId, `IMAGE_${params.status}`, {
+		await dispatchWebhook(params.album_id, `IMAGE_${params.status}`, {
 			imageId,
 			status: params.status,
-			albumId: params.albumId,
+			albumId: params.album_id,
 			reason: params.reason,
 		});
 	}
 
-	return {
+	return aliaserSpec(aliasSpec.response, {
 		count: result.count,
 		status: params.status,
-	};
+	});
 };
 
 export const moderateImagesService = service;

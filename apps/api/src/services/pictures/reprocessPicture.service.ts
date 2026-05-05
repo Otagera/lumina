@@ -1,19 +1,27 @@
+import Joi from "joi";
 import { deleteFacesByImageId } from "../../../../../packages/models/src/faces.model.ts";
 import { getImage } from "./pictures.lib.ts";
+import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
-export const reprocessPictureService = async ({
-	userId,
-	imageId,
-}: {
-	userId: string;
-	imageId: string;
-}) => {
+const spec = Joi.object({
+	userId: Joi.string().uuid().required(),
+	imageId: Joi.string().uuid().required(),
+});
+
+const aliasSpec = {
+	request: { userId: "user_id", imageId: "image_id" },
+	response: { success: "success" },
+};
+
+export const reprocessPictureService = async (data: any) => {
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
+
 	// 1. Verify user owns the image and get the raw database record
 	// The `getImage` lib handles the verification and throws NotFoundError if it fails.
-	const image = await getImage({ image_id: imageId, uploaded_by: userId });
+	const image = await getImage({ image_id: params.user_id, uploaded_by: params.image_id });
 
 	// 2. Delete existing faces for this image
-	await deleteFacesByImageId(imageId);
+	await deleteFacesByImageId(params.image_id);
 
 	// 3. Queue the face recognition job again
 	// Dynamic import to avoid circular dependency
@@ -25,12 +33,12 @@ export const reprocessPictureService = async ({
 	await queueServices.faceRecognitionQueueLib.addJob(
 		"faceRecognition",
 		{
-			imageId,
+			imageId: params.image_id,
 			imagePath: image.image_path,
 			worker: "faceRecognition",
 		},
 		{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
 	);
 
-	return true;
+	return aliaserSpec(aliasSpec.response, { success: true });
 };

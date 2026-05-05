@@ -11,6 +11,8 @@
 		"create-handler": "bun src/utils/scripts/index.script.ts handler",
 		"create-middleware": "bun src/utils/scripts/index.script.ts middleware",
 		"create-service": "bun src/utils/scripts/index.script.ts service",
+		"generate:service": "bun src/utils/scripts/service-generator.ts",
+		"validate:services": "bun src/utils/scripts/validate-services.ts",
 		"test": "bun test",
 		"test:watch": "bun test --watch",
 		"test:coverage": "bun test --coverage",

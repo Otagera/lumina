@@ -3,6 +3,8 @@ import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util
 import fetchFaceService from "../services/pictures/fetchFace.service.ts";
 import searchFacesService from "../services/pictures/searchFaces.service.ts";
 import updateFaceService from "../services/pictures/updateFace.service.ts";
+import { ignoreFaceService } from "../services/faces/ignoreFace.service.ts";
+import { unignoreFaceService } from "../services/faces/unignoreFace.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 import { guestPlugin } from "./middleware/guest.plugin.ts";
 import { checkTaggingPolicy } from "./middleware/policy.middleware.ts";
@@ -142,18 +144,14 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					return { status: "error", message: "Invalid face ID format." };
 				}
 
-				// Enforce policy
-				await checkTaggingPolicy({ faceId, userId, guestSessionId });
-
-				const { personId } = body;
-
-				const { ignoreFace } = await import(
-					"../../../../packages/models/src/faces.model.ts"
-				);
-				await ignoreFace(personId, faceId, userId || crypto.randomUUID());
+				const data = await ignoreFaceService({
+					...body,
+					faceId,
+					userId: userId || crypto.randomUUID(),
+				});
 
 				set.status = HTTP_STATUS_CODES.OK;
-				return { status: "completed", message: "Face ignored successfully." };
+				return data;
 			} catch (error: any) {
 				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return { status: "error", message: error?.message || "Internal error" };
@@ -174,20 +172,14 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					return { status: "error", message: "Invalid face ID format." };
 				}
 
-				// Enforce policy
-				await checkTaggingPolicy({ faceId, userId, guestSessionId });
-
-				const { personId } = body;
-				const { unignoreFace } = await import(
-					"../../../../packages/models/src/faces.model.ts"
-				);
-				await unignoreFace(personId, faceId, userId || crypto.randomUUID());
+				const data = await unignoreFaceService({
+					...body,
+					faceId,
+					userId: userId || crypto.randomUUID(),
+				});
 
 				set.status = HTTP_STATUS_CODES.OK;
-				return {
-					status: "completed",
-					message: "Face un-ignored successfully.",
-				};
+				return data;
 			} catch (error: any) {
 				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return { status: "error", message: error?.message || "Internal error" };

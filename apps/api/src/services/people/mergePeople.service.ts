@@ -4,7 +4,7 @@ import {
 	BadRequestError,
 	NotFoundError,
 } from "../../../../../packages/utils/src/error.util.ts";
-import { validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
 	sourcePersonId: Joi.string().uuid().required(),
@@ -12,8 +12,13 @@ const spec = Joi.object({
 	userId: Joi.string().uuid().required(),
 });
 
+const aliasSpec = {
+	request: { userId: "user_id" },
+	response: { success: "success", targetPersonId: "targetPersonId" },
+};
+
 const service = async (data: any) => {
-	const params = validateSpec(spec, data);
+	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
 	if (params.sourcePersonId === params.targetPersonId) {
 		throw new BadRequestError("Source and target person cannot be the same.");
@@ -22,10 +27,10 @@ const service = async (data: any) => {
 	// Verify both people belong to the user
 	const [sourcePerson, targetPerson] = await Promise.all([
 		prisma.people.findFirst({
-			where: { person_id: params.sourcePersonId, user_id: params.userId },
+			where: { person_id: params.sourcePersonId, user_id: params.user_id },
 		}),
 		prisma.people.findFirst({
-			where: { person_id: params.targetPersonId, user_id: params.userId },
+			where: { person_id: params.targetPersonId, user_id: params.user_id },
 		}),
 	]);
 
@@ -76,7 +81,7 @@ const service = async (data: any) => {
 		});
 	});
 
-	return { success: true, targetPersonId: params.targetPersonId };
+	return aliaserSpec(aliasSpec.response, { success: true, targetPersonId: params.targetPersonId });
 };
 
 export const mergePeopleService = service;

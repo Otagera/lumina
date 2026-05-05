@@ -1,8 +1,20 @@
 import crypto from "node:crypto";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
+import Joi from "joi";
+import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const envConfig = config[config.env || "development"];
+const spec = Joi.object({
+	albumId: Joi.string().uuid().required(),
+	eventType: Joi.string().required(),
+	payload: Joi.object().required(),
+});
+
+const aliasSpec = {
+	request: { albumId: "album_id", eventType: "event_type" },
+	response: { success: "success" },
+};
 
 /**
  * Triggers a webhook for a given album if a webhook URL is configured.
@@ -14,19 +26,25 @@ export const dispatchWebhook = async (
 	payload: any,
 ) => {
 	try {
+		const params = validateSpec(spec, aliaserSpec(aliasSpec.request, {
+			albumId,
+			eventType,
+			payload,
+		}));
+
 		const albumSettings = await prisma.album_settings.findUnique({
-			where: { album_id: albumId },
+			where: { album_id: params.album_id },
 		});
 
 		if (!albumSettings || !albumSettings.webhook_url) {
-			return; // No webhook configured
+			return aliaserSpec(aliasSpec.response, { success: false }); // No webhook configured
 		}
 
 		const event = await prisma.webhook_events.create({
 			data: {
-				album_id: albumId,
-				event_type: eventType,
-				payload: payload,
+				album_id: params.album_id,
+				event_type: params.event_type,
+				payload: params.payload,
 				status: "PENDING",
 				attempts: 0,
 			},
@@ -34,9 +52,11 @@ export const dispatchWebhook = async (
 
 		// In a production system, this would be queued in BullMQ.
 		// For now, we will attempt synchronous delivery, and mark it.
-		await sendWebhook(event.id, albumSettings.webhook_url, eventType, payload);
+		await sendWebhook(event.id, albumSettings.webhook_url, params.event_type, params.payload);
+		return aliaserSpec(aliasSpec.response, { success: true });
 	} catch (error) {
 		console.error("Failed to dispatch webhook:", error);
+		return aliaserSpec(aliasSpec.response, { success: false });
 	}
 };
 

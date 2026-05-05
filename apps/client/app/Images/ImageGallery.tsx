@@ -15,7 +15,7 @@ import { getBentoSpanClass } from "~/utils/bento";
 import ImageGridItem from "./ImageGridItem";
 import ImageModal from "./ImageModal";
 
-const ImagesList: FC = () => {
+const ImageGallery: FC = () => {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -285,11 +285,10 @@ const ImagesList: FC = () => {
 					<button
 						type="button"
 						onClick={() => setViewMode("grid")}
-						className={`p-2 rounded-xl transition-all ${
-							viewMode === "grid"
+						className={`p-2 rounded-xl transition-all ${viewMode === "grid"
 								? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
 								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-						}`}
+							}`}
 						title="Bento Grid"
 					>
 						<svg
@@ -307,11 +306,10 @@ const ImagesList: FC = () => {
 					<button
 						type="button"
 						onClick={() => setViewMode("list")}
-						className={`p-2 rounded-xl transition-all ${
-							viewMode === "list"
+						className={`p-2 rounded-xl transition-all ${viewMode === "list"
 								? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
 								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-						}`}
+							}`}
 						title="List View"
 					>
 						<svg
@@ -419,4 +417,4 @@ const ImagesList: FC = () => {
 	);
 };
 
-export default ImagesList;
+export default ImageGallery;

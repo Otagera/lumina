@@ -1,9 +1,15 @@
+import Joi from "joi";
 import config from "../../../../../packages/config/src/index.config.ts";
 import { getPeople } from "../../../../../packages/models/src/people.model.ts";
 import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
-import { aliaserSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+import { aliaserSpec, validateSpec } from "../../../../../packages/utils/src/specValidator.util.ts";
+
+const spec = Joi.object({
+	user_id: Joi.string().uuid().required(),
+});
 
 const aliasSpec = {
+	request: {},
 	response: {
 		person_id: "personId",
 		name: "name",
@@ -12,8 +18,9 @@ const aliasSpec = {
 };
 
 const service = async (user_id: string) => {
-	const people = await getPeople(user_id);
+	const params = validateSpec(spec, { user_id });
 
+	const people = await getPeople(params.user_id);
 	const envConfig = config[config.env || "development"];
 	const r2 = envConfig?.r2;
 
@@ -37,8 +44,7 @@ const service = async (user_id: string) => {
 				const imagePath = image.optimized_path || image.image_path;
 
 				// Fallback for local storage or if thumbnail API fails
-				const isR2 =
-					image.storage_provider && image.storage_provider !== "local";
+				const isR2 = image.storage_provider && image.storage_provider !== "local";
 				if (!isR2) {
 					base.faceUrl = normalizeImagePath(
 						imagePath,
