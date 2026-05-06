@@ -7,12 +7,12 @@ import {
 	useState,
 } from "react";
 import { login as apiLogin, signup as apiSignup } from "./api";
-import axiosAPI from "./axios";
+import { api } from "./eden";
 
 interface User {
 	id: string;
 	email: string;
-	// Add other user properties as needed
+	planName?: string;
 }
 
 interface AuthContextType {
@@ -37,9 +37,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 			authCheckRef.current = true;
 
 			try {
-				const response = await axiosAPI.get("/auth/me");
-				if (response.data?.status === "completed" && response.data?.data) {
-					setUser(response.data.data);
+				const { data, error } = await api.auth.me.get();
+				if (!error && data?.status === "completed" && data?.data) {
+					setUser(data.data as User);
 				}
 			} catch (error) {
 				setUser(null);
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 	const logout = async () => {
 		try {
-			await axiosAPI.post("/auth/logout");
+			await api.auth.logout.post();
 		} catch (error) {
 			console.error("Logout failed", error);
 		} finally {

@@ -234,10 +234,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 				},
 				{
 					params: t.Object({ token: t.String() }),
-					body: t.Object({
-						uploadedImages: t.Optional(t.Any()),
-						key: t.Optional(t.String()),
-					}),
+					body: t.Any(),
 					bodyLimit: 500 * 1024 * 1024,
 				},
 			),

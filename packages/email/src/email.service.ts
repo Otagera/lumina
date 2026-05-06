@@ -54,6 +54,11 @@ const checkEmailPreference = async (
 export const sendResetPasswordEmail = async (email: string, token: string) => {
 	const resetLink = `${FRONTEND_URL}/reset-password?token=${token}`;
 
+	if (config.env === "test") {
+		console.log(`[EMAIL-TEST] Skipping reset password email for ${email}`);
+		return { id: "test-id" };
+	}
+
 	try {
 		const data = await resend.emails.send({
 			from: FROM_EMAIL,
@@ -79,6 +84,11 @@ export const sendWelcomeEmail = async (email: string) => {
 	if (!allowed) {
 		console.log(`[EMAIL] Skipping welcome email for ${email} - unsubscribed`);
 		return null;
+	}
+
+	if (config.env === "test") {
+		console.log(`[EMAIL-TEST] Skipping welcome email for ${email}`);
+		return { id: "test-id" };
 	}
 
 	try {
@@ -117,6 +127,11 @@ export const sendPhotoApprovedEmail = async (
 		return;
 	}
 
+	if (config.env === "test") {
+		console.log(`[EMAIL-TEST] Skipping photo approved email for ${email}`);
+		return;
+	}
+
 	try {
 		await resend.emails.send({
 			from: FROM_EMAIL,
@@ -145,6 +160,11 @@ export const sendClusteringCompleteEmail = async (
 		return;
 	}
 
+	if (config.env === "test") {
+		console.log(`[EMAIL-TEST] Skipping clustering complete email for ${email}`);
+		return;
+	}
+
 	try {
 		await resend.emails.send({
 			from: FROM_EMAIL,
@@ -169,6 +189,11 @@ export const sendAlbumSharedEmail = async (
 ) => {
 	const allowed = await checkEmailPreference(email, "albumShared");
 	if (!allowed) return;
+
+	if (config.env === "test") {
+		console.log(`[EMAIL-TEST] Skipping album shared email for ${email}`);
+		return;
+	}
 
 	const albumLink = `${FRONTEND_URL}/albums/${token}`;
 
@@ -197,6 +222,11 @@ export const sendNewPhotosEmail = async (
 ) => {
 	const allowed = await checkEmailPreference(email, "newPhotos");
 	if (!allowed) return;
+
+	if (config.env === "test") {
+		console.log(`[EMAIL-TEST] Skipping new photos email for ${email}`);
+		return;
+	}
 
 	const albumLink = `${FRONTEND_URL}/albums/${token}`;
 

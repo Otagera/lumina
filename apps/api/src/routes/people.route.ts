@@ -100,6 +100,47 @@ const peopleRoutes = new Elysia({ prefix: "/people" })
 			}),
 		},
 	)
+	.delete(
+		"/:personId",
+		async ({ params, set, userId }) => {
+			try {
+				const data = await prisma.people.deleteMany({
+					where: {
+						person_id: params.personId,
+						user_id: userId,
+					},
+				});
+
+				if (data.count === 0) {
+					set.status = HTTP_STATUS_CODES.NOT_FOUND;
+					return {
+						status: "error",
+						message: "Person not found",
+						data: null,
+					};
+				}
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Person deleted successfully.",
+					data: null,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({
+				personId: t.String(),
+			}),
+		},
+	)
 	.post(
 		"/merge",
 		async ({ body, set, userId }) => {

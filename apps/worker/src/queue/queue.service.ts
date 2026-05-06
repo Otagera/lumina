@@ -1,4 +1,5 @@
 import { Queue } from "bullmq";
+import config from "../../../../packages/config/src/index.config.ts";
 import { BULL_QUEUE_NAMES } from "../../../../packages/utils/src/constants.util.ts";
 import redisClient from "../../../../packages/utils/src/redisClient.util.ts";
 
@@ -44,6 +45,10 @@ export class QueueLib {
 	}
 
 	async addJob(queueName, data, options?: any) {
+		if (config.env === "test") {
+			console.log(`[QUEUE-TEST] Skipping job enqueue for ${queueName}`);
+			return { id: "test-job-id" };
+		}
 		return await this._queue.add(queueName, data, options);
 	}
 	getQueue() {

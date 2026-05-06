@@ -21,6 +21,7 @@ const aliasSpec = {
 		created_by: "userId",
 		creation_date: "createdAt",
 		shared_link: "sharedLink",
+		share_token: "shareToken",
 	},
 };
 

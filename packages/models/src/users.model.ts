@@ -109,18 +109,20 @@ const deleteAllUsers = async () => {
 
 // Storage Configs
 const createStorageConfig = async (userId, data) => {
+	const { name, is_active, ...rest } = data;
 	return await prisma.user_storage_configs.create({
 		data: {
-			...data,
+			...rest,
 			user_id: userId,
 		},
 	});
 };
 
 const updateStorageConfig = async (configId, data) => {
+	const { name, is_active, ...rest } = data;
 	return await prisma.user_storage_configs.update({
 		where: { id: configId },
-		data,
+		data: rest,
 	});
 };
 

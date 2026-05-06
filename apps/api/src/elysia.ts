@@ -8,14 +8,25 @@ import { swagger } from "@elysiajs/swagger";
 import * as Sentry from "@sentry/bun";
 import { Elysia, sse } from "elysia";
 import config from "../../../packages/config/src/index.config.ts";
-import { AuthError } from "../../../packages/utils/src/error.util.ts";
 import {
 	EVENTS,
 	eventEmitter,
 } from "../../../packages/utils/src/events.util.ts";
 import { createServiceLogger } from "../../../packages/utils/src/logger.util.ts";
 import { queueServices } from "../../worker/src/queue/queue.service.ts";
+import albumsRoutes from "./routes/albums.route";
+import authRoutes, { unsubscribeRoutes } from "./routes/auth.route";
+import billingWebhookRoutes from "./routes/billing-webhook.route";
+import facesRoutes from "./routes/faces.route";
 import { csrfPlugin } from "./routes/middleware/csrf.plugin.ts";
+import notificationsRoutes from "./routes/notifications.route";
+import peopleRoutes from "./routes/people.route";
+import { picturesRoutes, publicPicturesRoutes } from "./routes/pictures.route";
+import publicRoutes from "./routes/public.route";
+import settingsRoutes from "./routes/settings.route";
+import { thumbnailRoutes } from "./routes/thumbnail.route";
+import trashRoutes from "./routes/trash.route";
+import usageRoutes from "./routes/usage.route";
 
 const envConfig = config[config.env || "development"];
 
@@ -28,55 +39,17 @@ Sentry.init({
 const logger = createServiceLogger("api");
 
 export const createElysiaApp = async () => {
-	const { default: albumsRoutes } = await import("./routes/albums.route");
-	const { default: authRoutes, unsubscribeRoutes } = await import(
-		"./routes/auth.route"
-	);
-	const { picturesRoutes, publicPicturesRoutes } = await import(
-		"./routes/pictures.route"
-	);
-	const { default: facesRoutes } = await import("./routes/faces.route");
-	const { default: publicRoutes } = await import("./routes/public.route");
-	const { default: peopleRoutes } = await import("./routes/people.route");
-	const { default: settingsRoutes } = await import("./routes/settings.route");
-	const { default: trashRoutes } = await import("./routes/trash.route");
-	const { default: notificationsRoutes } = await import(
-		"./routes/notifications.route"
-	);
-	const { default: usageRoutes } = await import("./routes/usage.route");
-	const { thumbnailRoutes } = await import("./routes/thumbnail.route");
-	const { default: billingWebhookRoutes } = await import(
-		"./routes/billing-webhook.route"
-	);
-
-	let bullBoardPlugin: any = null;
-	if (config.env !== "test") {
-		const serverAdapter: any = new ElysiaAdapter("/worker/admin");
-
-		createBullBoard({
-			queues: [
-				new BullMQAdapter(queueServices.defaultQueueLib.getQueue()),
-				new BullMQAdapter(queueServices.imageOptimizationQueueLib.getQueue()),
-				new BullMQAdapter(queueServices.faceRecognitionQueueLib.getQueue()),
-				new BullMQAdapter(queueServices.faceSearchQueueLib.getQueue()),
-				new BullMQAdapter(queueServices.faceClusteringQueueLib.getQueue()),
-				new BullMQAdapter(queueServices.bulkDownloadQueueLib.getQueue()),
-				new BullMQAdapter(queueServices.fileDeletionQueueLib.getQueue()),
-			],
-			serverAdapter: serverAdapter,
-		});
-
-		bullBoardPlugin = await serverAdapter.registerPlugin();
-	}
-
-	eventEmitter.setMaxListeners(100);
-
 	const app = new Elysia({
 		bodyParser: {
 			limit: "10mb",
 		},
-	})
-		.use(csrfPlugin)
+	});
+
+	if (config.env !== "test") {
+		app.use(csrfPlugin);
+	}
+
+	app
 		.onBeforeHandle(({ request, body }) => {
 			console.log(
 				`[${new Date().toISOString()}] ${request.method} ${request.url}`,
@@ -225,9 +198,9 @@ export const createElysiaApp = async () => {
 				},
 			},
 		)
-		.group("/api/v1/public", (app) => app.use(publicPicturesRoutes))
 		.group("/api/v1", (app) =>
 			app
+				.group("/public", (app) => app.use(publicPicturesRoutes))
 				.use(billingWebhookRoutes)
 				.use(thumbnailRoutes)
 				.use(unsubscribeRoutes)
@@ -241,16 +214,36 @@ export const createElysiaApp = async () => {
 				.use(trashRoutes)
 				.use(notificationsRoutes)
 				.use(usageRoutes),
-		);
+		)
 
-	if (bullBoardPlugin) {
+		.use(swagger());
+
+	if (config.env !== "test") {
+		const serverAdapter: any = new ElysiaAdapter("/worker/admin");
+
+		createBullBoard({
+			queues: [
+				new BullMQAdapter(queueServices.defaultQueueLib.getQueue()),
+				new BullMQAdapter(queueServices.imageOptimizationQueueLib.getQueue()),
+				new BullMQAdapter(queueServices.faceRecognitionQueueLib.getQueue()),
+				new BullMQAdapter(queueServices.faceSearchQueueLib.getQueue()),
+				new BullMQAdapter(queueServices.faceClusteringQueueLib.getQueue()),
+				new BullMQAdapter(queueServices.bulkDownloadQueueLib.getQueue()),
+				new BullMQAdapter(queueServices.fileDeletionQueueLib.getQueue()),
+			],
+			serverAdapter: serverAdapter,
+		});
+
+		const bullBoardPlugin = await serverAdapter.registerPlugin();
 		app.use(bullBoardPlugin);
 	}
 
-	app.use(swagger());
+	eventEmitter.setMaxListeners(100);
 
 	return app;
 };
+
+export type App = Awaited<ReturnType<typeof createElysiaApp>>;
 
 const start = async () => {
 	try {
@@ -273,8 +266,6 @@ const start = async () => {
 	}
 };
 
-// Only start if this file is run directly (though Bun makes this tricky with imports)
-// For now, we'll keep the side effect but export the creator
 if (import.meta.main) {
 	await start();
 }

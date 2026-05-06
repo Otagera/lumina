@@ -9,8 +9,8 @@ const envPaths = [
 	path.resolve("apps/api/.env"),
 ];
 
-let loadedEnv: Record<string, string> = {};
-
+const initialNodeEnv = process.env.NODE_ENV;
+let loadedEnv: any = {};
 for (const envPath of envPaths) {
 	try {
 		const result = dotenv.config({ path: envPath, override: true });
@@ -26,8 +26,13 @@ for (const envPath of envPaths) {
 
 // Helper to get env value
 const getEnv = (key: string): string | undefined => {
+	// If we are in test mode, prioritize initial process.env over loadedEnv for NODE_ENV
+	if (key === "NODE_ENV" && initialNodeEnv === "test") {
+		return "test";
+	}
 	return loadedEnv[key] || process.env[key];
 };
+
 
 interface IConfig {
 	env: "development" | "test" | "production";

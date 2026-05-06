@@ -1,43 +1,52 @@
 import { Elysia, t } from "elysia";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
-import { NotFoundError } from "../../../../packages/utils/src/error.util.ts";
-import { normalizeImagePath } from "../../../../packages/utils/src/image.util.ts";
-import { checkAlbumPermissions } from "../../../../packages/utils/src/permissions.util.ts";
-import { addImagesToAlbumService } from "../services/albums/addImagesToAlbum.service.ts";
-import { getAlbumForUser } from "../services/albums/albums.lib";
 import { alterAlbumService } from "../services/albums/alterAlbum.service.ts";
 import { createAlbumService } from "../services/albums/createAlbum.service.ts";
-import { deleteInviteService } from "../services/albums/deleteInvite.service.ts";
 import { fetchAlbumService } from "../services/albums/fetchAlbum.service.ts";
 import { fetchAlbumsService } from "../services/albums/fetchAlbums.service.ts";
-import { fetchImagesInAlbumService } from "../services/albums/fetchImagesInAlbum.service.ts";
 import { generateInviteService } from "../services/albums/generateInvite.service.ts";
 import { joinAlbumService } from "../services/albums/joinAlbum.service.ts";
-import { moderateImagesService } from "../services/albums/moderateImages.service.ts";
 import { removeAlbumService } from "../services/albums/removeAlbum.service.ts";
-import { removeAlbumsService } from "../services/albums/removeAlbums.service.ts";
 import { removeImagesInAlbumService } from "../services/albums/removeImagesInAlbum.service.ts";
-import { removeMemberService } from "../services/albums/removeMember.service.ts";
 import { resendInviteService } from "../services/albums/resendInvite.service.ts";
 import { updateMemberRoleService } from "../services/albums/updateMemberRole.service.ts";
-import { findDuplicatesService } from "../services/pictures/findDuplicates.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
+import { checkAlbumPermissions } from "./middleware/permissions.plugin.ts";
 
 const albumsRoutes = new Elysia({ prefix: "/albums" })
 	.derive(authDerivation)
+	.get("/", async ({ userId, set }) => {
+		try {
+			const data = await fetchAlbumsService({ userId });
+
+			set.status = HTTP_STATUS_CODES.OK;
+			return {
+				status: "completed",
+				message: "Albums fetched successfully.",
+				data,
+			};
+		} catch (error: any) {
+			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+			return {
+				status: "error",
+				message: error?.message || "Internal server error",
+				data: null,
+			};
+		}
+	})
 	.post(
 		"/",
 		async ({ body, set, userId }) => {
 			try {
 				const data = await createAlbumService({
-					albumName: body.albumName,
-					userId: userId,
+					...body,
+					userId,
 				});
 
 				set.status = HTTP_STATUS_CODES.CREATED;
 				return {
 					status: "completed",
-					message: `Album created successfully.`,
+					message: "Album created successfully.",
 					data,
 				};
 			} catch (error: any) {
@@ -55,38 +64,19 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			}),
 		},
 	)
-	.get("/", async ({ set, userId }) => {
-		try {
-			const data = await fetchAlbumsService({ userId });
-
-			set.status = HTTP_STATUS_CODES.OK;
-			return {
-				status: "completed",
-				message: `Albums retrieved successfully.`,
-				data,
-			};
-		} catch (error: any) {
-			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-			return {
-				status: "error",
-				message: error?.message || "Internal server error",
-				data: null,
-			};
-		}
-	})
 	.post(
 		"/join",
 		async ({ body, set, userId }) => {
 			try {
 				const data = await joinAlbumService({
+					...body,
 					userId,
-					inviteToken: body.inviteToken,
 				});
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
 					status: "completed",
-					message: `Successfully joined album.`,
+					message: "Album joined successfully.",
 					data,
 				};
 			} catch (error: any) {
@@ -109,78 +99,14 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 		async ({ params, set, userId }) => {
 			try {
 				const albumId = params.albumId;
+				await checkAlbumPermissions(albumId, userId, ["VIEWER", "ADMIN"]);
 
-				// Validate UUID format before querying database
-				const uuidRegex =
-					/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-				if (!uuidRegex.test(albumId)) {
-					throw new NotFoundError("Album not found");
-				}
-
-				const album = await getAlbumForUser(albumId, userId);
-
-				if (!album) {
-					throw new NotFoundError("Album not found");
-				}
-
-				let coverImage: { id: string | null; url: string | null } = {
-					id: null,
-					url: null,
-				};
-
-				// MANUAL: if cover_image is set and not deleted
-				if (album.cover_image && !album.cover_image.deleted_at) {
-					coverImage = {
-						id: album.cover_image.image_id,
-						url: normalizeImagePath(
-							album.cover_image.image_path,
-							album.cover_image.storage_provider,
-							album.cover_image.storage_key,
-						),
-					};
-				}
-
-				// FALLBACK: first 4 images if no manual cover set
-				let coverImages: string[] = [];
-
-				if (!coverImage.url) {
-					//fetch album images
-					const albumImages = await fetchImagesInAlbumService({
-						albumId,
-						userId,
-						limit: "4",
-					});
-
-					if (
-						albumImages &&
-						typeof albumImages === "object" &&
-						"imagesInAlbum" in albumImages
-					) {
-						coverImages =
-							albumImages.imagesInAlbum
-								.map((ai: any) => ai.images?.imagePath)
-								.filter(Boolean) || [];
-					}
-				}
-
-				const data = {
-					id: album.album_id,
-					albumName: album.album_name,
-					userId: album.created_by,
-					creationDate: album.creation_date,
-					sharedLink: album.shared_link,
-					shareToken: album.share_token,
-					settings: album.settings,
-					members: album.album_members,
-					coverImage,
-					coverImages,
-					storageConfig: album.storage_config,
-				};
+				const data = await fetchAlbumService({ albumId, userId });
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
 					status: "completed",
-					message: `Album: ${albumId} retrieved successfully.`,
+					message: "Album fetched successfully.",
 					data,
 				};
 			} catch (error: any) {
@@ -194,7 +120,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 		},
 		{
 			params: t.Object({
-				albumId: t.String(), // Assuming albumId is a string/UUID
+				albumId: t.String(),
 			}),
 		},
 	)
@@ -205,12 +131,16 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				const albumId = params.albumId;
 				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
 
-				const data = await alterAlbumService({ ...body, userId, albumId });
+				const data = await alterAlbumService({
+					...body,
+					albumId,
+					userId,
+				});
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
 					status: "completed",
-					message: `Album: ${albumId} updated successfully.`,
+					message: "Album updated successfully.",
 					data,
 				};
 			} catch (error: any) {
@@ -224,203 +154,28 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 		},
 		{
 			params: t.Object({
-				albumId: t.String(), // Assuming albumId is a string/UUID
+				albumId: t.String(),
 			}),
-			body: t.Object({
-				albumName: t.Optional(t.String()),
-				shareToken: t.Optional(t.Nullable(t.String())),
-				coverImageId: t.Optional(t.Nullable(t.String())),
-				settings: t.Optional(
-					t.Object({
-						is_event: t.Optional(t.Boolean()),
-						requires_approval: t.Optional(t.Boolean()),
-						tagging_policy: t.Optional(t.String()),
-						expires_at: t.Optional(t.Nullable(t.String())),
-						allow_guest_uploads: t.Optional(t.Boolean()),
-					}),
-				),
-				storageConfigId: t.Optional(t.Nullable(t.String())),
-			}),
+			body: t.Any(),
 		},
 	)
 	.post(
-		"/:albumId/invites",
+		"/:albumId/images/bulk-status",
 		async ({ params, body, set, userId }) => {
 			try {
 				const albumId = params.albumId;
 				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
 
-				const data = await generateInviteService({
-					albumId,
-					role: body.role,
-				});
-
-				set.status = HTTP_STATUS_CODES.CREATED;
-				return {
-					status: "completed",
-					message: `Invite generated successfully.`,
-					data,
-				};
-			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-				return {
-					status: "error",
-					message: error?.message || "Internal server error",
-					data: null,
-				};
-			}
-		},
-		{
-			params: t.Object({ albumId: t.String() }),
-			body: t.Object({
-				role: t.Optional(t.String()),
-			}),
-		},
-	)
-	.delete(
-		"/:albumId/invites/:memberId",
-		async ({ params, set, userId }) => {
-			try {
-				const { albumId, memberId } = params;
-				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
-
-				const data = await deleteInviteService({
-					albumId,
-					memberId,
-				});
-
-				set.status = HTTP_STATUS_CODES.OK;
-				return {
-					status: "completed",
-					message: "Invite deleted.",
-					data,
-				};
-			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-				return {
-					status: "error",
-					message: error?.message || "Internal server error",
-					data: null,
-				};
-			}
-		},
-		{
-			params: t.Object({ albumId: t.String(), memberId: t.String() }),
-		},
-	)
-	.post(
-		"/:albumId/invites/:memberId/resend",
-		async ({ params, set, userId }) => {
-			try {
-				const { albumId, memberId } = params;
-				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
-
-				const data = await resendInviteService({
-					albumId,
-					memberId,
-				});
-
-				set.status = HTTP_STATUS_CODES.OK;
-				return {
-					status: "completed",
-					message: "Invite resent.",
-					data,
-				};
-			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-				return {
-					status: "error",
-					message: error?.message || "Internal server error",
-					data: null,
-				};
-			}
-		},
-		{
-			params: t.Object({ albumId: t.String(), memberId: t.String() }),
-		},
-	)
-	.patch(
-		"/:albumId/members/:memberId",
-		async ({ params, body, set, userId }) => {
-			try {
-				const { albumId, memberId } = params;
-				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
-
-				const data = await updateMemberRoleService({
-					albumId,
-					memberId,
-					role: body.role,
-				});
-
-				set.status = HTTP_STATUS_CODES.OK;
-				return {
-					status: "completed",
-					message: "Member role updated.",
-					data,
-				};
-			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-				return {
-					status: "error",
-					message: error?.message || "Internal server error",
-					data: null,
-				};
-			}
-		},
-		{
-			params: t.Object({ albumId: t.String(), memberId: t.String() }),
-			body: t.Object({
-				role: t.String(),
-			}),
-		},
-	)
-	.delete(
-		"/:albumId/members/:memberId",
-		async ({ params, set, userId }) => {
-			try {
-				const { albumId, memberId } = params;
-				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
-
-				const data = await removeMemberService({
-					albumId,
-					memberId,
-				});
-
-				set.status = HTTP_STATUS_CODES.OK;
-				return {
-					status: "completed",
-					message: "Member removed.",
-					data,
-				};
-			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-				return {
-					status: "error",
-					message: error?.message || "Internal server error",
-					data: null,
-				};
-			}
-		},
-		{
-			params: t.Object({ albumId: t.String(), memberId: t.String() }),
-		},
-	)
-	.post(
-		"/:albumId/moderate",
-		async ({ params, body, set, userId }) => {
-			try {
-				const albumId = params.albumId;
-				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
-
-				const data = await moderateImagesService({
-					albumId,
+				const data = await removeImagesInAlbumService({
 					...body,
+					albumId,
+					userId,
 				});
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
 					status: "completed",
-					message: `Successfully moderated ${data.count} images.`,
+					message: "Images status updated successfully.",
 					data,
 				};
 			} catch (error: any) {
@@ -437,6 +192,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			body: t.Object({
 				imageIds: t.Array(t.String()),
 				status: t.String(),
+				reason: t.Optional(t.String()),
 			}),
 		},
 	)
@@ -466,77 +222,27 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 		},
 		{
 			params: t.Object({
-				albumId: t.String(), // Assuming albumId is a string/UUID
-			}),
-		},
-	)
-	.get(
-		"/:albumId/images",
-		async ({ params, query, set, userId }) => {
-			try {
-				const albumId = params.albumId;
-
-				const data = await fetchImagesInAlbumService({
-					...query, // Assuming query params for filtering/pagination
-					userId,
-					albumId,
-				});
-
-				set.status = HTTP_STATUS_CODES.OK;
-				return {
-					status: "completed",
-					message: `Album images retrieved successfully.`,
-					data,
-				};
-			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-				return {
-					status: "error",
-					message: error?.message || "Internal server error",
-					data: null,
-				};
-			}
-		},
-		{
-			params: t.Object({
-				albumId: t.String(), // Assuming albumId is a string/UUID
-			}),
-			query: t.Object({
-				limit: t.Optional(t.String()),
-				nextCursor: t.Optional(t.String()),
-				paginationType: t.Optional(t.String()),
-				status: t.Optional(t.String()),
-				uploaderId: t.Optional(t.String()),
-				startDate: t.Optional(t.String()),
-				endDate: t.Optional(t.String()),
-				sortBy: t.Optional(t.String()),
+				albumId: t.String(),
 			}),
 		},
 	)
 	.post(
-		"/:albumId/images",
+		"/:albumId/invites",
 		async ({ params, body, set, userId }) => {
 			try {
 				const albumId = params.albumId;
+				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
 
-				const data = await addImagesToAlbumService({
+				const data = await generateInviteService({
 					...body,
-					userId,
 					albumId,
+					userId,
 				});
 
-				if (data.idempotent) {
-					set.status = HTTP_STATUS_CODES.OK;
-					return {
-						status: "completed",
-						message: `Image already exists in the album.`,
-						data: data.album_image,
-					};
-				}
 				set.status = HTTP_STATUS_CODES.CREATED;
 				return {
 					status: "completed",
-					message: `Image added to album successfully.`,
+					message: "Invite generated successfully.",
 					data,
 				};
 			} catch (error: any) {
@@ -549,134 +255,31 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			}
 		},
 		{
-			params: t.Object({
-				albumId: t.String(), // Assuming albumId is a string/UUID
-			}),
+			params: t.Object({ albumId: t.String() }),
 			body: t.Object({
-				imageIds: t.Array(t.String()), // Assuming imageIds is an array of strings/UUIDs
+				role: t.Optional(t.String()),
+				passcode: t.Optional(t.String()),
+				expiresInDays: t.Optional(t.Numeric()),
 			}),
 		},
 	)
 	.post(
-		"/:albumId/images/delete-batch",
-		async ({ params, body, set, userId }) => {
-			try {
-				const albumId = params.albumId;
-
-				const data = await removeImagesInAlbumService({
-					...body,
-					userId,
-					albumId,
-				});
-
-				set.status = HTTP_STATUS_CODES.OK;
-				return {
-					status: "completed",
-					message: `Image(s) removed from album successfully.`,
-					data,
-				};
-			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-				return {
-					status: "error",
-					message: error?.message || "Internal server error",
-					data: null,
-				};
-			}
-		},
-		{
-			params: t.Object({
-				albumId: t.String(), // Assuming albumId is a string/UUID
-			}),
-			body: t.Object({
-				imageIds: t.Array(t.String()), // Assuming imageIds is an array of strings/UUIDs
-			}),
-		},
-	)
-	.post(
-		"/:albumId/cluster",
+		"/:albumId/invites/:inviteId/resend",
 		async ({ params, set, userId }) => {
 			try {
 				const albumId = params.albumId;
-				console.log(
-					`[CLUSTER] Triggered for album ${albumId} by user ${userId}`,
-				);
+				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
 
-				// Dynamic import to ensure queueServices is ready and avoid circular deps
-				const { queueServices: localQueueServices } = await import(
-					"../../../worker/src/queue/queue.service.ts"
-				);
-
-				if (!localQueueServices) {
-					throw new Error("Queue services not initialized");
-				}
-
-				await getAlbumForUser(albumId, userId);
-
-				await localQueueServices.faceClusteringQueueLib.addJob(
-					"faceClustering",
-					{
-						albumId,
-						worker: "faceClustering",
-					},
-					{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
-				);
-
-				set.status = HTTP_STATUS_CODES.OK;
-				return {
-					status: "completed",
-					message: `Face clustering initiated for album: ${albumId}`,
-					data: null,
-				};
-			} catch (error: any) {
-				console.error("[CLUSTER] Route Error:", error.message);
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-				return {
-					status: "error",
-					message: error?.message || "Internal server error",
-					data: null,
-				};
-			}
-		},
-		{
-			params: t.Object({
-				albumId: t.String(),
-			}),
-		},
-	)
-	.delete("/", async ({ set, userId }) => {
-		try {
-			const data = await removeAlbumsService({ userId });
-
-			set.status = HTTP_STATUS_CODES.OK;
-			return {
-				status: "completed",
-				message: `Albums deleted successfully.`,
-				data,
-			};
-		} catch (error: any) {
-			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-			return {
-				status: "error",
-				message: error?.message || "Internal server error",
-				data: null,
-			};
-		}
-	})
-	.get(
-		"/:albumId/duplicates",
-		async ({ params, query, userId, set }) => {
-			try {
-				const data = await findDuplicatesService({
-					albumId: params.albumId,
+				const data = await resendInviteService({
+					inviteId: params.inviteId,
+					albumId,
 					userId,
-					threshold: query.threshold ? Number.parseInt(query.threshold) : 5,
 				});
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
 					status: "completed",
-					message: "Duplicates identified successfully.",
+					message: "Invite resent successfully.",
 					data,
 				};
 			} catch (error: any) {
@@ -691,9 +294,46 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 		{
 			params: t.Object({
 				albumId: t.String(),
+				inviteId: t.String(),
 			}),
-			query: t.Object({
-				threshold: t.Optional(t.String()),
+		},
+	)
+	.patch(
+		"/:albumId/invites/:inviteId",
+		async ({ params, body, set, userId }) => {
+			try {
+				const albumId = params.albumId;
+				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
+
+				const data = await updateMemberRoleService({
+					inviteId: params.inviteId,
+					albumId,
+					userId,
+					role: body.role,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Invite updated successfully.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({
+				albumId: t.String(),
+				inviteId: t.String(),
+			}),
+			body: t.Object({
+				role: t.String(),
 			}),
 		},
 	);

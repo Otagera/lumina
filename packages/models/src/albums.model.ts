@@ -1,4 +1,6 @@
+import crypto from "node:crypto";
 import { queueServices } from "../../../apps/worker/src/queue/queue.service.ts";
+import config from "../../config/src/index.config.ts";
 import prisma from "../../config/src/db.config.ts";
 import { deleteFile } from "../../utils/src/file.util.ts";
 import {
@@ -7,9 +9,16 @@ import {
 } from "./images.model.ts";
 
 const createNewAlbum = async (data) => {
+	const shareToken = crypto.randomBytes(16).toString("hex");
+	const env = config.env || "development";
+	const baseUrl = config[env].base_api_url;
+	const sharedLink = `${baseUrl}/public/albums/${shareToken}`;
+
 	return await prisma.albums.create({
 		data: {
 			...data,
+			share_token: shareToken,
+			shared_link: sharedLink,
 			settings: {
 				create: {}, // Initialize with default settings
 			},

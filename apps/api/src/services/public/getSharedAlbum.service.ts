@@ -8,13 +8,13 @@ import {
 } from "../../../../../packages/utils/src/specValidator.util.ts";
 
 const spec = Joi.object({
-	token: Joi.string().required(),
+	share_token: Joi.string().required(),
 	status: Joi.string().optional(),
 	startDate: Joi.string().optional(),
 	endDate: Joi.string().optional(),
 	uploaderId: Joi.string().uuid().optional(),
 	minFaces: Joi.number().optional(),
-	guestSessionId: Joi.string().uuid().optional(),
+	guest_session_id: Joi.string().uuid().optional(),
 });
 
 const aliasSpec = {

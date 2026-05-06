@@ -149,7 +149,6 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: unknown) {
-				console.error("Error in POST /images:", error);
 				const err = error as { statusCode?: number; message?: string };
 				set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
@@ -160,14 +159,12 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 			}
 		},
 		{
-			body: t.Object({
-				uploadedImages: t.Optional(t.Any()),
-				albumId: t.Optional(t.String()),
-				key: t.Optional(t.String()),
-				status: t.Optional(t.String()),
-			}),
+			body: t.Any(),
 			beforeHandle: [checkQuota as any],
 			bodyLimit: 500 * 1024 * 1024,
+			error({ error }) {
+				console.error("[PICTURES ROUTE ERROR]", error);
+			}
 		},
 	)
 	.post(
@@ -277,29 +274,43 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 			}),
 		},
 	)
-	.get("/", async ({ query, set, userId }) => {
-		try {
-			const data = await fetchPicturesService({
-				...query,
-				userId,
-			});
+	.get(
+		"/",
+		async ({ query, set, userId }) => {
+			try {
+				const data = await fetchPicturesService({
+					...query,
+					userId,
+				});
 
-			set.status = HTTP_STATUS_CODES.OK;
-			return {
-				status: "completed",
-				message: "Images retrieved successfully.",
-				data,
-			};
-		} catch (error: unknown) {
-			const err = error as { statusCode?: number; message?: string };
-			set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
-			return {
-				status: "error",
-				message: err?.message || "Internal server error",
-				data: null,
-			};
-		}
-	})
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Images retrieved successfully.",
+					data,
+				};
+			} catch (error: unknown) {
+				const err = error as { statusCode?: number; message?: string };
+				set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: err?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			query: t.Object({
+				paginationType: t.Optional(t.String()),
+				limit: t.Optional(t.Numeric()),
+				nextCursor: t.Optional(t.String()),
+				prevCursor: t.Optional(t.String()),
+				albumId: t.Optional(t.String()),
+				from: t.Optional(t.String()),
+				to: t.Optional(t.String()),
+			}),
+		},
+	)
 	.get(
 		"/:imageId",
 		async ({ params, set, userId }) => {
@@ -565,7 +576,6 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 					data: { key },
 				};
 			} catch (error: any) {
-				console.error("[LOCAL UPLOAD] Error:", error.message, error.stack);
 				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",

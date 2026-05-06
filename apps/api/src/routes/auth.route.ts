@@ -72,7 +72,6 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 							},
 						};
 					} catch (error) {
-						console.error("Signup Error:", error);
 						set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 						return {
 							status: "error",
@@ -122,7 +121,6 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 							},
 						};
 					} catch (error) {
-						console.log("error", error);
 						set.status = error?.statusCode || HTTP_STATUS_CODES.UNAUTHORIZED;
 						return {
 							status: "error",
@@ -148,7 +146,6 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 							message: "If an account exists, a reset link has been sent.",
 						};
 					} catch (error: any) {
-						console.error("Forgot Password Error:", error);
 						set.status = HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 						return {
 							status: "error",
@@ -172,7 +169,6 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 							message: "Password reset successfully",
 						};
 					} catch (error: any) {
-						console.error("Reset Password Error:", error);
 						set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 						return {
 							status: "error",

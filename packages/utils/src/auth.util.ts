@@ -22,12 +22,16 @@ const createUserAuthToken = async (userId) => {
 	const env = config.env || "development";
 	const secret = config[env].secret;
 
-	const accessToken = jwt.sign({ userId, type: "access" }, secret, {
-		expiresIn: "24h",
-	});
-	const refreshToken = jwt.sign({ userId, type: "refresh" }, secret, {
-		expiresIn: "30d",
-	});
+	const accessToken = jwt.sign(
+		{ userId, type: "access", jti: crypto.randomUUID() },
+		secret,
+		{ expiresIn: "24h" },
+	);
+	const refreshToken = jwt.sign(
+		{ userId, type: "refresh", jti: crypto.randomUUID() },
+		secret,
+		{ expiresIn: "30d" },
+	);
 	return { accessToken, refreshToken };
 };
 

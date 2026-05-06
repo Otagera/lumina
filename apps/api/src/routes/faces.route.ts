@@ -16,15 +16,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 		"/:faceId",
 		async ({ params, set }) => {
 			try {
-				const faceId = parseInt(params.faceId, 10);
-				if (Number.isNaN(faceId)) {
-					set.status = HTTP_STATUS_CODES.BAD_REQUEST;
-					return {
-						status: "error",
-						message: "Invalid face ID format.",
-						data: null,
-					};
-				}
+				const faceId = params.faceId;
 
 				const data = await fetchFaceService({ faceId });
 
@@ -50,7 +42,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 		},
 		{
 			params: t.Object({
-				faceId: t.String(),
+				faceId: t.Numeric(),
 			}),
 		},
 	)
@@ -58,15 +50,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 		"/:faceId",
 		async ({ params, body, set, userId, guestSessionId }) => {
 			try {
-				const faceId = parseInt(params.faceId, 10);
-				if (Number.isNaN(faceId)) {
-					set.status = HTTP_STATUS_CODES.BAD_REQUEST;
-					return {
-						status: "error",
-						message: "Invalid face ID format.",
-						data: null,
-					};
-				}
+				const faceId = params.faceId;
 
 				// Enforce policy
 				await checkTaggingPolicy({ faceId, userId, guestSessionId });
@@ -94,7 +78,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 		},
 		{
 			params: t.Object({
-				faceId: t.String(),
+				faceId: t.Numeric(),
 			}),
 			body: t.Object({
 				personId: t.Optional(t.Union([t.String(), t.Null()])),
@@ -138,11 +122,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 		"/:faceId/ignore",
 		async ({ params, body, set, userId, guestSessionId }) => {
 			try {
-				const faceId = parseInt(params.faceId, 10);
-				if (Number.isNaN(faceId)) {
-					set.status = HTTP_STATUS_CODES.BAD_REQUEST;
-					return { status: "error", message: "Invalid face ID format." };
-				}
+				const faceId = params.faceId;
 
 				const data = await ignoreFaceService({
 					...body,
@@ -158,7 +138,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 			}
 		},
 		{
-			params: t.Object({ faceId: t.String() }),
+			params: t.Object({ faceId: t.Numeric() }),
 			body: t.Object({ personId: t.String() }),
 		},
 	)
@@ -166,11 +146,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 		"/:faceId/unignore",
 		async ({ params, body, set, userId, guestSessionId }) => {
 			try {
-				const faceId = parseInt(params.faceId, 10);
-				if (Number.isNaN(faceId)) {
-					set.status = HTTP_STATUS_CODES.BAD_REQUEST;
-					return { status: "error", message: "Invalid face ID format." };
-				}
+				const faceId = params.faceId;
 
 				const data = await unignoreFaceService({
 					...body,
@@ -186,7 +162,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 			}
 		},
 		{
-			params: t.Object({ faceId: t.String() }),
+			params: t.Object({ faceId: t.Numeric() }),
 			body: t.Object({ personId: t.String() }),
 		},
 	);

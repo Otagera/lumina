@@ -1,4 +1,4 @@
-import axiosAPI from "./axios";
+import { api } from "./eden";
 
 export const fetchImages = async ({
 	pageParam = null,
@@ -6,11 +6,15 @@ export const fetchImages = async ({
 	pageParam?: string | null;
 } = {}) => {
 	try {
-		const url = pageParam
-			? `/images?paginationType=cursor&limit=25&nextCursor=${pageParam}`
-			: "/images?paginationType=cursor&limit=25";
-		const response = await axiosAPI.get(url);
-		return response.data;
+		const { data, error } = await api.images.get({
+			$query: {
+				paginationType: "cursor",
+				limit: 25,
+				...(pageParam ? { nextCursor: pageParam } : {}),
+			},
+		});
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error fetching images:", error);
 	}
@@ -18,8 +22,9 @@ export const fetchImages = async ({
 
 export const fetchImage = async (imageId: string) => {
 	try {
-		const response = await axiosAPI.get(`/images/${imageId}`);
-		return response.data;
+		const { data, error } = await api.images[imageId].get();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error fetching image:", error);
 	}
@@ -27,18 +32,19 @@ export const fetchImage = async (imageId: string) => {
 
 export const uploadImages = async (formData: FormData) => {
 	try {
-		const albumId = formData.get("albumId");
-		const uploadResponse = await axiosAPI.post("/images", formData, {
-			headers: { "Content-Type": "multipart/form-data" },
-		});
-		const uploadResponseData = uploadResponse.data;
+		const albumId = formData.get("albumId") as string | undefined;
+		const { data, error } = await (api.images.post as any)(formData);
+		if (error) throw error;
+
+		const uploadResponseData = data as any;
 
 		if (albumId && albumId !== "undefined" && albumId !== "null") {
-			await axiosAPI.post(`/albums/${albumId}/images`, {
+			const { error: albumError } = await api.albums[albumId].images.post({
 				imageIds: uploadResponseData.data.images.map(
 					(image: any) => image.imageId,
 				),
 			});
+			if (albumError) throw albumError;
 		}
 
 		return uploadResponseData;
@@ -50,8 +56,9 @@ export const uploadImages = async (formData: FormData) => {
 
 export const deleteImage = async (imageId: string) => {
 	try {
-		const response = await axiosAPI.delete(`/images/${imageId}`);
-		return response.data;
+		const { data, error } = await api.images[imageId].delete();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error deleting image:", error);
 	}
@@ -59,8 +66,9 @@ export const deleteImage = async (imageId: string) => {
 
 export const fetchAlbums = async () => {
 	try {
-		const response = await axiosAPI.get("/albums");
-		return response.data;
+		const { data, error } = await api.albums.get();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error fetching albums:", error);
 	}
@@ -68,8 +76,9 @@ export const fetchAlbums = async () => {
 
 export const fetchPlans = async () => {
 	try {
-		const response = await axiosAPI.get("/public/plans");
-		return response.data;
+		const { data, error } = await api.public.plans.get();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error fetching plans:", error);
 	}
@@ -93,15 +102,20 @@ export const fetchImagesInAlbum = async ({
 	sortBy?: string;
 }) => {
 	try {
-		let url = `/albums/${albumId}/images?paginationType=cursor&limit=25&status=${status}`;
-		if (pageParam) url += `&nextCursor=${pageParam}`;
-		if (startDate) url += `&startDate=${startDate}`;
-		if (endDate) url += `&endDate=${endDate}`;
-		if (uploaderId) url += `&uploaderId=${uploaderId}`;
-		if (sortBy) url += `&sortBy=${sortBy}`;
-
-		const response = await axiosAPI.get(url);
-		return response.data;
+		const { data, error } = await api.albums[albumId].images.get({
+			$query: {
+				paginationType: "cursor",
+				limit: 25,
+				status,
+				...(pageParam ? { nextCursor: pageParam } : {}),
+				...(startDate ? { startDate } : {}),
+				...(endDate ? { endDate } : {}),
+				...(uploaderId ? { uploaderId } : {}),
+				...(sortBy ? { sortBy } : {}),
+			},
+		});
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error fetching images in album:", error);
 	}
@@ -109,12 +123,13 @@ export const fetchImagesInAlbum = async ({
 
 export const fetchAlbum = async (albumId: string) => {
 	try {
-		const response = await axiosAPI.get(`/albums/${albumId}`);
-		return response.data;
-	} catch (error: any) {
-		if (error.response?.status === 404) {
+		const { data, error, status } = await api.albums[albumId].get();
+		if (status === 404) {
 			throw new Error("Album not found");
 		}
+		if (error) throw error;
+		return data;
+	} catch (error) {
 		console.error("Error fetching album:", error);
 		throw error;
 	}
@@ -122,8 +137,9 @@ export const fetchAlbum = async (albumId: string) => {
 
 export const login = async (credentials: any) => {
 	try {
-		const response = await axiosAPI.post("/auth/login", credentials);
-		return response.data;
+		const { data, error } = await api.auth.login.post(credentials);
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error logging in:", error);
 		throw error;
@@ -132,8 +148,9 @@ export const login = async (credentials: any) => {
 
 export const signup = async (credentials: any) => {
 	try {
-		const response = await axiosAPI.post("/auth/signup", credentials);
-		return response.data;
+		const { data, error } = await api.auth.signup.post(credentials);
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error signing up:", error);
 		throw error;
@@ -142,8 +159,9 @@ export const signup = async (credentials: any) => {
 
 export const forgotPassword = async (email: string) => {
 	try {
-		const response = await axiosAPI.post("/auth/forgot-password", { email });
-		return response.data;
+		const { data, error } = await api.auth["forgot-password"].post({ email });
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error sending forgot password link:", error);
 		throw error;
@@ -152,8 +170,10 @@ export const forgotPassword = async (email: string) => {
 
 export const resetPassword = async (data: any) => {
 	try {
-		const response = await axiosAPI.post("/auth/reset-password", data);
-		return response.data;
+		const { data: responseData, error } =
+			await api.auth["reset-password"].post(data);
+		if (error) throw error;
+		return responseData;
 	} catch (error) {
 		console.error("Error resetting password:", error);
 		throw error;
@@ -162,8 +182,9 @@ export const resetPassword = async (data: any) => {
 
 export const createAlbum = async (albumName: string) => {
 	try {
-		const response = await axiosAPI.post("/albums", { albumName });
-		return response.data;
+		const { data, error } = await api.albums.post({ albumName });
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error creating album:", error);
 	}
@@ -181,12 +202,13 @@ export const editAlbum = async ({
 	coverImageId?: string | null;
 }) => {
 	try {
-		const response = await axiosAPI.put(`/albums/${albumId}`, {
+		const { data, error } = await api.albums[albumId].put({
 			albumName,
 			shareToken,
 			coverImageId,
 		});
-		return response.data;
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error editing album:", error);
 	}
@@ -194,8 +216,9 @@ export const editAlbum = async ({
 
 export const deleteAlbum = async (albumId: string) => {
 	try {
-		const response = await axiosAPI.delete(`/albums/${albumId}`);
-		return response.data;
+		const { data, error } = await api.albums[albumId].delete();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error deleting album:", error);
 	}
@@ -203,8 +226,9 @@ export const deleteAlbum = async (albumId: string) => {
 
 export const triggerClustering = async (albumId: string) => {
 	try {
-		const response = await axiosAPI.post(`/albums/${albumId}/cluster`);
-		return response.data;
+		const { data, error } = await api.albums[albumId].cluster.post();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error triggering clustering:", error);
 		throw error;
@@ -213,8 +237,9 @@ export const triggerClustering = async (albumId: string) => {
 
 export const reprocessImage = async (imageId: string) => {
 	try {
-		const response = await axiosAPI.post(`/images/${imageId}/reprocess`);
-		return response.data;
+		const { data, error } = await api.images[imageId].reprocess.post();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error reprocessing image:", error);
 		throw error;
@@ -223,8 +248,9 @@ export const reprocessImage = async (imageId: string) => {
 
 export const downloadImage = async (imageId: string) => {
 	try {
-		const response = await axiosAPI.post(`/images/${imageId}/download`);
-		return response.data;
+		const { data, error } = await api.images[imageId].download.post();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error downloading image:", error);
 		throw error;
@@ -245,13 +271,25 @@ export const searchFaces = async ({
 	shareToken?: string;
 }) => {
 	try {
-		const url = shareToken ? "/public/faces/search" : "/faces/search";
-		const body = shareToken
-			? { faceId, shareToken, threshold, limit }
-			: { faceId, albumId, threshold, limit };
-
-		const response = await axiosAPI.post(url, body);
-		return response.data;
+		if (shareToken) {
+			const { data, error } = await api.public.faces.search.post({
+				faceId,
+				shareToken,
+				threshold,
+				limit,
+			});
+			if (error) throw error;
+			return data;
+		} else {
+			const { data, error } = await api.faces.search.post({
+				faceId,
+				albumId,
+				threshold,
+				limit,
+			});
+			if (error) throw error;
+			return data;
+		}
 	} catch (error) {
 		console.error("Error searching faces:", error);
 	}
@@ -259,8 +297,9 @@ export const searchFaces = async ({
 
 export const fetchSharedAlbum = async (token: string) => {
 	try {
-		const response = await axiosAPI.get(`/public/albums/${token}`);
-		return response.data;
+		const { data, error } = await api.public.albums[token].get({ $query: {} });
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error fetching shared album:", error);
 	}
@@ -268,8 +307,9 @@ export const fetchSharedAlbum = async (token: string) => {
 
 export const fetchSharedImage = async (token: string, imageId: string) => {
 	try {
-		const response = await axiosAPI.get(`/public/images/${token}/${imageId}`);
-		return response.data;
+		const { data, error } = await api.public.images[token][imageId].get();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error fetching shared image:", error);
 	}
@@ -277,8 +317,9 @@ export const fetchSharedImage = async (token: string, imageId: string) => {
 
 export const fetchPeople = async () => {
 	try {
-		const response = await axiosAPI.get("/people");
-		return response.data;
+		const { data, error } = await api.people.get();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error fetching people:", error);
 	}
@@ -286,8 +327,9 @@ export const fetchPeople = async () => {
 
 export const createPerson = async (name: string) => {
 	try {
-		const response = await axiosAPI.post("/people", { name });
-		return response.data;
+		const { data, error } = await api.people.post({ name });
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error creating person:", error);
 	}
@@ -295,8 +337,9 @@ export const createPerson = async (name: string) => {
 
 export const updatePerson = async (personId: string, name: string) => {
 	try {
-		const response = await axiosAPI.put(`/people/${personId}`, { name });
-		return response.data;
+		const { data, error } = await api.people[personId].put({ name });
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error updating person:", error);
 	}
@@ -304,8 +347,9 @@ export const updatePerson = async (personId: string, name: string) => {
 
 export const deletePerson = async (personId: string) => {
 	try {
-		const response = await axiosAPI.delete(`/people/${personId}`);
-		return response.data;
+		const { data, error } = await api.people[personId].delete();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error deleting person:", error);
 		throw error;
@@ -317,8 +361,9 @@ export const updateFace = async (
 	data: { personId: string | null },
 ) => {
 	try {
-		const response = await axiosAPI.patch(`/faces/${faceId}`, data);
-		return response.data;
+		const { data: responseData, error } = await api.faces[faceId].patch(data);
+		if (error) throw error;
+		return responseData;
 	} catch (error) {
 		console.error("Error updating face:", error);
 	}
@@ -326,10 +371,11 @@ export const updateFace = async (
 
 export const ignoreFace = async (faceId: number, personId: string) => {
 	try {
-		const response = await axiosAPI.post(`/faces/${faceId}/ignore`, {
+		const { data, error } = await api.faces[faceId].ignore.post({
 			personId,
 		});
-		return response.data;
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error ignoring face:", error);
 		throw error;
@@ -338,10 +384,11 @@ export const ignoreFace = async (faceId: number, personId: string) => {
 
 export const unignoreFace = async (faceId: number, personId: string) => {
 	try {
-		const response = await axiosAPI.post(`/faces/${faceId}/unignore`, {
+		const { data, error } = await api.faces[faceId].unignore.post({
 			personId,
 		});
-		return response.data;
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error un-ignoring face:", error);
 		throw error;
@@ -351,8 +398,9 @@ export const unignoreFace = async (faceId: number, personId: string) => {
 // Settings & Storage
 export const fetchSettings = async () => {
 	try {
-		const response = await axiosAPI.get("/settings");
-		return response.data;
+		const { data, error } = await api.settings.get();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error fetching settings:", error);
 		throw error;
@@ -361,8 +409,9 @@ export const fetchSettings = async () => {
 
 export const fetchUsage = async () => {
 	try {
-		const response = await axiosAPI.get("/usage");
-		return response.data;
+		const { data, error } = await api.usage.get();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error fetching usage:", error);
 		throw error;
@@ -371,8 +420,9 @@ export const fetchUsage = async () => {
 
 export const createStorageConfig = async (data: any) => {
 	try {
-		const response = await axiosAPI.post("/settings/storage", data);
-		return response.data;
+		const { data: responseData, error } = await api.settings.storage.post(data);
+		if (error) throw error;
+		return responseData;
 	} catch (error) {
 		console.error("Error creating storage config:", error);
 		throw error;
@@ -381,8 +431,10 @@ export const createStorageConfig = async (data: any) => {
 
 export const updateStorageConfig = async (configId: string, data: any) => {
 	try {
-		const response = await axiosAPI.put(`/settings/storage/${configId}`, data);
-		return response.data;
+		const { data: responseData, error } =
+			await api.settings.storage[configId].put(data);
+		if (error) throw error;
+		return responseData;
 	} catch (error) {
 		console.error("Error updating storage config:", error);
 		throw error;
@@ -391,8 +443,9 @@ export const updateStorageConfig = async (configId: string, data: any) => {
 
 export const deleteStorageConfig = async (configId: string) => {
 	try {
-		const response = await axiosAPI.delete(`/settings/storage/${configId}`);
-		return response.data;
+		const { data, error } = await api.settings.storage[configId].delete();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error deleting storage config:", error);
 		throw error;
@@ -405,8 +458,10 @@ export const getPresignedUrl = async (data: {
 	albumId?: string;
 }) => {
 	try {
-		const response = await axiosAPI.post("/images/presigned-url", data);
-		return response.data;
+		const { data: responseData, error } =
+			await api.images["presigned-url"].post(data);
+		if (error) throw error;
+		return responseData;
 	} catch (error) {
 		console.error("Error getting presigned URL:", error);
 		throw error;
@@ -425,11 +480,10 @@ export const getPublicPresignedUrl = async (
 	},
 ) => {
 	try {
-		const response = await axiosAPI.post(
-			`/public/albums/${token}/presigned-url`,
-			data,
-		);
-		return response.data;
+		const { data: responseData, error } =
+			await api.public.albums[token]["presigned-url"].post(data);
+		if (error) throw error;
+		return responseData;
 	} catch (error) {
 		console.error("Error getting public presigned URL:", error);
 		throw error;
@@ -443,8 +497,10 @@ export const completeMultipartUpload = async (data: {
 	parts: { ETag: string; PartNumber: number }[];
 }) => {
 	try {
-		const response = await axiosAPI.post("/images/complete-multipart", data);
-		return response.data;
+		const { data: responseData, error } =
+			await api.images["complete-multipart"].post(data);
+		if (error) throw error;
+		return responseData;
 	} catch (error) {
 		console.error("Error completing multipart upload:", error);
 		throw error;
@@ -460,11 +516,14 @@ export const completePublicMultipartUpload = async (
 	},
 ) => {
 	try {
-		const response = await axiosAPI.post(`/public/images/complete-multipart`, {
+		const { data: responseData, error } = await api.public.images[
+			"complete-multipart"
+		].post({
 			...data,
 			shareToken: token,
 		});
-		return response.data;
+		if (error) throw error;
+		return responseData;
 	} catch (error) {
 		console.error("Error completing public multipart upload:", error);
 		throw error;
@@ -477,8 +536,10 @@ export const abortMultipartUpload = async (data: {
 	uploadId: string;
 }) => {
 	try {
-		const response = await axiosAPI.post("/images/abort-multipart", data);
-		return response.data;
+		const { data: responseData, error } =
+			await api.images["abort-multipart"].post(data);
+		if (error) throw error;
+		return responseData;
 	} catch (error) {
 		console.error("Error aborting multipart upload:", error);
 		throw error;
@@ -493,11 +554,14 @@ export const abortPublicMultipartUpload = async (
 	},
 ) => {
 	try {
-		const response = await axiosAPI.post(`/public/images/abort-multipart`, {
+		const { data: responseData, error } = await api.public.images[
+			"abort-multipart"
+		].post({
 			...data,
 			shareToken: token,
 		});
-		return response.data;
+		if (error) throw error;
+		return responseData;
 	} catch (error) {
 		console.error("Error aborting public multipart upload:", error);
 		throw error;
@@ -507,14 +571,11 @@ export const abortPublicMultipartUpload = async (
 // Events & Guest Uploads
 export const uploadGuestImages = async (token: string, formData: FormData) => {
 	try {
-		const response = await axiosAPI.post(
-			`/public/albums/${token}/upload`,
+		const { data, error } = await (api.public.albums[token].upload.post as any)(
 			formData,
-			{
-				headers: { "Content-Type": "multipart/form-data" },
-			},
 		);
-		return response.data;
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error uploading guest images:", error);
 		throw error;
@@ -523,11 +584,9 @@ export const uploadGuestImages = async (token: string, formData: FormData) => {
 
 export const editAlbumSettings = async (albumId: string, data: any) => {
 	try {
-		console.log("Editing album with data:", data);
-		const response = await axiosAPI.put(`/albums/${albumId}`, {
-			...data,
-		});
-		return response.data;
+		const { data: responseData, error } = await api.albums[albumId].put(data);
+		if (error) throw error;
+		return responseData;
 	} catch (error) {
 		console.error("Error editing album settings:", error);
 		throw error;
@@ -541,12 +600,13 @@ export const moderateImages = async (
 	reason?: string,
 ) => {
 	try {
-		const response = await axiosAPI.post(`/albums/${albumId}/moderate`, {
+		const { data, error } = await api.albums[albumId].moderate.post({
 			imageIds,
 			status,
 			reason,
 		});
-		return response.data;
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error moderating images:", error);
 		throw error;
@@ -556,14 +616,14 @@ export const moderateImages = async (
 export const generateInvite = async (
 	albumId: string,
 	role: string,
-	expiresInDays?: number,
+	_expiresInDays?: number,
 ) => {
 	try {
-		const response = await axiosAPI.post(`/albums/${albumId}/invites`, {
+		const { data, error } = await api.albums[albumId].invites.post({
 			role,
-			expiresInDays,
 		});
-		return response.data;
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error generating invite:", error);
 		throw error;
@@ -576,13 +636,11 @@ export const updateMemberRole = async (
 	role: string,
 ) => {
 	try {
-		const response = await axiosAPI.patch(
-			`/albums/${albumId}/members/${memberId}`,
-			{
-				role,
-			},
-		);
-		return response.data;
+		const { data, error } = await api.albums[albumId].members[memberId].patch({
+			role,
+		});
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error updating member role:", error);
 		throw error;
@@ -591,10 +649,10 @@ export const updateMemberRole = async (
 
 export const removeMember = async (albumId: string, memberId: string) => {
 	try {
-		const response = await axiosAPI.delete(
-			`/albums/${albumId}/members/${memberId}`,
-		);
-		return response.data;
+		const { data, error } =
+			await api.albums[albumId].members[memberId].delete();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error removing member:", error);
 		throw error;
@@ -603,10 +661,10 @@ export const removeMember = async (albumId: string, memberId: string) => {
 
 export const deleteInvite = async (albumId: string, memberId: string) => {
 	try {
-		const response = await axiosAPI.delete(
-			`/albums/${albumId}/invites/${memberId}`,
-		);
-		return response.data;
+		const { data, error } =
+			await api.albums[albumId].invites[memberId].delete();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error deleting invite:", error);
 		throw error;
@@ -615,10 +673,10 @@ export const deleteInvite = async (albumId: string, memberId: string) => {
 
 export const resendInvite = async (albumId: string, memberId: string) => {
 	try {
-		const response = await axiosAPI.post(
-			`/albums/${albumId}/invites/${memberId}/resend`,
-		);
-		return response.data;
+		const { data, error } =
+			await api.albums[albumId].invites[memberId].resend.post();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error resending invite:", error);
 		throw error;
@@ -627,10 +685,11 @@ export const resendInvite = async (albumId: string, memberId: string) => {
 
 export const joinAlbum = async (inviteToken: string) => {
 	try {
-		const response = await axiosAPI.post("/albums/join", {
+		const { data, error } = await api.albums.join.post({
 			inviteToken,
 		});
-		return response.data;
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error joining album:", error);
 		throw error;
@@ -639,8 +698,9 @@ export const joinAlbum = async (inviteToken: string) => {
 
 export const fetchTrash = async () => {
 	try {
-		const response = await axiosAPI.get("/trash");
-		return response.data;
+		const { data, error } = await api.trash.get();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error fetching trash:", error);
 		throw error;
@@ -649,10 +709,11 @@ export const fetchTrash = async () => {
 
 export const restoreImages = async (imageIds: string[]) => {
 	try {
-		const response = await axiosAPI.post("/trash/images/restore", {
+		const { data, error } = await api.trash.images.restore.post({
 			imageIds,
 		});
-		return response.data;
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error restoring images:", error);
 		throw error;
@@ -661,8 +722,9 @@ export const restoreImages = async (imageIds: string[]) => {
 
 export const restoreAlbum = async (albumId: string) => {
 	try {
-		const response = await axiosAPI.post(`/trash/albums/${albumId}/restore`);
-		return response.data;
+		const { data, error } = await api.trash.albums[albumId].restore.post();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error restoring album:", error);
 		throw error;
@@ -671,10 +733,9 @@ export const restoreAlbum = async (albumId: string) => {
 
 export const permanentlyDeleteImages = async (imageIds: string[]) => {
 	try {
-		const response = await axiosAPI.delete("/trash/images", {
-			data: { imageIds },
-		});
-		return response.data;
+		const { data, error } = await api.trash.images.delete({ imageIds });
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error permanently deleting images:", error);
 		throw error;
@@ -683,10 +744,9 @@ export const permanentlyDeleteImages = async (imageIds: string[]) => {
 
 export const permanentlyDeleteAlbums = async (albumIds: string[]) => {
 	try {
-		const response = await axiosAPI.delete("/trash/albums", {
-			data: { albumIds },
-		});
-		return response.data;
+		const { data, error } = await api.trash.albums.delete({ albumIds });
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error permanently deleting albums:", error);
 		throw error;
@@ -695,8 +755,9 @@ export const permanentlyDeleteAlbums = async (albumIds: string[]) => {
 
 export const emptyTrash = async () => {
 	try {
-		const response = await axiosAPI.delete("/trash");
-		return response.data;
+		const { data, error } = await api.trash.delete();
+		if (error) throw error;
+		return data;
 	} catch (error) {
 		console.error("Error emptying trash:", error);
 		throw error;

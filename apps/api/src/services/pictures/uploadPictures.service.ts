@@ -171,11 +171,11 @@ const service = async (data) => {
 
 	useExternalStorage = storageProvider !== "local";
 
-	// Process files - upload to storage and prepare for DB
 	const processedFiles = await Promise.all(
 		params.files.map(async (file: any) => {
-			const filename =
-				file.existingKey || `${Date.now()}-${file.name || file.originalname}`;
+			const originalname = file?.name || file?.originalname || "unknown.jpg";
+			const mimetype = file?.type || file?.mimetype || "image/jpeg";
+			const filename = file.existingKey || `${Date.now()}-${originalname}`;
 			let filePath: string;
 			let fileSize: number;
 			let storageKey: string;
@@ -206,7 +206,7 @@ const service = async (data) => {
 				const fileBuffer = Buffer.from(await file.arrayBuffer());
 				storageKey = await currentStorage.upload(fileBuffer, {
 					key: filename,
-					contentType: file.type || file.mimetype,
+					contentType: mimetype,
 				});
 
 				if (useExternalStorage) {
@@ -225,8 +225,8 @@ const service = async (data) => {
 				fileSize,
 				storageKey,
 				storageProvider: useExternalStorage ? storageProvider : "local",
-				originalname: file.name || file.originalname,
-				mimetype: file.type || file.mimetype,
+				originalname,
+				mimetype,
 			};
 		}),
 	);

@@ -12,8 +12,8 @@ const notificationsRoutes = new Elysia({ prefix: "/notifications" })
 			try {
 				const data = await listNotificationsService({
 					userId,
-					limit: query.limit ? Number.parseInt(query.limit) : 20,
-					offset: query.offset ? Number.parseInt(query.offset) : 0,
+					limit: query.limit ?? 20,
+					offset: query.offset ?? 0,
 				});
 
 				set.status = HTTP_STATUS_CODES.OK;
@@ -33,8 +33,8 @@ const notificationsRoutes = new Elysia({ prefix: "/notifications" })
 		},
 		{
 			query: t.Object({
-				limit: t.Optional(t.String()),
-				offset: t.Optional(t.String()),
+				limit: t.Optional(t.Numeric()),
+				offset: t.Optional(t.Numeric()),
 			}),
 		},
 	)

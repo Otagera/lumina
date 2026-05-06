@@ -18,7 +18,7 @@ const aliasSpec = {
 const service = async (data: any) => {
 	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, data));
 
-	await restoreImages(params.user_id, params.imageIds);
+	await restoreImages(params.imageIds);
 
 	return aliaserSpec(aliasSpec.response, { success: true });
 };

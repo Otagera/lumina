@@ -24,10 +24,10 @@ import { storage } from "../../../../../packages/utils/src/storage.util.ts";
 import { uploadPicturesService } from "../pictures/uploadPictures.service.ts";
 
 const spec = Joi.object({
-	token: Joi.string().required(),
+	share_token: Joi.string().required(),
 	files: Joi.any().optional(),
-	existingKey: Joi.string().optional(),
-	guestSessionId: Joi.string().uuid().optional(),
+	key: Joi.string().optional(),
+	guest_session_id: Joi.string().uuid().optional(),
 });
 
 const aliasSpec = {

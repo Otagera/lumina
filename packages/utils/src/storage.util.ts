@@ -329,10 +329,16 @@ export class StorageService {
 
 	private constructor() {
 		// Default to Managed R2 if configured in .env, otherwise Local
-		const envConfig = config[config.env || "development"];
+		const env = config.env || "development";
+		const envConfig = config[env];
 		const r2 = envConfig?.r2;
 
-		if (r2?.access_key_id && r2?.secret_access_key && r2?.bucket) {
+		if (
+			env !== "test" &&
+			r2?.access_key_id &&
+			r2?.secret_access_key &&
+			r2?.bucket
+		) {
 			console.log(
 				`[STORAGE] Initializing with Managed R2 Bucket: ${r2.bucket}`,
 			);
@@ -358,6 +364,9 @@ export class StorageService {
 	}
 
 	getProviderName(): string {
+		if (config.env === "test") {
+			return "local";
+		}
 		return this.provider.getProviderName();
 	}
 
