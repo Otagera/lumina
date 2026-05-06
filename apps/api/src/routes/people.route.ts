@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
 import createPersonService from "../services/people/create.service.ts";
+import deletePersonService from "../services/people/deletePerson.service.ts";
 import listPeopleService from "../services/people/list.service.ts";
 import { mergePeopleService } from "../services/people/mergePeople.service.ts";
 import { updatePersonService } from "../services/people/updatePerson.service.ts";
@@ -104,11 +105,9 @@ const peopleRoutes = new Elysia({ prefix: "/people" })
 		"/:personId",
 		async ({ params, set, userId }) => {
 			try {
-				const data = await prisma.people.deleteMany({
-					where: {
-						person_id: params.personId,
-						user_id: userId,
-					},
+				const data = await deletePersonService({
+					personId: params.personId,
+					userId,
 				});
 
 				if (data.count === 0) {

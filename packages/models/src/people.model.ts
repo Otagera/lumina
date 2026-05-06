@@ -68,4 +68,13 @@ const updatePerson = async (
 	return result;
 };
 
-export { createPerson, getPeople, getPersonById, updatePerson };
+const deletePerson = async (person_id: string, user_id: string) => {
+	return await prisma.people.deleteMany({
+		where: {
+			person_id,
+			user_id,
+		},
+	});
+};
+
+export { createPerson, deletePerson, getPeople, getPersonById, updatePerson };
