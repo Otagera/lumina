@@ -135,7 +135,7 @@ export const fetchAlbum = async (albumId: string) => {
 	}
 };
 
-export const login = async (credentials: any) => {
+export const login = async (credentials: { email: string; password: string }) => {
 	try {
 		const { data, error } = await api.auth.login.post(credentials);
 		if (error) throw error;
@@ -146,7 +146,7 @@ export const login = async (credentials: any) => {
 	}
 };
 
-export const signup = async (credentials: any) => {
+export const signup = async (credentials: { email: string; password: string }) => {
 	try {
 		const { data, error } = await api.auth.signup.post(credentials);
 		if (error) throw error;
@@ -168,7 +168,7 @@ export const forgotPassword = async (email: string) => {
 	}
 };
 
-export const resetPassword = async (data: any) => {
+export const resetPassword = async (data: { token: string; password: string }) => {
 	try {
 		const { data: responseData, error } =
 			await api.auth["reset-password"].post(data);
@@ -418,7 +418,15 @@ export const fetchUsage = async () => {
 	}
 };
 
-export const createStorageConfig = async (data: any) => {
+export const createStorageConfig = async (data: {
+	provider: string;
+	accessKeyId?: string;
+	secretAccessKey?: string;
+	bucket?: string;
+	endpoint?: string;
+	region?: string;
+	isActive?: boolean;
+}) => {
 	try {
 		const { data: responseData, error } = await api.settings.storage.post(data);
 		if (error) throw error;
@@ -429,7 +437,18 @@ export const createStorageConfig = async (data: any) => {
 	}
 };
 
-export const updateStorageConfig = async (configId: string, data: any) => {
+export const updateStorageConfig = async (
+	configId: string,
+	data: {
+		provider?: string;
+		accessKeyId?: string;
+		secretAccessKey?: string;
+		bucket?: string;
+		endpoint?: string;
+		region?: string;
+		isActive?: boolean;
+	},
+) => {
 	try {
 		const { data: responseData, error } =
 			await api.settings.storage[configId].put(data);
@@ -582,7 +601,14 @@ export const uploadGuestImages = async (token: string, formData: FormData) => {
 	}
 };
 
-export const editAlbumSettings = async (albumId: string, data: any) => {
+export const editAlbumSettings = async (
+	albumId: string,
+	data: {
+		albumName?: string;
+		shareToken?: string | null;
+		coverImageId?: string | null;
+	},
+) => {
 	try {
 		const { data: responseData, error } = await api.albums[albumId].put(data);
 		if (error) throw error;

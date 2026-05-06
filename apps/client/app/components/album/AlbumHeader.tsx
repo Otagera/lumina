@@ -78,11 +78,10 @@ export function AlbumHeader({
 						<div className="flex flex-wrap items-center gap-3 group justify-between">
 							<div className="flex items-center gap-2 flex-1 overflow-hidden">
 								<div
-									className={`transition-all duration-300 ease-out flex items-center gap-2 ${
-										isEditingName
-											? "translate-x-0 opacity-100"
-											: "-translate-x-4 opacity-0 absolute pointer-events-none"
-									}`}
+									className={`transition-all duration-300 ease-out flex items-center gap-2 ${isEditingName
+										? "translate-x-0 opacity-100"
+										: "-translate-x-4 opacity-0 absolute pointer-events-none"
+										}`}
 								>
 									<input
 										type="text"
@@ -116,11 +115,10 @@ export function AlbumHeader({
 									</Button>
 								</div>
 								<div
-									className={`transition-all duration-300 ease-out flex items-center gap-2 ${
-										isEditingName
-											? "translate-x-4 opacity-0 absolute pointer-events-none"
-											: "translate-x-0 opacity-100"
-									}`}
+									className={`transition-all duration-300 ease-out flex items-center gap-2 ${isEditingName
+										? "translate-x-4 opacity-0 absolute pointer-events-none"
+										: "translate-x-0 opacity-100"
+										}`}
 								>
 									<Heading level={1} className="text-5xl md:text-6xl">
 										{album?.albumName}

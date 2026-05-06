@@ -212,7 +212,8 @@ export const getAlbumForUser = async (albumId: string, userId: string) => {
 			},
 			cover_image: true,
 			album_images: {
-				take: 4,
+				take: 8,
+				orderBy: { images: { upload_date: "desc" } },
 				include: { images: true },
 			},
 		},

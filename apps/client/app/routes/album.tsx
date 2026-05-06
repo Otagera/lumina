@@ -14,6 +14,7 @@ import { DuplicateReview } from "~/components/DuplicateReview";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
+import { albumKeys } from "~/utils/queryKeys";
 import { useAlbumImages } from "~/hooks/album/useAlbumImages";
 import { useBatchActions } from "~/hooks/album/useBatchActions";
 import { useInfiniteScroll } from "~/hooks/album/useInfiniteScroll";
@@ -32,7 +33,6 @@ import type {
 } from "~/types";
 import { getBentoSpanClass } from "~/utils/bento";
 import { groupImagesByDate } from "~/utils/dateGrouping";
-import { imageKeys } from "~/utils/queryKeys";
 import { AlbumFilters } from "../components/AlbumFilters";
 import { AlbumPermissionsModal } from "../components/AlbumPermissionsModal";
 import { RejectReasonModal } from "../components/RejectReasonModal";
@@ -164,7 +164,7 @@ const AlbumPage = () => {
 			coverImageId?: string | null;
 		}) => editAlbumApi({ albumId, albumName, coverImageId }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: imageKeys.album(albumId!) });
+			queryClient.invalidateQueries({ queryKey: albumKeys.detail(albumId!) });
 			toast.success("Album updated");
 		},
 		onError: (error: Error) => {

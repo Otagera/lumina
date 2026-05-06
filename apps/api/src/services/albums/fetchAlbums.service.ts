@@ -37,15 +37,18 @@ const service = async (data) => {
 	const albums = await getAlbumsForUser(created_by);
 
 	const mappedAlbums = albums.map((album: any) => {
-		let coverImage: string | null = null;
+		let coverImage: { id: string | null; url: string | null } | null = null;
 
 		// MANUAL: if cover_image is set and not deleted
 		if (album.cover_image && !album.cover_image.deleted_at) {
-			coverImage = normalizeImagePath(
-				album.cover_image.image_path,
-				album.cover_image.storage_provider,
-				album.cover_image.storage_key,
-			);
+			coverImage = {
+				id: album.cover_image.image_id,
+				url: normalizeImagePath(
+					album.cover_image.image_path,
+					album.cover_image.storage_provider,
+					album.cover_image.storage_key,
+				),
+			};
 		}
 
 		// FALLBACK: first 4 images if no manual cover set

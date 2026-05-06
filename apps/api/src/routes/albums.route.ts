@@ -4,6 +4,7 @@ import { alterAlbumService } from "../services/albums/alterAlbum.service.ts";
 import { createAlbumService } from "../services/albums/createAlbum.service.ts";
 import { fetchAlbumService } from "../services/albums/fetchAlbum.service.ts";
 import { fetchAlbumsService } from "../services/albums/fetchAlbums.service.ts";
+import { fetchImagesInAlbumService } from "../services/albums/fetchImagesInAlbum.service.ts";
 import { generateInviteService } from "../services/albums/generateInvite.service.ts";
 import { joinAlbumService } from "../services/albums/joinAlbum.service.ts";
 import { removeAlbumService } from "../services/albums/removeAlbum.service.ts";
@@ -121,6 +122,51 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 		{
 			params: t.Object({
 				albumId: t.String(),
+			}),
+		},
+	)
+	.get(
+		"/:albumId/images",
+		async ({ params, query, set, userId }) => {
+			try {
+				const albumId = params.albumId;
+				await checkAlbumPermissions(albumId, userId, ["VIEWER", "CONTRIBUTOR", "ADMIN"]);
+
+				const data = await fetchImagesInAlbumService({
+					albumId,
+					userId,
+					...query,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Images fetched successfully.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({
+				albumId: t.String(),
+			}),
+			query: t.Object({
+				paginationType: t.Optional(t.String()),
+				limit: t.Optional(t.Numeric()),
+				nextCursor: t.Optional(t.String()),
+				prevCursor: t.Optional(t.String()),
+				status: t.Optional(t.String()),
+				sortBy: t.Optional(t.String()),
+				startDate: t.Optional(t.String()),
+				endDate: t.Optional(t.String()),
+				uploaderId: t.Optional(t.String()),
 			}),
 		},
 	)
