@@ -1,7 +1,8 @@
 import type React from "react";
 import { useRef, useState } from "react";
+import { useSelfieSearch } from "@lumina/event-sdk";
 import toast from "react-hot-toast";
-import axiosAPI from "../utils/axios";
+import { publicEventClient } from "~/hooks/usePublicEventClient";
 
 interface SelfieSearchModalProps {
 	token: string;
@@ -59,43 +60,33 @@ export const SelfieSearchModal: React.FC<SelfieSearchModalProps> = ({
 		}
 	};
 
-	const handleSearch = async (blob: Blob) => {
-		setIsProcessing(true);
-		const toastId = toast.loading("Analyzing your face...");
-		try {
-			const formData = new FormData();
-			formData.append("selfie", blob, "selfie.jpg");
-
-			const response = await axiosAPI.post(
-				`/public/albums/${token}/search-by-image`,
-				formData,
-				{
-					headers: { "Content-Type": "multipart/form-data" },
-				},
-			);
-
-			if (response.data.data.faces.length === 0) {
-				toast.error("No matches found in this album.", { id: toastId });
-			} else {
-				toast.success(
-					`Found ${response.data.data.faces.length} photos of you!`,
-					{
-						id: toastId,
-					},
-				);
-				onResults(response.data.data.faces);
-				onClose();
-			}
-		} catch (err: any) {
-			toast.error(err.response?.data?.message || "Search failed", {
-				id: toastId,
-			});
-		} finally {
-			setIsProcessing(false);
+	const searchMutation = useSelfieSearch({
+	token,
+	client: publicEventClient,
+	onSuccess: (result) => {
+		if (result.faces.length === 0) {
+			toast.error("No matches found in this album.");
+			return;
 		}
-	};
+		toast.success(`Found ${result.faces.length} photos of you!`);
+		onResults(result.faces);
+		onClose();
+	},
+	onError: (err: any) => {
+		toast.error(err.response?.data?.message || err.message || "Search failed");
+	},
+});
 
-	const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+const handleSearch = async (blob: Blob) => {
+	setIsProcessing(true);
+	try {
+		await searchMutation.mutateAsync(blob);
+	} finally {
+		setIsProcessing(false);
+	}
+};
+
+const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (file) {
 			handleSearch(file);
