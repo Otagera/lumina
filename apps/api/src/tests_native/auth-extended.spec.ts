@@ -1,7 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import crypto from "node:crypto";
+import {
+	createPasswordReset,
+	getPasswordReset,
+	removePasswordReset,
+} from "../../../../packages/models/src/passwordResets.lib.ts";
 import { Users } from "../../../../packages/models/src/index.model.ts";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
-import { getApp, parseRes, req, setupAuth } from "./test-utils";
+import { getApp, parseRes, req } from "./test-utils";
 
 describe("Auth Extended Routes (Native)", () => {
 	const prefix = `auth-ext-${Date.now()}`;
@@ -37,11 +43,15 @@ describe("Auth Extended Routes (Native)", () => {
 			token,
 			authHeader: { Authorization: `Bearer ${token}`, Cookie: cookieHeader },
 		};
+
+		const userRecord = await Users.fetchUserByEmail(testEmail);
+		user.user_id = userRecord?.user_id;
 	});
 
 	afterAll(async () => {
 		const userRecord = await Users.fetchUserByEmail(testEmail);
 		if (userRecord) {
+			await removePasswordReset({ user_id: userRecord.user_id });
 			await Users.deleteUserById(userRecord.user_id);
 		}
 	});
@@ -72,6 +82,61 @@ describe("Auth Extended Routes (Native)", () => {
 	});
 
 	describe("POST /api/v1/auth/reset-password", () => {
+		it("should verify hashed reset tokens and invalidate all user tokens", async () => {
+			const rawToken = `raw-${Date.now()}`;
+			const tokenHash = crypto
+				.createHash("sha256")
+				.update(rawToken)
+				.digest("hex");
+
+			await createPasswordReset({
+				token: tokenHash,
+				user_id: user.user_id,
+				expires_at: new Date(Date.now() + 10 * 60 * 1000),
+			});
+
+			// A second active token should also be removed after successful reset.
+			await createPasswordReset({
+				token: crypto.randomBytes(32).toString("hex"),
+				user_id: user.user_id,
+				expires_at: new Date(Date.now() + 10 * 60 * 1000),
+			});
+
+			const res = await app.handle(
+				req.post("/api/v1/auth/reset-password", {
+					token: rawToken,
+					password: "NewPassword123!",
+				}),
+			);
+			const body = await parseRes(res);
+
+			expect(res.status).toBe(HTTP_STATUS_CODES.OK);
+			expect(body.status).toBe("completed");
+			const hashedRow = await getPasswordReset({ token: tokenHash });
+			expect(hashedRow).toBeNull();
+		});
+
+		it("should support legacy plaintext reset tokens", async () => {
+			const legacyToken = `legacy-${Date.now()}`;
+			await createPasswordReset({
+				token: legacyToken,
+				user_id: user.user_id,
+				expires_at: new Date(Date.now() + 10 * 60 * 1000),
+			});
+
+			const res = await app.handle(
+				req.post("/api/v1/auth/reset-password", {
+					token: legacyToken,
+					password: "LegacyPass123!",
+				}),
+			);
+			const body = await parseRes(res);
+
+			expect(res.status).toBe(HTTP_STATUS_CODES.OK);
+			expect(body.status).toBe("completed");
+			expect(await getPasswordReset({ token: legacyToken })).toBeNull();
+		});
+
 		it("should fail with invalid token", async () => {
 			const res = await app.handle(
 				req.post("/api/v1/auth/reset-password", {

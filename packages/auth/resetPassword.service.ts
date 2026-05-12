@@ -1,4 +1,5 @@
 import joi from "joi";
+import crypto from "node:crypto";
 import {
 	getPasswordReset,
 	removePasswordReset,
@@ -23,15 +24,22 @@ const spec = joi.object({
 
 export const resetPasswordService = async (data: any) => {
 	const { token, password } = validateSpec(spec, data);
+	const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
-	const resetEntry = await getPasswordReset({ token });
+	// Primary lookup for new hashed-token rows.
+	let resetEntry = await getPasswordReset({ token: hashedToken });
+
+	// Backward compatibility for legacy plaintext rows.
+	if (!resetEntry) {
+		resetEntry = await getPasswordReset({ token });
+	}
 
 	if (!resetEntry) {
 		throw new AuthError("Invalid or expired password reset token");
 	}
 
 	if (new Date() > new Date(resetEntry.expires_at)) {
-		await removePasswordReset({ token });
+		await removePasswordReset({ id: resetEntry.id });
 		throw new AuthError("Password reset token has expired");
 	}
 

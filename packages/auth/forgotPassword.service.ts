@@ -12,10 +12,11 @@ export const forgotPasswordService = async (email: string) => {
 	}
 
 	const token = crypto.randomBytes(32).toString("hex");
+	const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 	const expires_at = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
 	await createPasswordReset({
-		token,
+		token: tokenHash,
 		user_id: user.user_id,
 		expires_at,
 	});
