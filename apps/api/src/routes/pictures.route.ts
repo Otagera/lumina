@@ -1,5 +1,4 @@
 import { Elysia, t } from "elysia";
-import jwt from "jsonwebtoken";
 import {
 	BULL_QUEUE_NAMES,
 	HTTP_STATUS_CODES,
@@ -17,6 +16,8 @@ import { getPresignedUrlService } from "../services/pictures/getPresignedUrl.ser
 import { moderatePicturesService } from "../services/pictures/moderatePictures.service.ts";
 import { reprocessPictureService } from "../services/pictures/reprocessPicture.service.ts";
 import { uploadPicturesService } from "../services/pictures/uploadPictures.service.ts";
+import { uploadDirectLocalService } from "../services/pictures/uploadDirectLocal.service.ts";
+import { verifyShareTokenService } from "../services/pictures/verifyShareToken.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 import { guestPlugin } from "./middleware/guest.plugin.ts";
 import { checkQuota } from "./middleware/quota.middleware.ts";
@@ -522,61 +523,22 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 		"/upload-direct-local",
 		async ({ query, set, headers, request }) => {
 			try {
-				const key = query.key;
-				const shareToken = query.shareToken;
-				const authToken = query.authToken;
-				const authHeader = headers.authorization;
-
-				if (!key) throw new Error("Key is required");
-
-				// Verify authorization
-				let isAuthorized = false;
-
-				if (authToken) {
-					try {
-						const decoded = jwt.verify(
-							authToken,
-							config[config.env || "development"].secret || "default_secret",
-						) as any;
-						if (decoded.key === key) isAuthorized = true;
-					} catch {
-						// Invalid or expired token
-					}
-				} else if (authHeader) {
-					isAuthorized = true;
-				} else if (shareToken) {
-					const result = await verifyShareTokenService({ shareToken, key });
-					isAuthorized = result.authorized;
-				}
-
-				if (!isAuthorized) {
-					set.status = HTTP_STATUS_CODES.UNAUTHORIZED;
-					return { error: "Unauthorized upload attempt" };
-				}
-
-				// Use absolute path based on app directory
-				const uploadsDir = path.resolve(process.cwd(), "src/uploads");
-				const filePath = path.resolve(uploadsDir, key);
-
-				if (!filePath.startsWith(uploadsDir + path.sep)) {
-					set.status = 400;
-					return { error: "Invalid key" };
-				}
-
-				// Write file
-				await fs.promises.mkdir(uploadsDir, { recursive: true });
-				const arrayBuffer = await request.arrayBuffer();
-				const buffer = Buffer.from(arrayBuffer);
-				await Bun.write(filePath, buffer);
+				const data = await uploadDirectLocalService({
+					key: query.key,
+					shareToken: query.shareToken,
+					authToken: query.authToken,
+					authHeader: headers.authorization,
+					request,
+				});
 
 				set.status = HTTP_STATUS_CODES.OK;
 				return {
 					status: "completed",
 					message: "File uploaded successfully via direct local upload.",
-					data: { key },
+					data,
 				};
 			} catch (error: any) {
-				set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
