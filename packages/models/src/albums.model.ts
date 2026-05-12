@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { queueServices } from "../../../apps/worker/src/queue/queue.service.ts";
-import config from "../../config/src/index.config.ts";
 import prisma from "../../config/src/db.config.ts";
+import config from "../../config/src/index.config.ts";
 import { deleteFile } from "../../utils/src/file.util.ts";
 import {
 	cleanupImageSideEffects,

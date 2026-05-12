@@ -130,7 +130,11 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 		async ({ params, query, set, userId }) => {
 			try {
 				const albumId = params.albumId;
-				await checkAlbumPermissions(albumId, userId, ["VIEWER", "CONTRIBUTOR", "ADMIN"]);
+				await checkAlbumPermissions(albumId, userId, [
+					"VIEWER",
+					"CONTRIBUTOR",
+					"ADMIN",
+				]);
 
 				const data = await fetchImagesInAlbumService({
 					albumId,

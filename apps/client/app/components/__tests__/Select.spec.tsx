@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Select } from "../standard/Select";
 
@@ -39,7 +39,9 @@ describe("Select Component", () => {
 	it("handles onChange events", () => {
 		const handleChange = vi.fn();
 		render(<Select options={options} onChange={handleChange} />);
-		fireEvent.change(screen.getByRole("combobox"), { target: { value: "option2" } });
+		fireEvent.change(screen.getByRole("combobox"), {
+			target: { value: "option2" },
+		});
 		expect(handleChange).toHaveBeenCalled();
 	});
 

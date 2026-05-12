@@ -1,9 +1,9 @@
 export {
-  Skeleton,
-  SkeletonText,
-  SkeletonCard,
-  SkeletonImageGrid,
-  SkeletonButton,
-  SkeletonInput,
-  SkeletonAvatar,
+	Skeleton,
+	SkeletonAvatar,
+	SkeletonButton,
+	SkeletonCard,
+	SkeletonImageGrid,
+	SkeletonInput,
+	SkeletonText,
 } from "@lumina/ui/components/domain/Skeleton";

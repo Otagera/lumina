@@ -23,11 +23,11 @@ import notificationsRoutes from "./routes/notifications.route";
 import peopleRoutes from "./routes/people.route";
 import { picturesRoutes, publicPicturesRoutes } from "./routes/pictures.route";
 import publicRoutes from "./routes/public.route";
+import { reactionsRoutes } from "./routes/reactions.route";
 import settingsRoutes from "./routes/settings.route";
 import { thumbnailRoutes } from "./routes/thumbnail.route";
 import trashRoutes from "./routes/trash.route";
 import usageRoutes from "./routes/usage.route";
-import { reactionsRoutes } from "./routes/reactions.route";
 
 const envConfig = config[config.env || "development"];
 

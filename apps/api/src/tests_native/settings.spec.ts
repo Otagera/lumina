@@ -22,7 +22,7 @@ describe("Settings Routes (Native)", () => {
 	describe("Profile Settings", () => {
 		it("should fetch user settings", async () => {
 			const res = await app.handle(
-				req.get("/api/v1/settings", user.authHeader)
+				req.get("/api/v1/settings", user.authHeader),
 			);
 			const body = await parseRes(res);
 
@@ -35,7 +35,7 @@ describe("Settings Routes (Native)", () => {
 	describe("Email Preferences", () => {
 		it("should fetch email preferences", async () => {
 			const res = await app.handle(
-				req.get("/api/v1/settings/email-preferences", user.authHeader)
+				req.get("/api/v1/settings/email-preferences", user.authHeader),
 			);
 			const body = await parseRes(res);
 
@@ -46,19 +46,23 @@ describe("Settings Routes (Native)", () => {
 
 		it("should update email preferences", async () => {
 			const res = await app.handle(
-				req.put("/api/v1/settings/email-preferences", {
-					marketing: true,
-					clustering: false
-				}, user.authHeader)
+				req.put(
+					"/api/v1/settings/email-preferences",
+					{
+						marketing: true,
+						clustering: false,
+					},
+					user.authHeader,
+				),
 			);
 			const body = await parseRes(res);
 
 			expect(res.status).toBe(HTTP_STATUS_CODES.OK);
 			expect(body.status).toBe("completed");
-			
+
 			// Verify update
 			const checkRes = await app.handle(
-				req.get("/api/v1/settings/email-preferences", user.authHeader)
+				req.get("/api/v1/settings/email-preferences", user.authHeader),
 			);
 			const checkBody = await parseRes(checkRes);
 			expect(checkBody.data.marketing).toBe(true);
@@ -69,15 +73,19 @@ describe("Settings Routes (Native)", () => {
 	describe("Storage Configurations (BYOS)", () => {
 		it("should create a new storage config", async () => {
 			const res = await app.handle(
-				req.post("/api/v1/settings/storage", {
-					provider: "r2",
-					name: "Test R2",
-					accessKeyId: "test-key",
-					secretAccessKey: "test-secret",
-					bucket: "test-bucket",
-					endpoint: "https://test.r2.cloudflarestorage.com",
-					region: "auto"
-				}, user.authHeader)
+				req.post(
+					"/api/v1/settings/storage",
+					{
+						provider: "r2",
+						name: "Test R2",
+						accessKeyId: "test-key",
+						secretAccessKey: "test-secret",
+						bucket: "test-bucket",
+						endpoint: "https://test.r2.cloudflarestorage.com",
+						region: "auto",
+					},
+					user.authHeader,
+				),
 			);
 			const body = await parseRes(res);
 			if (res.status !== HTTP_STATUS_CODES.CREATED) {
@@ -92,9 +100,13 @@ describe("Settings Routes (Native)", () => {
 
 		it("should update storage config", async () => {
 			const res = await app.handle(
-				req.put(`/api/v1/settings/storage/${testConfigId}`, {
-					name: "Updated R2 Name"
-				}, user.authHeader)
+				req.put(
+					`/api/v1/settings/storage/${testConfigId}`,
+					{
+						name: "Updated R2 Name",
+					},
+					user.authHeader,
+				),
 			);
 			const body = await parseRes(res);
 
@@ -104,7 +116,7 @@ describe("Settings Routes (Native)", () => {
 
 		it("should delete storage config", async () => {
 			const res = await app.handle(
-				req.delete(`/api/v1/settings/storage/${testConfigId}`, user.authHeader)
+				req.delete(`/api/v1/settings/storage/${testConfigId}`, user.authHeader),
 			);
 			expect(res.status).toBe(HTTP_STATUS_CODES.OK);
 		});

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Modal, ModalSection } from "../standard/Modal";
 
@@ -7,25 +7,25 @@ describe("Modal Component", () => {
 		render(
 			<Modal isOpen={false} onClose={() => {}}>
 				<div>Content</div>
-			</Modal>
+			</Modal>,
 		);
 		expect(screen.queryByText("Content")).not.toBeInTheDocument();
 	});
 
 	it("renders when isOpen is true", () => {
 		render(
-			< Modal isOpen={true} onClose={() => {}}>
+			<Modal isOpen={true} onClose={() => {}}>
 				<div>Content</div>
-			</Modal>
+			</Modal>,
 		);
 		expect(screen.getByText("Content")).toBeInTheDocument();
 	});
 
 	it("renders with title", () => {
 		render(
-			< Modal isOpen={true} onClose={() => {}} title="Test Title">
+			<Modal isOpen={true} onClose={() => {}} title="Test Title">
 				<div>Content</div>
-			</Modal>
+			</Modal>,
 		);
 		expect(screen.getByText("Test Title")).toBeInTheDocument();
 	});
@@ -34,7 +34,7 @@ describe("Modal Component", () => {
 		render(
 			<Modal isOpen={true} onClose={() => {}} description="Test Description">
 				<div>Content</div>
-			</Modal>
+			</Modal>,
 		);
 		expect(screen.getByText("Test Description")).toBeInTheDocument();
 	});
@@ -42,9 +42,9 @@ describe("Modal Component", () => {
 	it("calls onClose when close button is clicked", () => {
 		const handleClose = vi.fn();
 		render(
-			< Modal isOpen={true} onClose={handleClose} title="Test">
+			<Modal isOpen={true} onClose={handleClose} title="Test">
 				<div>Content</div>
-			</Modal>
+			</Modal>,
 		);
 		fireEvent.click(screen.getByLabelText("Close modal"));
 		expect(handleClose).toHaveBeenCalledTimes(1);
@@ -54,7 +54,7 @@ describe("Modal Component", () => {
 		render(
 			<Modal isOpen={true} onClose={() => {}} size="sm">
 				<div>Content</div>
-			</Modal>
+			</Modal>,
 		);
 		expect(screen.getByText("Content")).toBeInTheDocument();
 	});
@@ -63,7 +63,7 @@ describe("Modal Component", () => {
 		render(
 			<Modal isOpen={true} onClose={() => {}} size="lg">
 				<div>Content</div>
-			</Modal>
+			</Modal>,
 		);
 		expect(screen.getByText("Content")).toBeInTheDocument();
 	});
@@ -72,7 +72,7 @@ describe("Modal Component", () => {
 		render(
 			<Modal isOpen={true} onClose={() => {}} size="full">
 				<div>Content</div>
-			</Modal>
+			</Modal>,
 		);
 		expect(screen.getByText("Content")).toBeInTheDocument();
 	});
@@ -83,7 +83,7 @@ describe("ModalSection Component", () => {
 		render(
 			<ModalSection>
 				<div>Section Content</div>
-			</ModalSection>
+			</ModalSection>,
 		);
 		expect(screen.getByText("Section Content")).toBeInTheDocument();
 	});

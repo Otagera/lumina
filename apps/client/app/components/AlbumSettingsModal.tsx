@@ -47,7 +47,7 @@ export const AlbumSettingsModal = ({
 		mutationFn: (data: { settings: any; storageConfigId: string | null }) =>
 			editAlbumSettings(albumId, {
 				...(data.settings || {}),
-				storageConfigId: data.storageConfigId
+				storageConfigId: data.storageConfigId,
 			}),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [`album-${albumId}`] });

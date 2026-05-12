@@ -78,10 +78,10 @@ const service = async (data: any) => {
 						include: {
 							faces: true,
 							reactions: {
-								select: { id: true }
-							}
-						}
-					}
+								select: { id: true },
+							},
+						},
+					},
 				},
 				where: { images: imageFilter },
 			},

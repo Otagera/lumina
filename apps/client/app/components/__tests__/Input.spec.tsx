@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Input } from "../standard/Input";
 
@@ -37,7 +37,9 @@ describe("Input Component", () => {
 	it("handles onChange events", () => {
 		const handleChange = vi.fn();
 		render(<Input onChange={handleChange} />);
-		fireEvent.change(screen.getByRole("textbox"), { target: { value: "test" } });
+		fireEvent.change(screen.getByRole("textbox"), {
+			target: { value: "test" },
+		});
 		expect(handleChange).toHaveBeenCalled();
 	});
 

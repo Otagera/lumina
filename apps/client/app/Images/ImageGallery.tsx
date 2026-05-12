@@ -1,3 +1,4 @@
+import { ImageGrid } from "@lumina/ui/components/domain/ImageGrid";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -11,7 +12,6 @@ import { EmptyState } from "~/components/standard/EmptyState";
 import type { ImageFromDB } from "~/types";
 import { deleteImage, fetchImages } from "~/utils/api";
 import axiosAPI from "~/utils/axios";
-import { ImageGrid } from "@lumina/ui/components/domain/ImageGrid";
 import ImageModal from "./ImageModal";
 
 const ImageGallery: FC = () => {

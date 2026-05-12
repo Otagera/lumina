@@ -1,4 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it, beforeEach } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import fs from "node:fs/promises";
 import path from "node:path";
 import prisma from "../../../../packages/config/src/db.config.ts";
@@ -19,7 +26,11 @@ describe("Faces Routes (Native)", () => {
 		user = await setupAuth(app);
 
 		const albumRes = await app.handle(
-			req.post("/api/v1/albums", { albumName: "Faces Test Album" }, user.authHeader)
+			req.post(
+				"/api/v1/albums",
+				{ albumName: "Faces Test Album" },
+				user.authHeader,
+			),
 		);
 		const albumBody = await parseRes(albumRes);
 		testAlbumId = albumBody.data.id;
@@ -27,19 +38,26 @@ describe("Faces Routes (Native)", () => {
 		const uploadsDir = path.resolve(process.cwd(), "src/uploads");
 		await fs.mkdir(uploadsDir, { recursive: true });
 		const fixturePath = path.resolve(__dirname, "fixtures/test.jpg");
-		await fs.copyFile(fixturePath, path.join(uploadsDir, "face-test-image.jpg"));
+		await fs.copyFile(
+			fixturePath,
+			path.join(uploadsDir, "face-test-image.jpg"),
+		);
 
 		const imageRes = await app.handle(
-			req.post("/api/v1/images", { 
-				uploadedImages: [{ existingKey: "face-test-image.jpg" }],
-				albumId: testAlbumId 
-			}, user.authHeader)
+			req.post(
+				"/api/v1/images",
+				{
+					uploadedImages: [{ existingKey: "face-test-image.jpg" }],
+					albumId: testAlbumId,
+				},
+				user.authHeader,
+			),
 		);
 		const imageBody = await parseRes(imageRes);
 		testImageId = imageBody.data.images[0].imageId;
 
 		const personRes = await app.handle(
-			req.post("/api/v1/people", { name: "Test Person" }, user.authHeader)
+			req.post("/api/v1/people", { name: "Test Person" }, user.authHeader),
 		);
 		const personBody = await parseRes(personRes);
 		testPersonId = personBody.data.id || personBody.data.personId;
@@ -47,9 +65,11 @@ describe("Faces Routes (Native)", () => {
 		const face = await prisma.faces.create({
 			data: {
 				image_id: testImageId,
-				embedding: Array(512).fill(0).map(() => Math.random()),
+				embedding: Array(512)
+					.fill(0)
+					.map(() => Math.random()),
 				bounding_box: { x: 10, y: 10, w: 50, h: 50 } as any,
-			}
+			},
 		});
 		testFaceId = face.face_id;
 	});
@@ -59,14 +79,16 @@ describe("Faces Routes (Native)", () => {
 			await Users.deleteUserById(user.userId);
 		}
 		try {
-			await fs.unlink(path.resolve(process.cwd(), "src/uploads/face-test-image.jpg"));
+			await fs.unlink(
+				path.resolve(process.cwd(), "src/uploads/face-test-image.jpg"),
+			);
 		} catch (e) {}
 	});
 
 	describe("GET /api/v1/faces/:faceId", () => {
 		it("should fetch face details", async () => {
 			const res = await app.handle(
-				req.get(`/api/v1/faces/${testFaceId}`, user.authHeader)
+				req.get(`/api/v1/faces/${testFaceId}`, user.authHeader),
 			);
 			const body = await parseRes(res);
 
@@ -76,7 +98,7 @@ describe("Faces Routes (Native)", () => {
 
 		it("should return 404 for non-existent face", async () => {
 			const res = await app.handle(
-				req.get("/api/v1/faces/999999", user.authHeader)
+				req.get("/api/v1/faces/999999", user.authHeader),
 			);
 			expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
 		});
@@ -115,7 +137,11 @@ describe("Faces Routes (Native)", () => {
 	describe("POST /api/v1/faces/search", () => {
 		it("should search for similar faces by faceId", async () => {
 			const res = await app.handle(
-				req.post("/api/v1/faces/search", { faceId: testFaceId, albumId: testAlbumId }, user.authHeader)
+				req.post(
+					"/api/v1/faces/search",
+					{ faceId: testFaceId, albumId: testAlbumId },
+					user.authHeader,
+				),
 			);
 			const body = await parseRes(res);
 

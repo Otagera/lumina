@@ -14,16 +14,24 @@ describe("Public Extended Routes (Native)", () => {
 		owner = await setupAuth(app);
 
 		const albumRes = await app.handle(
-			req.post("/api/v1/albums", { albumName: "Public Extended Test" }, { Cookie: owner.cookie }),
+			req.post(
+				"/api/v1/albums",
+				{ albumName: "Public Extended Test" },
+				{ Cookie: owner.cookie },
+			),
 		);
 		const albumBody = await parseRes(albumRes);
 		testAlbumId = albumBody.data.id;
 		testShareToken = albumBody.data.shareToken;
 
 		await app.handle(
-			req.put(`/api/v1/albums/${testAlbumId}`, {
-				settings: { is_event: true, allow_guest_uploads: true },
-			}, { Cookie: owner.cookie }),
+			req.put(
+				`/api/v1/albums/${testAlbumId}`,
+				{
+					settings: { is_event: true, allow_guest_uploads: true },
+				},
+				{ Cookie: owner.cookie },
+			),
 		);
 	});
 
@@ -47,9 +55,13 @@ describe("Public Extended Routes (Native)", () => {
 
 		beforeAll(async () => {
 			const inviteRes = await app.handle(
-				req.post(`/api/v1/albums/${testAlbumId}/invites`, {
-					role: "VIEWER",
-				}, { Cookie: owner.cookie }),
+				req.post(
+					`/api/v1/albums/${testAlbumId}/invites`,
+					{
+						role: "VIEWER",
+					},
+					{ Cookie: owner.cookie },
+				),
 			);
 			const inviteBody = await parseRes(inviteRes);
 			inviteToken = inviteBody.data.inviteToken;

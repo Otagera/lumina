@@ -14,7 +14,6 @@ import { DuplicateReview } from "~/components/DuplicateReview";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
-import { albumKeys } from "~/utils/queryKeys";
 import { useAlbumImages } from "~/hooks/album/useAlbumImages";
 import { useBatchActions } from "~/hooks/album/useBatchActions";
 import { useInfiniteScroll } from "~/hooks/album/useInfiniteScroll";
@@ -33,6 +32,7 @@ import type {
 } from "~/types";
 import { getBentoSpanClass } from "~/utils/bento";
 import { groupImagesByDate } from "~/utils/dateGrouping";
+import { albumKeys } from "~/utils/queryKeys";
 import { AlbumFilters } from "../components/AlbumFilters";
 import { AlbumPermissionsModal } from "../components/AlbumPermissionsModal";
 import { RejectReasonModal } from "../components/RejectReasonModal";
@@ -44,9 +44,15 @@ import {
 import { useUpload } from "../utils/UploadContext";
 
 // Type guard for coverImage - can be string or object { id, url }
-const getCoverImageId = (coverImage: string | { id: string | null; url: string | null } | null | undefined): string | null => {
+const getCoverImageId = (
+	coverImage:
+		| string
+		| { id: string | null; url: string | null }
+		| null
+		| undefined,
+): string | null => {
 	if (!coverImage) return null;
-	return typeof coverImage === 'string' ? coverImage : coverImage.id;
+	return typeof coverImage === "string" ? coverImage : coverImage.id;
 };
 
 const AlbumPage = () => {
@@ -270,7 +276,8 @@ const AlbumPage = () => {
 	const handleSetCoverImage = (imageId: string) => {
 		if (!albumId) return;
 		const coverImage = albumData?.data?.coverImage;
-		const currentCoverId = typeof coverImage === 'object' ? coverImage?.id : coverImage;
+		const currentCoverId =
+			typeof coverImage === "object" ? coverImage?.id : coverImage;
 		const newCoverId = currentCoverId === imageId ? null : imageId;
 		editAlbumMutation.mutate({ albumId, coverImageId: newCoverId });
 	};
@@ -405,8 +412,9 @@ const AlbumPage = () => {
 													className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
 												>
 													<span
-														className={`text-zinc-400 transition-transform duration-200 ${isCollapsed ? "" : "rotate-90"
-															}`}
+														className={`text-zinc-400 transition-transform duration-200 ${
+															isCollapsed ? "" : "rotate-90"
+														}`}
 													>
 														›
 													</span>
@@ -418,10 +426,11 @@ const AlbumPage = () => {
 													</span>
 												</button>
 												<div
-													className={`overflow-hidden transition-all duration-300 ease-out ${isCollapsed
-														? "max-h-0 opacity-0"
-														: "max-h-[5000px] opacity-100"
-														}`}
+													className={`overflow-hidden transition-all duration-300 ease-out ${
+														isCollapsed
+															? "max-h-0 opacity-0"
+															: "max-h-[5000px] opacity-100"
+													}`}
 												>
 													<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5 sm:gap-1 auto-rows-[150px] sm:auto-rows-[200px]">
 														{section.images.map((image, idx) => {
@@ -457,8 +466,9 @@ const AlbumPage = () => {
 																		onDelete={handleDeleteImage}
 																		onSetCover={handleSetCoverImage}
 																		isCover={
-																			getCoverImageId(albumData?.data?.coverImage) ===
-																			image.imageId
+																			getCoverImageId(
+																				albumData?.data?.coverImage,
+																			) === image.imageId
 																		}
 																		selectionMode={selectedIds.size > 0}
 																	/>
@@ -468,10 +478,10 @@ const AlbumPage = () => {
 													</div>
 												</div>
 											</div>
-											);
-											})
-											) : (
-											<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5 sm:gap-1 auto-rows-[150px] sm:auto-rows-[200px]">
+										);
+									})
+								) : (
+									<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5 sm:gap-1 auto-rows-[150px] sm:auto-rows-[200px]">
 										{images.map((image, index) => {
 											const width = image.originalSize?.width || 0;
 											const height = image.originalSize?.height || 0;

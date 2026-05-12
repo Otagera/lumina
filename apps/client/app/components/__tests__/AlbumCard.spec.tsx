@@ -1,6 +1,6 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
+import { describe, expect, it, vi } from "vitest";
 import AlbumCard from "../AlbumCard";
 
 const mockAlbum = {
@@ -20,7 +20,7 @@ describe("AlbumCard Component", () => {
 		render(
 			<BrowserRouter>
 				<AlbumCard album={mockAlbum} />
-			</BrowserRouter>
+			</BrowserRouter>,
 		);
 		expect(screen.getByText("Test Album")).toBeInTheDocument();
 		expect(screen.getByText("4 photos")).toBeInTheDocument();
@@ -30,7 +30,7 @@ describe("AlbumCard Component", () => {
 		render(
 			<BrowserRouter>
 				<AlbumCard album={mockAlbum} />
-			</BrowserRouter>
+			</BrowserRouter>,
 		);
 		expect(screen.getByText("Test Album")).toBeInTheDocument();
 	});
@@ -44,7 +44,7 @@ describe("AlbumCard Component", () => {
 		render(
 			<BrowserRouter>
 				<AlbumCard album={singleImageAlbum} />
-			</BrowserRouter>
+			</BrowserRouter>,
 		);
 		expect(screen.getByText("1 photos")).toBeInTheDocument();
 	});
@@ -59,7 +59,7 @@ describe("AlbumCard Component", () => {
 		render(
 			<BrowserRouter>
 				<AlbumCard album={emptyAlbum} />
-			</BrowserRouter>
+			</BrowserRouter>,
 		);
 		expect(screen.getByText("Empty Album")).toBeInTheDocument();
 		expect(screen.getByText("0 photos")).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe("AlbumCard Component", () => {
 		render(
 			<BrowserRouter>
 				<AlbumCard album={mockAlbum} />
-			</BrowserRouter>
+			</BrowserRouter>,
 		);
 		const link = screen.getByRole("link");
 		expect(link).toHaveAttribute("href", "/album/album-1");
@@ -80,8 +80,12 @@ describe("AlbumCard Component", () => {
 		const handleDelete = vi.fn();
 		render(
 			<BrowserRouter>
-				<AlbumCard album={mockAlbum} onEdit={handleEdit} onDelete={handleDelete} />
-			</BrowserRouter>
+				<AlbumCard
+					album={mockAlbum}
+					onEdit={handleEdit}
+					onDelete={handleDelete}
+				/>
+			</BrowserRouter>,
 		);
 		const menuButton = screen.getByRole("button");
 		fireEvent.click(menuButton);

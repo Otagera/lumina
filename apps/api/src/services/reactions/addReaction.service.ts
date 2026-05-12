@@ -1,6 +1,9 @@
 import Joi from "joi";
+import {
+	addReaction,
+	getReactionCount,
+} from "../../../../../packages/models/src/reactions.lib.ts";
 import { emitReactionAdded } from "../../../../../packages/utils/src/events.util.ts";
-import { addReaction, getReactionCount } from "../../../../../packages/models/src/reactions.lib.ts";
 import {
 	aliaserSpec,
 	validateSpec,

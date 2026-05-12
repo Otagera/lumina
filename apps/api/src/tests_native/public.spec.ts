@@ -21,11 +21,18 @@ describe("Public Access Routes (Native)", () => {
 		const uploadsDir = path.resolve(process.cwd(), "src/uploads");
 		await fs.mkdir(uploadsDir, { recursive: true });
 		const fixturePath = path.resolve(__dirname, "fixtures/test.jpg");
-		await fs.copyFile(fixturePath, path.join(uploadsDir, "public-test-image.jpg"));
+		await fs.copyFile(
+			fixturePath,
+			path.join(uploadsDir, "public-test-image.jpg"),
+		);
 
 		// Create an album
 		const albumRes = await app.handle(
-			req.post("/api/v1/albums", { albumName: "Public Test Album" }, owner.authHeader)
+			req.post(
+				"/api/v1/albums",
+				{ albumName: "Public Test Album" },
+				owner.authHeader,
+			),
 		);
 		const albumBody = await parseRes(albumRes);
 		testAlbumId = albumBody.data.id;
@@ -33,20 +40,28 @@ describe("Public Access Routes (Native)", () => {
 
 		// Update settings to allow guest uploads
 		await app.handle(
-			req.put(`/api/v1/albums/${testAlbumId}`, {
-				settings: {
-					is_event: true,
-					allow_guest_uploads: true
-				}
-			}, owner.authHeader)
+			req.put(
+				`/api/v1/albums/${testAlbumId}`,
+				{
+					settings: {
+						is_event: true,
+						allow_guest_uploads: true,
+					},
+				},
+				owner.authHeader,
+			),
 		);
 
 		// Upload an image as owner
 		const imageRes = await app.handle(
-			req.post("/api/v1/images", { 
-				uploadedImages: [{ existingKey: "public-test-image.jpg" }],
-				albumId: testAlbumId 
-			}, owner.authHeader)
+			req.post(
+				"/api/v1/images",
+				{
+					uploadedImages: [{ existingKey: "public-test-image.jpg" }],
+					albumId: testAlbumId,
+				},
+				owner.authHeader,
+			),
 		);
 		const imageBody = await parseRes(imageRes);
 		testImageId = imageBody.data.images[0].imageId;
@@ -58,14 +73,16 @@ describe("Public Access Routes (Native)", () => {
 		}
 		// Cleanup mock image
 		try {
-			await fs.unlink(path.resolve(process.cwd(), "src/uploads/public-test-image.jpg"));
+			await fs.unlink(
+				path.resolve(process.cwd(), "src/uploads/public-test-image.jpg"),
+			);
 		} catch (e) {}
 	});
 
 	describe("GET /api/v1/public/albums/:token", () => {
 		it("should allow guest to fetch shared album details", async () => {
 			const res = await app.handle(
-				req.get(`/api/v1/public/albums/${testShareToken}`)
+				req.get(`/api/v1/public/albums/${testShareToken}`),
 			);
 			const body = await parseRes(res);
 
@@ -76,7 +93,7 @@ describe("Public Access Routes (Native)", () => {
 
 		it("should fail for invalid token", async () => {
 			const res = await app.handle(
-				req.get("/api/v1/public/albums/invalid-token")
+				req.get("/api/v1/public/albums/invalid-token"),
 			);
 			expect(res.status).toBe(HTTP_STATUS_CODES.NOTFOUND);
 		});
@@ -85,7 +102,7 @@ describe("Public Access Routes (Native)", () => {
 	describe("GET /api/v1/public/images/:token/:imageId", () => {
 		it("should allow guest to fetch shared image details", async () => {
 			const res = await app.handle(
-				req.get(`/api/v1/public/images/${testShareToken}/${testImageId}`)
+				req.get(`/api/v1/public/images/${testShareToken}/${testImageId}`),
 			);
 			const body = await parseRes(res);
 
@@ -101,13 +118,13 @@ describe("Public Access Routes (Native)", () => {
 			const uploadsDir = path.resolve(process.cwd(), "src/uploads");
 			await fs.copyFile(
 				path.resolve(__dirname, "fixtures/test.jpg"),
-				path.join(uploadsDir, "guest-upload.jpg")
+				path.join(uploadsDir, "guest-upload.jpg"),
 			);
 
 			const res = await app.handle(
 				req.post(`/api/v1/public/albums/${testShareToken}/upload`, {
-					key: "guest-upload.jpg"
-				})
+					key: "guest-upload.jpg",
+				}),
 			);
 			const body = await parseRes(res);
 			if (res.status !== HTTP_STATUS_CODES.CREATED) {
@@ -118,7 +135,7 @@ describe("Public Access Routes (Native)", () => {
 			expect(body.status).toBe("completed");
 			expect(body.data.images).toBeDefined();
 			expect(body.data.images.length).toBe(1);
-			
+
 			// Cleanup
 			try {
 				await fs.unlink(path.join(uploadsDir, "guest-upload.jpg"));
