@@ -9,7 +9,7 @@ interface CompactListViewProps {
 	onToggleSelect: (id: string) => void;
 	onSelectAll?: () => void;
 	onImageClick: (image: ImageFromDB) => void;
-	onDelete: (imageId: string) => void;
+	onDelete?: (imageId: string) => void;
 	onSetCover?: (imageId: string) => void;
 	coverImageId?: string;
 }
@@ -107,9 +107,9 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 										<img
 											src={image.imagePath}
 											alt={filename}
-											className={`w-full h-full object-cover ${image.status === "QUOTA_EXCEEDED" ? "grayscale opacity-60" : ""}`}
+											className={`w-full h-full object-cover ${(image.status as string) === "QUOTA_EXCEEDED" ? "grayscale opacity-60" : ""}`}
 										/>
-										{image.status === "QUOTA_EXCEEDED" && (
+										{(image.status as string) === "QUOTA_EXCEEDED" && (
 											<div className="absolute inset-0 flex items-center justify-center">
 												<div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
 											</div>
@@ -122,7 +122,7 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 											<span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate max-w-[200px]">
 												{filename}
 											</span>
-											{image.status === "QUOTA_EXCEEDED" && (
+											{(image.status as string) === "QUOTA_EXCEEDED" && (
 												<span className="px-1.5 py-0.5 bg-red-500/10 text-red-500 text-[8px] font-black uppercase tracking-tighter rounded-md">
 													Limit Reached
 												</span>
@@ -181,7 +181,7 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 												<button
 													type="button"
 													onClick={() => {
-														onDelete(image.imageId);
+														onDelete?.(image.imageId);
 														setOpenMenuId(null);
 													}}
 													className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"

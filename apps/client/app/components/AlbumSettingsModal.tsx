@@ -45,7 +45,10 @@ export const AlbumSettingsModal = ({
 
 	const updateSettingsMutation = useMutation({
 		mutationFn: (data: { settings: any; storageConfigId: string | null }) =>
-			editAlbumSettings(albumId, data),
+			editAlbumSettings(albumId, {
+				...(data.settings || {}),
+				storageConfigId: data.storageConfigId
+			}),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [`album-${albumId}`] });
 			toast.success("Album settings updated successfully");

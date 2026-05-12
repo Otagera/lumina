@@ -320,8 +320,8 @@ export default function UsageDashboard() {
 										outerRadius={80}
 										paddingAngle={5}
 										dataKey="value"
-										label={({ name, percent }) =>
-											`${name} (${(percent * 100).toFixed(0)}%)`
+										label={({ name, percent }: any) =>
+											`${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
 										}
 									>
 										{storageByAlbumData.map((entry: any, index: number) => (
@@ -332,7 +332,7 @@ export default function UsageDashboard() {
 										))}
 									</Pie>
 									<Tooltip
-										formatter={(value: number) => [
+										formatter={(value: any) => [
 											`${Math.round(value)} MB`,
 											"Storage",
 										]}
@@ -365,8 +365,8 @@ export default function UsageDashboard() {
 										outerRadius={80}
 										paddingAngle={5}
 										dataKey="value"
-										label={({ name, percent }) =>
-											`${name} (${(percent * 100).toFixed(0)}%)`
+										label={({ name, percent }: any) =>
+											`${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
 										}
 									>
 										{computeByOperationData.map((entry: any, index: number) => (
@@ -377,7 +377,7 @@ export default function UsageDashboard() {
 										))}
 									</Pie>
 									<Tooltip
-										formatter={(value: number) => [`${value} units`, "Compute"]}
+										formatter={(value: any) => [`${value} units`, "Compute"]}
 									/>
 								</PieChart>
 							</ResponsiveContainer>

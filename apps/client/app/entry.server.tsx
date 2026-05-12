@@ -3,6 +3,7 @@ import ReactDOMServer from "react-dom/server";
 import {
 	createStaticHandler,
 	createStaticRouter,
+	// @ts-expect-error - SSR module not resolved in browser context
 	StaticRouterProvider,
 } from "react-router-dom/server";
 import routes from "./routes.tsx";

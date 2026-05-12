@@ -2,13 +2,13 @@ import type { Album } from "~/types";
 import { cn } from "~/utils/cn";
 
 interface AlbumCoverProps {
-	album: Album;
+	album?: Album;
 	className?: string;
 }
 
 const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 	// The cover image logic is as follows:
-	// we need somehthing for when album is undefined (loading state), when album has no images, when album has images but no cover set, and when album has a cover image set
+	// we need something for when album is undefined (loading state), when album has no images, when album has images but no cover set, and when album has a cover image set
 	if (!album) {
 		return (
 			<div
@@ -16,11 +16,17 @@ const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 			/>
 		);
 	}
+
+	// Type guard for coverImage - can be object { id, url } or string or null
+	const coverImageUrl = typeof album.coverImage === 'string' 
+		? album.coverImage 
+		: album.coverImage?.url;
+
 	// 1. Manual Cover Selection (Priority)
-	if (album.coverImage?.url) {
+	if (coverImageUrl) {
 		return (
 			<img
-				src={album.coverImage.url}
+				src={coverImageUrl}
 				alt={album.albumName}
 				className={cn(
 					"w-full h-full object-cover transition-transform duration-500 group-hover:scale-105",

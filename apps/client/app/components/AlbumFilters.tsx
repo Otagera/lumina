@@ -61,9 +61,9 @@ export const AlbumFilters = ({
 			const d = new Date(filters.endDate);
 			return `Until ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 		}
-		const start = new Date(filters.startDate);
-		const end = new Date(filters.endDate);
-		return `${start.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${end.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+		const start = filters.startDate ? new Date(filters.startDate) : null;
+		const end = filters.endDate ? new Date(filters.endDate) : null;
+		return `${start?.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${end?.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 	};
 
 	const applyDatePreset = (preset: string) => {

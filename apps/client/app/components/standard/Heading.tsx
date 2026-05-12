@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode, ElementType } from "react";
 import { cn } from "~/utils/cn";
 
 interface HeadingProps {
@@ -8,7 +8,7 @@ interface HeadingProps {
 }
 
 export const Heading = ({ level = 2, children, className }: HeadingProps) => {
-	const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+	const Tag = `h${level}` as ElementType;
 
 	const styles = {
 		1: "text-3xl md:text-4xl font-black tracking-tight",

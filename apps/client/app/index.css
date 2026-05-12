@@ -1,40 +1,9 @@
 @import "tailwindcss";
+@import "@lumina/config-tailwind/theme.css";
+
+@source "../../packages/ui/src/**/*.tsx";
 
 @variant dark (&:where(.dark, .dark *));
-
-@theme {
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  
-  /* New OKLCH Palette */
-  --color-sage: oklch(58% 0.031 107.3);
-  --color-terracotta: oklch(54.7% 0.021 43.1);
-  --color-plum: oklch(36.4% 0.029 323.89);
-  --color-slate-blue: oklch(44.6% 0.043 257.281);
-  
-  /* Standardizing brand colors to use the new palette */
-  --color-brand-primary: var(--color-sage);
-  --color-brand-secondary: var(--color-terracotta);
-  --color-brand-accent: var(--color-plum);
-  --color-brand-info: var(--color-slate-blue);
-}
-
-@layer base {
-  *, ::after, ::before {
-    @apply border-zinc-200 dark:border-zinc-800 transition-colors duration-200;
-  }
-
-  html {
-    @apply antialiased scroll-smooth;
-  }
-
-  body {
-    @apply bg-zinc-50 text-zinc-900 min-h-screen transition-colors duration-200;
-  }
-  
-  .dark body {
-    @apply bg-zinc-950 text-zinc-100;
-  }
-}
 
 @layer components {
   .glass-panel {

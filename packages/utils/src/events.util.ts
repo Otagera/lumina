@@ -11,6 +11,7 @@ export const EVENTS = {
 	FACE_DETECTED: "FACE_DETECTED",
 	FACE_CLUSTERED: "FACE_CLUSTERED",
 	BULK_DOWNLOAD_COMPLETED: "BULK_DOWNLOAD_COMPLETED",
+	REACTION_ADDED: "REACTION_ADDED",
 };
 
 const REDIS_CHANNEL = "facematch_events";
@@ -77,5 +78,20 @@ export const emitBulkDownloadCompleted = async (
 	});
 
 	eventEmitter.emit(EVENTS.BULK_DOWNLOAD_COMPLETED, { albumId, downloadUrl });
+	await redisClient.publish(REDIS_CHANNEL, message);
+};
+
+export const emitReactionAdded = async (payload: {
+	imageId: string;
+	albumId?: string;
+	type: string;
+	count: number;
+}) => {
+	const message = JSON.stringify({
+		type: EVENTS.REACTION_ADDED,
+		payload,
+	});
+
+	eventEmitter.emit(EVENTS.REACTION_ADDED, payload);
 	await redisClient.publish(REDIS_CHANNEL, message);
 };

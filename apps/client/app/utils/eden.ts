@@ -1,7 +1,7 @@
+// @ts-expect-error - edenTreaty types are inconsistent
 import { edenTreaty } from "@elysiajs/eden";
 
 // Use relative path to go through Vite proxy
-// Vite proxy maps /api -> http://localhost:3005
 const API_BASE_URL = "";
 
 export const eden = edenTreaty(API_BASE_URL, {

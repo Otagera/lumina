@@ -2,32 +2,33 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, Link as LinkIcon, QrCode, Share2 } from "lucide-react";
 import { useState } from "react";
 import { QRCode } from "react-qrcode-logo";
+import type { Album } from "~/types";
 import { editAlbum } from "../utils/api";
+import AlbumCover from "./AlbumCover";
 import { Button } from "./standard/Button";
 import { Heading } from "./standard/Heading";
 
 interface ShareModalProps {
+	album: Album;
 	albumId: string;
-	albumName: string;
 	shareToken: string | null;
 	qrColor?: string | null;
 	qrLogoUrl?: string | null;
-	coverImage?: string | null;
 	creationDate?: string | Date | null;
 	onClose: () => void;
 	isOpen: boolean;
 }
 
 export const ShareModal = ({
+	album,
 	albumId,
-	albumName,
 	shareToken,
 	qrColor,
 	qrLogoUrl,
-	coverImage,
 	creationDate,
 	onClose,
 }: ShareModalProps) => {
+	const albumName = album.albumName || "";
 	const queryClient = useQueryClient();
 	const [copied, setCopied] = useState(false);
 	const [showQR, setShowQR] = useState(false);
@@ -117,9 +118,13 @@ export const ShareModal = ({
 					ctx.fillText(initial, coverX + coverSize / 2, coverY + coverSize / 2);
 				};
 
-				if (coverImage) {
+				const coverImageUrl = typeof album.coverImage === 'string' 
+					? album.coverImage 
+					: album.coverImage?.url || null;
+
+				if (coverImageUrl) {
 					try {
-						const img = await loadImage(coverImage);
+						const img = await loadImage(coverImageUrl);
 						ctx.save();
 						ctx.beginPath();
 						ctx.roundRect(coverX, coverY, coverSize, coverSize, coverRadius);
@@ -209,10 +214,10 @@ export const ShareModal = ({
 	const qrLogo = qrLogoUrl || "/favicon-camera-color.svg";
 	const formattedDate = creationDate
 		? new Date(creationDate).toLocaleDateString("en-US", {
-				month: "long",
-				day: "numeric",
-				year: "numeric",
-			})
+			month: "long",
+			day: "numeric",
+			year: "numeric",
+		})
 		: null;
 
 	return (
@@ -264,16 +269,14 @@ export const ShareModal = ({
 						<button
 							onClick={handleToggleShare}
 							disabled={shareMutation.isPending}
-							className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all focus:outline-none ${
-								shareToken
+							className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all focus:outline-none ${shareToken
 									? "bg-sage shadow-lg shadow-sage/20"
 									: "bg-zinc-200 dark:bg-zinc-800"
-							}`}
+								}`}
 						>
 							<span
-								className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 ${
-									shareToken ? "translate-x-7 shadow-sm" : "translate-x-1"
-								}`}
+								className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 ${shareToken ? "translate-x-7 shadow-sm" : "translate-x-1"
+									}`}
 							/>
 						</button>
 					</div>
@@ -319,19 +322,9 @@ export const ShareModal = ({
 								<div className="flex flex-col items-center gap-2 py-2 animate-in zoom-in duration-300">
 									<div className="p-4 bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-xl border border-zinc-100 dark:border-zinc-800 w-72 max-w-[90vw]">
 										<div className="flex items-center gap-4 mb-6">
-											{coverImage ? (
-												<div className="w-16 h-16 rounded-2xl overflow-hidden shadow-sm">
-													<img
-														src={coverImage}
-														alt={albumName}
-														className="w-full h-full object-cover"
-													/>
-												</div>
-											) : (
-												<div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 dark:text-zinc-500 font-black text-2xl shadow-sm">
-													{albumName ? albumName.charAt(0).toUpperCase() : "?"}
-												</div>
-											)}
+											<div className="w-16 h-16 rounded-2xl overflow-hidden shadow-sm">
+												<AlbumCover album={album} className="w-full h-full" />
+											</div>
 											<div className="flex-1 min-w-0">
 												<h3 className="font-black text-xl text-zinc-900 dark:text-white truncate">
 													{albumName}

@@ -43,6 +43,12 @@ import {
 } from "../utils/api";
 import { useUpload } from "../utils/UploadContext";
 
+// Type guard for coverImage - can be string or object { id, url }
+const getCoverImageId = (coverImage: string | { id: string | null; url: string | null } | null | undefined): string | null => {
+	if (!coverImage) return null;
+	return typeof coverImage === 'string' ? coverImage : coverImage.id;
+};
+
 const AlbumPage = () => {
 	const { albumId } = useParams();
 	const navigate = useNavigate();
@@ -263,7 +269,8 @@ const AlbumPage = () => {
 
 	const handleSetCoverImage = (imageId: string) => {
 		if (!albumId) return;
-		const currentCoverId = albumData?.data?.coverImage?.id;
+		const coverImage = albumData?.data?.coverImage;
+		const currentCoverId = typeof coverImage === 'object' ? coverImage?.id : coverImage;
 		const newCoverId = currentCoverId === imageId ? null : imageId;
 		editAlbumMutation.mutate({ albumId, coverImageId: newCoverId });
 	};
@@ -398,9 +405,8 @@ const AlbumPage = () => {
 													className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
 												>
 													<span
-														className={`text-zinc-400 transition-transform duration-200 ${
-															isCollapsed ? "" : "rotate-90"
-														}`}
+														className={`text-zinc-400 transition-transform duration-200 ${isCollapsed ? "" : "rotate-90"
+															}`}
 													>
 														›
 													</span>
@@ -412,13 +418,12 @@ const AlbumPage = () => {
 													</span>
 												</button>
 												<div
-													className={`overflow-hidden transition-all duration-300 ease-out ${
-														isCollapsed
-															? "max-h-0 opacity-0"
-															: "max-h-[2000px] opacity-100"
-													}`}
+													className={`overflow-hidden transition-all duration-300 ease-out ${isCollapsed
+														? "max-h-0 opacity-0"
+														: "max-h-[5000px] opacity-100"
+														}`}
 												>
-													<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 auto-rows-[200px]">
+													<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5 sm:gap-1 auto-rows-[150px] sm:auto-rows-[200px]">
 														{section.images.map((image, idx) => {
 															const width = image.originalSize?.width || 0;
 															const height = image.originalSize?.height || 0;
@@ -452,7 +457,7 @@ const AlbumPage = () => {
 																		onDelete={handleDeleteImage}
 																		onSetCover={handleSetCoverImage}
 																		isCover={
-																			albumData?.data?.coverImage?.id ===
+																			getCoverImageId(albumData?.data?.coverImage) ===
 																			image.imageId
 																		}
 																		selectionMode={selectedIds.size > 0}
@@ -463,10 +468,10 @@ const AlbumPage = () => {
 													</div>
 												</div>
 											</div>
-										);
-									})
-								) : (
-									<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 auto-rows-[200px]">
+											);
+											})
+											) : (
+											<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5 sm:gap-1 auto-rows-[150px] sm:auto-rows-[200px]">
 										{images.map((image, index) => {
 											const width = image.originalSize?.width || 0;
 											const height = image.originalSize?.height || 0;
@@ -516,7 +521,7 @@ const AlbumPage = () => {
 															onDelete={handleDeleteImage}
 															onSetCover={handleSetCoverImage}
 															isCover={
-																albumData?.data?.coverImage?.id ===
+																getCoverImageId(albumData?.data?.coverImage) ===
 																image.imageId
 															}
 															selectionMode={selectedIds.size > 0}
@@ -537,7 +542,7 @@ const AlbumPage = () => {
 								onSelectAll={toggleSelectAll}
 								onDelete={handleDeleteImage}
 								onSetCover={handleSetCoverImage}
-								coverImageId={albumData?.data?.coverImage?.id}
+								coverImageId={getCoverImageId(albumData?.data?.coverImage)}
 							/>
 						)}
 					</>
@@ -680,9 +685,9 @@ const AlbumPage = () => {
 			{isAlbumSettingsModalOpen && (
 				<AlbumSettingsModal
 					albumId={albumId!}
-					albumName={albumData?.data?.albumName}
+					albumName={albumData?.data?.albumName ?? ""}
 					settings={albumData?.data?.settings}
-					storageConfigId={albumData?.data?.storageConfigId}
+					storageConfigId={albumData?.data?.storageConfigId ?? null}
 					onClose={() => setIsAlbumSettingsModalOpen(false)}
 				/>
 			)}
@@ -690,7 +695,7 @@ const AlbumPage = () => {
 			{isAlbumPermissionsModalOpen && (
 				<AlbumPermissionsModal
 					albumId={albumId!}
-					members={albumData?.data?.members}
+					members={albumData?.data?.members ?? []}
 					onClose={() => setIsAlbumPermissionsModalOpen(false)}
 				/>
 			)}
@@ -709,10 +714,9 @@ const AlbumPage = () => {
 
 			{isAddToAlbumOpen && (
 				<AddToAlbumModal
-					isOpen={isAddToAlbumOpen}
 					onClose={() => setIsAddToAlbumOpen(false)}
 					onConfirm={handleBatchMove}
-					isBatch={true}
+					isProcessing={false}
 				/>
 			)}
 
@@ -720,13 +724,12 @@ const AlbumPage = () => {
 				<ShareModal
 					isOpen={isShareModalOpen}
 					onClose={() => setIsShareModalOpen(false)}
+					album={albumData?.data}
 					albumId={albumId!}
-					albumName={albumData?.data?.albumName}
-					shareToken={albumData?.data?.shareToken}
-					qrColor={albumData?.data?.qrColor}
-					qrLogoUrl={albumData?.data?.qrLogoUrl}
-					creationDate={albumData?.data?.createdAt}
-					coverImage={albumData?.data?.cover_image?.imagePath}
+					shareToken={albumData?.data?.shareToken ?? null}
+					qrColor={albumData?.data?.qrColor ?? null}
+					qrLogoUrl={albumData?.data?.qrLogoUrl ?? null}
+					creationDate={albumData?.data?.createdAt ?? null}
 				/>
 			)}
 		</MainContainer>

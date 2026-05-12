@@ -30,7 +30,7 @@ export function useModeration({
 			reason,
 		}: {
 			imageIds: string[];
-			status: ImageStatus;
+			status: "APPROVED" | "REJECTED";
 			reason?: string;
 		}) => moderateImages(albumId, imageIds, status, reason),
 		onSuccess: () => {

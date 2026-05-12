@@ -20,12 +20,14 @@ const spec = joi.object({
 			"string.pattern.base":
 				"Invalid password. It must be 8-128 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.",
 		}),
+	guestSessionId: joi.string().uuid().optional(),
 });
 
 const aliasSpec = {
 	request: {
 		email: "email",
 		password: "password",
+		guestSessionId: "guestSessionId",
 	},
 	response: {
 		user_id: "id",
@@ -50,6 +52,18 @@ const service = async (data) => {
 	const encryptedPassword = await encryptPassword(password);
 
 	const user = await createUser({ email, password: encryptedPassword });
+
+	// Merge guest data if guestSessionId is provided
+	if (guestSessionId) {
+		try {
+			const { mergeGuestDataService } = await import(
+				"../../apps/api/src/services/auth/mergeGuestData.service.ts"
+			);
+			await mergeGuestDataService({ guestSessionId, userId: user.user_id });
+		} catch (err) {
+			console.error("[SIGNUP] Failed to merge guest data:", err);
+		}
+	}
 
 	const { accessToken, refreshToken } = await createUserAuthToken(user.user_id);
 

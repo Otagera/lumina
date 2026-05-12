@@ -582,3 +582,20 @@ export const deleteImagesWithLogging = async (imageIds: string[]) => {
 
 	await cleanupImageSideEffects(images);
 };
+
+const linkGuestImagesToUser = async (
+	guest_session_id: string,
+	user_id: string,
+) => {
+	return await prisma.images.updateMany({
+		where: {
+			guest_session_id,
+			uploaded_by: null,
+		},
+		data: {
+			uploaded_by: user_id,
+		},
+	});
+};
+
+export { linkGuestImagesToUser };

@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@import "@lumina/config-tailwind/theme.css";
+
+@source "../../packages/ui/src/**/*.tsx";
+
+@variant dark (&:where(.dark, .dark *));

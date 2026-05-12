@@ -11,8 +11,11 @@
 		"./faces.model": "./src/faces.model",
 		"./images.model": "./src/images.model",
 		"./index.model": "./src/index.model",
+		"./reactions.model": "./src/reactions.model",
+		"./reactions.lib": "./src/reactions.lib",
 		"./users.lib": "./src/users.lib",
-		"./users.model": "./src/users.model"
+		"./users.model": "./src/users.model",
+		"./images.lib": "./src/images.lib"
 	},
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"

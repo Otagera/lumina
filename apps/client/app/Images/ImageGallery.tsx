@@ -11,8 +11,7 @@ import { EmptyState } from "~/components/standard/EmptyState";
 import type { ImageFromDB } from "~/types";
 import { deleteImage, fetchImages } from "~/utils/api";
 import axiosAPI from "~/utils/axios";
-import { getBentoSpanClass } from "~/utils/bento";
-import ImageGridItem from "./ImageGridItem";
+import { ImageGrid } from "@lumina/ui/components/domain/ImageGrid";
 import ImageModal from "./ImageModal";
 
 const ImageGallery: FC = () => {
@@ -334,45 +333,13 @@ const ImageGallery: FC = () => {
 			</div>
 
 			{viewMode === "grid" ? (
-				<div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full auto-rows-[150px] md:auto-rows-[250px] grid-flow-dense">
-					{images?.map((image, index) => {
-						const width = image.originalSize?.width || 0;
-						const height = image.originalSize?.height || 0;
-						const area = width * height;
-						const isFeatured = area > 2000000;
-						const spanClass = getBentoSpanClass(
-							width,
-							height,
-							index,
-							isFeatured,
-						);
-
-						return (
-							<div
-								key={image.imageId}
-								className={`relative animate-in fade-in slide-in-from-bottom-4 duration-500 ${spanClass}`}
-								style={{ animationDelay: `${(index % 50) * 50}ms` }}
-							>
-								<ImageGridItem
-									image={{
-										id: image.imageId,
-										width: width,
-										height: height,
-										url: image.imagePath,
-										alt: image.imagePath,
-										status: image.status,
-									}}
-									isSelected={selectedIds.has(image.imageId)}
-									onToggleSelect={toggleSelect}
-									selectionMode={selectedIds.size > 0}
-									className="cursor-pointer transition-transform duration-300 hover:scale-[1.015] w-full h-full object-cover"
-									onClick={() => handleImageClick(image)}
-									onDelete={handleDeleteImage}
-								/>
-							</div>
-						);
-					})}
-				</div>
+				<ImageGrid
+					images={images}
+					selectedIds={selectedIds}
+					onToggleSelect={toggleSelect}
+					onImageClick={handleImageClick}
+					onDelete={handleDeleteImage}
+				/>
 			) : (
 				<div>
 					<CompactListView
@@ -380,6 +347,7 @@ const ImageGallery: FC = () => {
 						selectedIds={selectedIds}
 						onToggleSelect={toggleSelect}
 						onImageClick={handleImageClick}
+						onDelete={handleDeleteImage}
 					/>
 				</div>
 			)}

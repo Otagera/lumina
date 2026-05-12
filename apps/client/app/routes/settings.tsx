@@ -606,7 +606,7 @@ const Settings = () => {
 										) : (
 											<Button
 												className="w-full py-6 rounded-2xl font-black uppercase tracking-widest text-[10px]"
-												variant={plan.is_highlighted ? "default" : "outline"}
+												variant={plan.is_highlighted ? "primary" : "outline"}
 												onClick={() =>
 													toast.success(
 														`Contact support to upgrade to ${plan.name}`,

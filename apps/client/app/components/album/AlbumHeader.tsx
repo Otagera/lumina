@@ -75,10 +75,10 @@ export function AlbumHeader({
 					</Card>
 
 					<div className="flex flex-col items-start gap-2">
-						<div className="flex flex-wrap items-center gap-3 group justify-between">
-							<div className="flex items-center gap-2 flex-1 overflow-hidden">
+						<div className="flex flex-wrap items-center gap-3 group justify-between w-full lg:w-auto">
+							<div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
 								<div
-									className={`transition-all duration-300 ease-out flex items-center gap-2 ${isEditingName
+									className={`transition-all duration-300 ease-out flex items-center gap-2 w-full ${isEditingName
 										? "translate-x-0 opacity-100"
 										: "-translate-x-4 opacity-0 absolute pointer-events-none"
 										}`}
@@ -94,14 +94,14 @@ export function AlbumHeader({
 										onBlur={() => {
 											if (!editAlbumName.trim()) onCancelEditing();
 										}}
-										className="flex-1 text-5xl md:text-6xl font-black text-zinc-900 dark:text-white bg-transparent border-b-2 border-sage focus:outline-none px-1"
+										className="flex-1 text-3xl md:text-5xl lg:text-6xl font-black text-zinc-900 dark:text-white bg-transparent border-b-2 border-sage focus:outline-none px-1 min-w-0"
 										autoFocus
 									/>
 									<Button
 										size="sm"
 										onClick={onSaveName}
 										disabled={!editAlbumName.trim() || isRenamePending}
-										className="text-sm"
+										className="text-xs sm:text-sm shrink-0"
 									>
 										{isRenamePending ? "..." : "Save"}
 									</Button>
@@ -109,7 +109,7 @@ export function AlbumHeader({
 										variant="ghost"
 										size="sm"
 										onClick={onCancelEditing}
-										className="text-sm"
+										className="shrink-0"
 									>
 										<XCircle size={16} />
 									</Button>
@@ -120,25 +120,26 @@ export function AlbumHeader({
 										: "translate-x-0 opacity-100"
 										}`}
 								>
-									<Heading level={1} className="text-5xl md:text-6xl">
+									<Heading level={1} className="text-3xl md:text-5xl lg:text-6xl truncate">
 										{album?.albumName}
 									</Heading>
 									<button
 										type="button"
 										onClick={onStartEditing}
-										className="p-2 text-zinc-400 hover:text-sage opacity-0 group-hover:opacity-100 transition-opacity"
+										className="p-2 text-zinc-400 hover:text-sage opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
 										title="Rename album"
 									>
-										<Pencil size={20} />
+										<Pencil size={18} />
 									</button>
 								</div>
 							</div>
-							<div className="flex items-center gap-1 ml-auto">
+							
+							<div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:ml-auto">
 								<Button
 									variant="outline"
 									size="sm"
 									onClick={onTriggerClustering}
-									className="text-sm"
+									className="text-xs flex-1 sm:flex-initial h-9"
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
@@ -160,16 +161,16 @@ export function AlbumHeader({
 									variant="outline"
 									size="sm"
 									onClick={onOpenPermissions}
-									className="text-sm"
+									className="text-xs flex-1 sm:flex-initial h-9"
 								>
 									<Settings2 size={14} className="mr-1.5" />
-									<span className="hidden sm:inline">Permissions</span>
+									<span>Permissions</span>
 								</Button>
 								<Button
 									variant="primary"
 									size="sm"
 									onClick={onUpload}
-									className="text-sm"
+									className="text-xs flex-1 sm:flex-initial h-9"
 								>
 									<Upload size={14} className="mr-1.5" />
 									Upload
@@ -181,7 +182,7 @@ export function AlbumHeader({
 											e.stopPropagation();
 											setMoreMenuOpen(!moreMenuOpen);
 										}}
-										className="p-2 text-zinc-400 hover:text-sage transition-colors rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+										className="p-2 text-zinc-400 hover:text-sage transition-colors rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-100 dark:border-zinc-800"
 										title="More actions"
 									>
 										<MoreVertical size={20} />

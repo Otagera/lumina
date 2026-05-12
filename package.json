@@ -3,18 +3,21 @@
 	"private": true,
 	"workspaces": [
 		"apps/*",
-		"packages/*"
+		"packages/*",
+		"packages/config/*"
 	],
 	"scripts": {
 		"start": "bun run --cwd apps/client start",
+		"start:app": "bun run --cwd apps/app start",
 		"start:api": "bun run --cwd apps/api start",
 		"migrate:api": "bun run --cwd apps/api migrate",
 		"start:worker": "bun run --cwd apps/worker start",
 		"dev": "bun run --cwd apps/client dev",
+		"dev:app": "bun run --cwd apps/app dev",
 		"dev:api": "bun run --cwd apps/api dev",
 		"dev:worker": "bun run --cwd apps/worker dev",
 		"dev:ai": "./venv/bin/uvicorn ai_service:app --port 8000 --reload --app-dir apps/ai",
-		"dev:all": "concurrently -c \"blue,green,magenta,yellow\" -n \"CLIENT,API,WORKER,AI\" \"bun run dev\" \"bun run dev:api\" \"bun run dev:worker\" \"bun run dev:ai\"",
+		"dev:all": "concurrently -c \"blue,cyan,green,magenta,yellow\" -n \"CLIENT,APP,API,WORKER,AI\" \"bun run dev\" \"bun run dev:app\" \"bun run dev:api\" \"bun run dev:worker\" \"bun run dev:ai\"",
 		"seed:api": "bun run --cwd apps/api prisma db seed",
 		"validate:services": "bun run --cwd apps/api validate:services",
 		"setup:hooks": "git config core.hooksPath .git-hooks",
@@ -31,6 +34,7 @@
 		"@bull-board/elysia": "^6.16.2",
 		"@elysiajs/cors": "^1.4.1",
 		"@elysiajs/static": "^1.4.7",
-		"react-datepicker": "^9.1.0"
+		"react-datepicker": "^9.1.0",
+		"tailwindcss-animate": "^1.0.7"
 	}
 }

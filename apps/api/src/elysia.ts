@@ -27,6 +27,7 @@ import settingsRoutes from "./routes/settings.route";
 import { thumbnailRoutes } from "./routes/thumbnail.route";
 import trashRoutes from "./routes/trash.route";
 import usageRoutes from "./routes/usage.route";
+import { reactionsRoutes } from "./routes/reactions.route";
 
 const envConfig = config[config.env || "development"];
 
@@ -213,10 +214,31 @@ export const createElysiaApp = async () => {
 				.use(settingsRoutes)
 				.use(trashRoutes)
 				.use(notificationsRoutes)
-				.use(usageRoutes),
+				.use(usageRoutes)
+				.use(reactionsRoutes),
 		)
 
-		.use(swagger());
+		.use(swagger())
+		.ws("/ws", {
+			open(ws) {
+				const albumId = ws.data.query.albumId;
+				if (albumId) {
+					ws.subscribe(`album:${albumId}`);
+					logger.info(`[WS] Client subscribed to album:${albumId}`);
+				}
+			},
+			message(ws, message: any) {
+				if (message.type === "REACTION") {
+					const albumId = ws.data.query.albumId;
+					if (albumId) {
+						ws.publish(`album:${albumId}`, {
+							type: "REACTION_ADDED",
+							data: message.data,
+						});
+					}
+				}
+			},
+		});
 
 	if (config.env !== "test") {
 		const serverAdapter: any = new ElysiaAdapter("/worker/admin");
@@ -239,6 +261,18 @@ export const createElysiaApp = async () => {
 	}
 
 	eventEmitter.setMaxListeners(100);
+
+	eventEmitter.on(EVENTS.REACTION_ADDED, (payload) => {
+		if (payload.albumId) {
+			app.server?.publish(`album:${payload.albumId}`, {
+				type: "REACTION_ADDED",
+				data: payload,
+			});
+		} else {
+			// If no specific albumId, maybe broadcast to a global channel or find which album the image belongs to
+			// For now, let's assume we always want albumId for scoped updates
+		}
+	});
 
 	return app;
 };

@@ -42,7 +42,9 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 				"/signup",
 				async ({ body, set, cookie: { accessToken, refreshToken } }) => {
 					try {
-						const data = await signupService(body);
+						const data = await signupService({
+							...body,
+						});
 
 						accessToken.set({
 							value: data.accessToken,

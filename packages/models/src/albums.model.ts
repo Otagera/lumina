@@ -154,6 +154,36 @@ const fetchAllAlbums = async () => {
 	});
 };
 
+const fetchAlbumHighlights = async (token: string, limit: number) => {
+	const album = await prisma.albums.findUnique({
+		where: { share_token: token },
+		select: { album_id: true },
+	});
+
+	if (!album) return [];
+
+	return await prisma.images.findMany({
+		where: {
+			album_images: {
+				some: { album_id: album.album_id },
+			},
+			status: "APPROVED",
+			deleted_at: null,
+		},
+		include: {
+			_count: {
+				select: { reactions: true },
+			},
+		},
+		orderBy: {
+			reactions: {
+				_count: "desc",
+			},
+		},
+		take: limit,
+	});
+};
+
 const softDeleteAlbumById = async (albumId: string, userId: string) => {
 	return await prisma.albums.update({
 		where: {
@@ -403,4 +433,5 @@ export {
 	deleteAlbumsByIds,
 	deleteAlbumsByUserId,
 	deleteAllAlbums,
+	fetchAlbumHighlights,
 };

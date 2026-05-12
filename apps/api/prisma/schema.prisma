@@ -121,6 +121,18 @@ model images {
   guest_session_id String?        @db.Uuid
   users            users?         @relation(fields: [uploaded_by], references: [user_id], onDelete: Cascade)
   covered_albums   albums[]       @relation("AlbumCover")
+  reactions        reactions[]
+}
+
+model reactions {
+  id               String   @id @default(uuid()) @db.Uuid
+  image_id         String   @db.Uuid
+  type             String   @default("HEART")
+  user_id          String?  @db.Uuid
+  guest_session_id String?  @db.Uuid
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  image images @relation(fields: [image_id], references: [image_id], onDelete: Cascade)
 }
 
 model user_storage_configs {

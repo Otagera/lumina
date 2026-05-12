@@ -1,5 +1,5 @@
 import { Component, type ReactNode } from "react";
-import { Button } from "./standard/Button";
+import { Button } from "./Button";
 
 interface ErrorBoundaryProps {
 	children: ReactNode;

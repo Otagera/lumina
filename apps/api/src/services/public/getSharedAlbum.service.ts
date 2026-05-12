@@ -73,7 +73,16 @@ const service = async (data: any) => {
 		where: { share_token: params.share_token },
 		include: {
 			album_images: {
-				include: { images: { include: { faces: true } } },
+				include: {
+					images: {
+						include: {
+							faces: true,
+							reactions: {
+								select: { id: true }
+							}
+						}
+					}
+				},
 				where: { images: imageFilter },
 			},
 			settings: true,
@@ -102,6 +111,7 @@ const service = async (data: any) => {
 			),
 			originalSize: { width: img.original_width, height: img.original_height },
 			isPending: img.status === "PENDING",
+			reactionCount: img.reactions.length,
 		}));
 
 	return {

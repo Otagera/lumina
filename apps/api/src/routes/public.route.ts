@@ -4,6 +4,7 @@ import { getInviteDetailsService } from "../services/albums/getInviteDetails.ser
 import { getPresignedUrlService } from "../services/pictures/getPresignedUrl.service.ts";
 import { getPlansService } from "../services/public/getPlans.service.ts";
 import { getSharedAlbumService } from "../services/public/getSharedAlbum.service.ts";
+import { getHighlightsService } from "../services/pictures/getHighlights.service.ts";
 import { getSharedImageService } from "../services/public/getSharedImage.service.ts";
 import { searchFacesPublicService } from "../services/public/searchFacesPublic.service.ts";
 import { selfieSearchService } from "../services/public/selfieSearch.service.ts";
@@ -101,6 +102,68 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 			params: t.Object({
 				token: t.String(),
 				imageId: t.String(),
+			}),
+		},
+	)
+	.get(
+		"/albums/:token/highlights",
+		async ({ params, query, set }) => {
+			try {
+				const data = await getHighlightsService({
+					token: params.token,
+					limit: query.limit || 10,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Highlights fetched successfully.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({ token: t.String() }),
+			query: t.Object({
+				limit: t.Optional(t.Numeric()),
+			}),
+		},
+	)
+	.get(
+		"/albums/:token/highlights",
+		async ({ params, query, set }) => {
+			try {
+				const data = await getHighlightsService({
+					token: params.token,
+					limit: query.limit ? Number.parseInt(String(query.limit), 10) : 10,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Highlights retrieved successfully.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({ token: t.String() }),
+			query: t.Object({
+				limit: t.Optional(t.Numeric()),
 			}),
 		},
 	)
