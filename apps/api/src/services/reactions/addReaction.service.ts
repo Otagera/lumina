@@ -26,11 +26,12 @@ const aliasSpec = {
 		guestSessionId: "guestSessionId",
 	},
 	response: {
-		reaction_id: "reactionId",
+		id: "reactionId",
 		image_id: "imageId",
 		type: "type",
 		user_id: "userId",
 		guest_session_id: "guestSessionId",
+		count: "count",
 	},
 };
 
@@ -59,7 +60,7 @@ export const service = async (data: any) => {
 	});
 
 	return aliaserSpec(aliasSpec.response, {
-		reaction_id: reaction.reaction_id,
+		id: reaction.id,
 		image_id: reaction.image_id,
 		type: reaction.type,
 		user_id: reaction.user_id,
