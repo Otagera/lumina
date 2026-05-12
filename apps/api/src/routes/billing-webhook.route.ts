@@ -23,7 +23,7 @@ const billingWebhookRoutes = new Elysia({ prefix: "/webhooks" }).post(
 			return { status: "completed", message: "Webhook processed" };
 		} catch (error: any) {
 			console.error("[Billing Webhook] Error:", error.message);
-			set.status = HTTP_STATUS_CODES.INTERNAL_ERROR;
+			set.status = HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 			return { status: "error", message: "Webhook processing failed" };
 		}
 	},

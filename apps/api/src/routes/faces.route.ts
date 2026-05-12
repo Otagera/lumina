@@ -27,11 +27,11 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					data,
 				};
 			} catch (error: unknown) {
-				const err = error as { statusCode?: number; message?: string };
+				const err = error as { statusCode: number; message: string };
 				if (err?.message === "Face not found.") {
 					set.status = HTTP_STATUS_CODES.NOTFOUND;
 				} else {
-					set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+					set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				}
 				return {
 					status: "error",
@@ -68,7 +68,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -98,8 +98,8 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					data,
 				};
 			} catch (error: unknown) {
-				const err = error as { statusCode?: number; message?: string };
-				set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				const err = error as { statusCode: number; message: string };
+				set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: err?.message || "Internal server error",
@@ -133,7 +133,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 				set.status = HTTP_STATUS_CODES.OK;
 				return data;
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return { status: "error", message: error?.message || "Internal error" };
 			}
 		},
@@ -157,7 +157,7 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 				set.status = HTTP_STATUS_CODES.OK;
 				return data;
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return { status: "error", message: error?.message || "Internal error" };
 			}
 		},

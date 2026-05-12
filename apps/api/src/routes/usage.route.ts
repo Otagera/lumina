@@ -16,7 +16,7 @@ const usageRoutes = new Elysia({ prefix: "/usage" })
 				data,
 			};
 		} catch (error: any) {
-			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+			set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 			return {
 				status: "error",
 				message: error?.message || "Internal server error",
@@ -55,7 +55,7 @@ const usageRoutes = new Elysia({ prefix: "/usage" })
 
 				return csv;
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",

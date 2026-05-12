@@ -46,4 +46,5 @@ const service = async (data) => {
 	return aliasRes;
 };
 
-export const removeImagesInAlbumService = service;
+export const updateImagesInAlbumStatusService = service;
+export const removeImagesInAlbumService = updateImagesInAlbumStatusService;

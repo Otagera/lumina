@@ -150,8 +150,8 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: unknown) {
-				const err = error as { statusCode?: number; message?: string };
-				set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				const err = error as { statusCode: number; message: string };
+				set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: err?.message || "Internal server error",
@@ -184,7 +184,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -221,7 +221,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -259,7 +259,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -291,8 +291,8 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: unknown) {
-				const err = error as { statusCode?: number; message?: string };
-				set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				const err = error as { statusCode: number; message: string };
+				set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: err?.message || "Internal server error",
@@ -329,11 +329,11 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: unknown) {
-				const err = error as { statusCode?: number; message?: string };
+				const err = error as { statusCode: number; message: string };
 				if (err?.message === "Image not found.") {
 					set.status = HTTP_STATUS_CODES.NOTFOUND;
 				} else {
-					set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+					set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				}
 				return {
 					status: "error",
@@ -365,11 +365,11 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: unknown) {
-				const err = error as { statusCode?: number; message?: string };
+				const err = error as { statusCode: number; message: string };
 				if (err?.message === "Image not found.") {
 					set.status = HTTP_STATUS_CODES.NOTFOUND;
 				} else {
-					set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+					set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				}
 				return {
 					status: "error",
@@ -401,11 +401,11 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: unknown) {
-				const err = error as { statusCode?: number; message?: string };
+				const err = error as { statusCode: number; message: string };
 				if (err?.message === "Image not found.") {
 					set.status = HTTP_STATUS_CODES.NOTFOUND;
 				} else {
-					set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+					set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				}
 				return {
 					status: "error",
@@ -437,11 +437,11 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data: { success },
 				};
 			} catch (error: unknown) {
-				const err = error as { statusCode?: number; message?: string };
+				const err = error as { statusCode: number; message: string };
 				if (err?.message === "Image not found.") {
 					set.status = HTTP_STATUS_CODES.NOTFOUND;
 				} else {
-					set.status = err?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+					set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				}
 				return {
 					status: "error",
@@ -472,7 +472,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Failed to generate download URL.",
@@ -502,7 +502,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -538,7 +538,7 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -572,7 +572,7 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -612,7 +612,7 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
