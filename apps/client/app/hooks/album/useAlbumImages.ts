@@ -79,7 +79,9 @@ export function useAlbumImages({
 		return (
 			approvedQuery.data?.pages.flatMap(
 				(page: ApiResponse<ImagesInAlbumResponse>) =>
-					page?.data?.imagesInAlbum?.map((ia: ImagesInAlbum) => ia.images) ||
+					page?.data?.imagesInAlbum?.map(
+						(albumImageJoin: ImagesInAlbum) => albumImageJoin.images,
+					) ||
 					[],
 			) || []
 		);
@@ -89,7 +91,9 @@ export function useAlbumImages({
 		return (
 			pendingQuery.data?.pages.flatMap(
 				(page: ApiResponse<ImagesInAlbumResponse>) =>
-					page?.data?.imagesInAlbum?.map((ia: ImagesInAlbum) => ia.images) ||
+					page?.data?.imagesInAlbum?.map(
+						(albumImageJoin: ImagesInAlbum) => albumImageJoin.images,
+					) ||
 					[],
 			) || []
 		);
