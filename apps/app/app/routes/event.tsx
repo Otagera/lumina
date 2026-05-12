@@ -2,7 +2,7 @@ import { ImageGrid } from "@lumina/ui/components/domain/ImageGrid";
 import { ImagePreviewModal } from "@lumina/ui/components/domain/ImagePreviewModal";
 import { SkeletonImageGrid } from "@lumina/ui/components/domain/Skeleton";
 import { Button } from "@lumina/ui/components/ui/button";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
 	Camera,
 	Heart,
@@ -17,7 +17,35 @@ import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 import { InAppCamera } from "~/components/InAppCamera";
 import { useLiveAlbum } from "~/hooks/useLiveAlbum";
+import {
+	createPublicEventClient,
+	eventAlbumKeys,
+	useEventAlbum,
+	useEventAlbumHighlights,
+	useSelfieSearch,
+} from "@lumina/event-sdk";
 import { api } from "~/utils/eden";
+
+
+const publicEventClient = createPublicEventClient({
+	getAlbum: async (token: string) => {
+		const res = await api.public.albums[token].get();
+		if (res.error) throw res.error;
+		return res.data;
+	},
+	getHighlights: async (token: string) => {
+		const res = await api.public.albums[token].highlights.get();
+		if (res.error) throw res.error;
+		return res.data;
+	},
+	searchByImage: async (token: string, selfie: File | Blob) => {
+		const res = await api.public.albums[token]["search-by-image"].post({
+			selfie: selfie as File,
+		});
+		if (res.error) throw res.error;
+		return res.data;
+	},
+});
 
 export default function EventPage() {
 	const { token } = useParams<{ token: string }>();
@@ -47,41 +75,25 @@ export default function EventPage() {
 	}, [selectedImage]);
 
 	// Fetch Album Details
-	const { data: albumData, isLoading: isAlbumLoading } = useQuery({
-		queryKey: ["album", token],
-		queryFn: async () => {
-			const res = await api.public.albums[token as string].get();
-			if (res.error) throw res.error;
-			return res.data?.data;
-		},
-		enabled: !!token,
+	const { data: albumData, isLoading: isAlbumLoading } = useEventAlbum({
+		token,
+		client: publicEventClient,
 	});
 
 	const albumId = albumData?.id;
 	const { reactions: liveReactions } = useLiveAlbum(albumId);
 
 	// Fetch Highlights (Trending)
-	const { data: highlightsData, isLoading: isHighlightsLoading } = useQuery({
-		queryKey: ["album-highlights", token],
-		queryFn: async () => {
-			const res = await api.public.albums[token as string].highlights.get();
-			if (res.error) throw res.error;
-			return res.data?.data;
-		},
-		enabled: !!token,
-	});
+	const { data: highlightsData, isLoading: isHighlightsLoading } =
+		useEventAlbumHighlights({
+			token,
+			client: publicEventClient,
+		});
 
-	// Selfie Search Mutation
-	const searchMutation = useMutation({
-		mutationFn: async (file: File) => {
-			const res = await api.public.albums[token as string][
-				"search-by-image"
-			].post({
-				selfie: file,
-			});
-			if (res.error) throw res.error;
-			return res.data?.data;
-		},
+		// Selfie Search Mutation
+	const searchMutation = useSelfieSearch({
+		token,
+		client: publicEventClient,
 		onSuccess: (data) => {
 			if (data?.faces) {
 				toast.success(`Found ${data.faces.length} photos of you!`);
@@ -93,7 +105,7 @@ export default function EventPage() {
 		},
 	});
 
-	// Reaction Mutation
+// Reaction Mutation
 	const reactMutation = useMutation({
 		mutationFn: async (imageId: string) => {
 			const res = await api.reactions.post({
@@ -104,7 +116,9 @@ export default function EventPage() {
 			return res.data;
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["album-highlights", token] });
+			queryClient.invalidateQueries({
+				queryKey: eventAlbumKeys.highlights(token as string),
+			});
 		},
 	});
 

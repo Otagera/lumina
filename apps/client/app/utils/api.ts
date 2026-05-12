@@ -1,3 +1,4 @@
+import { publicEventClient } from "~/hooks/usePublicEventClient";
 import { api } from "./eden";
 
 export const fetchImages = async ({
@@ -306,9 +307,7 @@ export const searchFaces = async ({
 
 export const fetchSharedAlbum = async (token: string) => {
 	try {
-		const { data, error } = await api.public.albums[token].get({ $query: {} });
-		if (error) throw error;
-		return data;
+		return { data: await publicEventClient.getPublicAlbum(token) };
 	} catch (error) {
 		console.error("Error fetching shared album:", error);
 	}
