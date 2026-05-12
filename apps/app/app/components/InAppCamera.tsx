@@ -1,12 +1,6 @@
 import { useRef, useCallback, useState } from "react";
 import Webcam from "react-webcam";
 import { X, Camera, RefreshCw, Sparkles, Upload, Image as ImageIcon } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@lumina/ui/components/ui/dialog";
 import { Button } from "@lumina/ui/components/ui/button";
 
 interface InAppCameraProps {
@@ -54,15 +48,25 @@ export const InAppCamera = ({ isOpen, onClose, onCapture }: InAppCameraProps) =>
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-[95vw] md:max-w-xl h-[85vh] p-0 overflow-hidden bg-black border-none rounded-[2.5rem] flex flex-col">
-        <DialogTitle className="sr-only">Find Your Photos</DialogTitle>
-        <DialogDescription className="sr-only">
-          Take a selfie or upload a photo to find every picture you are in.
-        </DialogDescription>
-        
-        <div className="flex-1 relative bg-zinc-950 overflow-hidden">
+    <div
+      className="fixed inset-0 z-[140] bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Find your photos"
+    >
+      <div className="relative w-full max-w-[95vw] md:max-w-xl h-[85dvh] overflow-hidden bg-black border border-zinc-800 rounded-[2.5rem] flex flex-col shadow-2xl">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 z-20 rounded-full p-2 bg-black/40 text-white hover:bg-black/60 transition-colors"
+          aria-label="Close camera modal"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="flex-1 relative bg-zinc-950 overflow-hidden pt-12">
           {mode === "camera" ? (
             <>
               <Webcam
@@ -156,7 +160,7 @@ export const InAppCamera = ({ isOpen, onClose, onCapture }: InAppCameraProps) =>
             </span>
           </button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
