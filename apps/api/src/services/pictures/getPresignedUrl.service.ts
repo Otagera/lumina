@@ -17,6 +17,7 @@ const spec = Joi.object({
 	is_multipart: Joi.boolean().optional(),
 	upload_id: Joi.string().optional(),
 	part_number: Joi.number().optional(),
+	key: Joi.string().optional(),
 });
 
 const aliasSpec = {
@@ -29,6 +30,7 @@ const aliasSpec = {
 		isMultipart: "is_multipart",
 		uploadId: "upload_id",
 		partNumber: "part_number",
+		key: "key",
 	},
 	response: {
 		uploadUrl: "uploadUrl",
