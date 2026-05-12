@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import routes from "./routes";
 import "./index.css";
+import { registerSW } from "virtual:pwa-register";
 
 const router = createBrowserRouter(routes);
 
@@ -25,3 +26,6 @@ if (rootElement) {
 		</StrictMode>,
 	);
 }
+
+
+registerSW({ immediate: true });
