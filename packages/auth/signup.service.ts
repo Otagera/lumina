@@ -40,7 +40,7 @@ const aliasSpec = {
 
 const service = async (data) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
-	const { email, password } = validateSpec(spec, aliasReq);
+	const { email, password, guestSessionId } = validateSpec(spec, aliasReq);
 
 	const existingUser = await getUser({ email });
 
