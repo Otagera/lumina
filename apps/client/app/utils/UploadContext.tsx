@@ -360,7 +360,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 			if (isQuotaError) {
 				const quotaMessage =
 					err.response?.data?.message ||
-					"Monthly image limit reached. Please upgrade your plan.";
+					"Upload limit reached. Guest uploads have hourly anti-abuse caps; host plans keep monthly processing limits.";
 
 				// We don't show a toast here because we either showed a proactive warning
 				// in addUploads, or the global axios interceptor will show a consolidated one.
