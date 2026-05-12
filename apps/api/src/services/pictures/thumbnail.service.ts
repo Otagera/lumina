@@ -1,4 +1,5 @@
 import Joi from "joi";
+import sharp from "sharp";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
 import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
@@ -76,7 +77,6 @@ const service = async (data: any) => {
 		imageBuffer = await Bun.file(imagePath).arrayBuffer();
 	}
 
-	const sharp = require("sharp");
 	let imageProcessor = sharp(Buffer.from(imageBuffer));
 
 	const metadata = await imageProcessor.metadata();
