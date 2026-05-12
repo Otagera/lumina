@@ -43,31 +43,63 @@ const service = async (data: any) => {
 				},
 			});
 
-			for (const img of imagesWithContext) {
-				if (img.users?.email) {
+			const approvalsPayload = imagesWithContext
+				.filter((img) => Boolean(img.users?.email && img.uploaded_by))
+				.map((img) => {
 					const albumName =
 						img.album_images[0]?.albums?.album_name || "a shared album";
 
-					await queueServices.emailQueueLib.addJob("email", {
-						worker: "email",
-						type: "photo_approved",
-						data: {
-							email: img.users.email,
-							albumName,
-						},
-					});
+					return {
+						email: img.users!.email,
+						userId: img.uploaded_by!,
+						imageId: img.image_id,
+						albumName,
+					};
+				});
 
-					// Add in-app notification
-					await prisma.notifications.create({
+			if (approvalsPayload.length > 0) {
+				const queueResult = await queueServices.emailQueueLib
+					.addJob("email", {
+						worker: "email",
+						type: "photo_approved_bulk",
 						data: {
-							user_id: img.uploaded_by!,
+							recipients: approvalsPayload.map((item) => ({
+								email: item.email,
+								albumName: item.albumName,
+								imageId: item.imageId,
+							})),
+						},
+					})
+					.then(() => ({ ok: true as const }))
+					.catch((error) => ({ ok: false as const, error }));
+
+				if (!queueResult.ok) {
+					console.error(
+						"Failed to enqueue bulk photo approval emails:",
+						queueResult.error,
+					);
+				}
+
+				const notificationResult = await prisma.notifications
+					.createMany({
+						data: approvalsPayload.map((item) => ({
+							user_id: item.userId,
 							type: "PHOTO_APPROVED",
 							metadata: {
-								imageId: img.image_id,
-								albumName,
+								imageId: item.imageId,
+								albumName: item.albumName,
 							},
-						},
-					});
+						})),
+						skipDuplicates: true,
+					})
+					.then(() => ({ ok: true as const }))
+					.catch((error) => ({ ok: false as const, error }));
+
+				if (!notificationResult.ok) {
+					console.error(
+						"Failed to create photo approval notifications:",
+						notificationResult.error,
+					);
 				}
 			}
 		} catch (error) {
