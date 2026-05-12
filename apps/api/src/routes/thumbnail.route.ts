@@ -17,7 +17,7 @@ export const thumbnailRoutes = new Elysia({ prefix: "/thumbnail" }).get(
 			return data.imageBuffer;
 		} catch (error: any) {
 			console.error("[Thumbnail] Error:", error.message, error.stack);
-			set.status = HTTP_STATUS_CODES.INTERNAL_ERROR;
+			set.status = HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 			return { status: "error", message: "Failed to generate thumbnail" };
 		}
 	},

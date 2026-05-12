@@ -56,7 +56,7 @@ export const uploadDirectLocalService = async (data: any) => {
 
 	if (!isAuthorized) {
 		const error = new Error("Unauthorized upload attempt") as Error & {
-			statusCode?: number;
+			statusCode: number;
 		};
 		error.statusCode = 401;
 		throw error;

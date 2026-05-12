@@ -55,7 +55,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -90,7 +90,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -121,7 +121,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -152,7 +152,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -183,7 +183,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 							data,
 						};
 					} catch (error: any) {
-						set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+						set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 						return {
 							status: "error",
 							message: error?.message || "Internal server error",
@@ -217,7 +217,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 						};
 					} catch (error: any) {
 						console.error("[SELFIE SEARCH] Error:", error.message);
-						set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+						set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 						return {
 							status: "error",
 							message: error?.message || "Internal server error",
@@ -246,7 +246,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 							data,
 						};
 					} catch (error: any) {
-						set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+						set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 						return {
 							status: "error",
 							message: error?.message || "Internal server error",
@@ -287,7 +287,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 							data,
 						};
 					} catch (error: any) {
-						set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+						set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 						return {
 							status: "error",
 							message: error?.message || "Internal server error",
@@ -317,7 +317,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",

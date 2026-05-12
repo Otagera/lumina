@@ -23,7 +23,7 @@ class OperationError extends Error {
 	field?: string;
 	action?: string;
 	value?: string;
-	statusCode?: number;
+	statusCode: number = HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
 	constructor(props: ErrorProps | string) {
 		super();

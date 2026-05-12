@@ -23,7 +23,7 @@ const notificationsRoutes = new Elysia({ prefix: "/notifications" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -54,7 +54,7 @@ const notificationsRoutes = new Elysia({ prefix: "/notifications" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",

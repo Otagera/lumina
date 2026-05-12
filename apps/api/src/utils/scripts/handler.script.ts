@@ -18,7 +18,7 @@ const handler = {
       });
     } catch (error) {
       return res
-        .status(error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST)
+        .status(error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR)
         .send({
           status: "error",
           message: error?.message || "Internal server error",

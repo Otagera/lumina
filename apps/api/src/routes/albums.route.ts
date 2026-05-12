@@ -8,7 +8,7 @@ import { fetchImagesInAlbumService } from "../services/albums/fetchImagesInAlbum
 import { generateInviteService } from "../services/albums/generateInvite.service.ts";
 import { joinAlbumService } from "../services/albums/joinAlbum.service.ts";
 import { removeAlbumService } from "../services/albums/removeAlbum.service.ts";
-import { removeImagesInAlbumService } from "../services/albums/removeImagesInAlbum.service.ts";
+import { updateImagesInAlbumStatusService } from "../services/albums/removeImagesInAlbum.service.ts";
 import { resendInviteService } from "../services/albums/resendInvite.service.ts";
 import { updateMemberRoleService } from "../services/albums/updateMemberRole.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
@@ -27,7 +27,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				data,
 			};
 		} catch (error: any) {
-			set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+			set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 			return {
 				status: "error",
 				message: error?.message || "Internal server error",
@@ -51,7 +51,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -81,7 +81,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -111,7 +111,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -149,7 +149,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -194,7 +194,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -216,7 +216,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				const albumId = params.albumId;
 				await checkAlbumPermissions(albumId, userId, ["ADMIN"]);
 
-				const data = await removeImagesInAlbumService({
+				const data = await updateImagesInAlbumStatusService({
 					...body,
 					albumId,
 					userId,
@@ -229,7 +229,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -262,7 +262,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -296,7 +296,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -333,7 +333,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -369,7 +369,7 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode || HTTP_STATUS_CODES.BAD_REQUEST;
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
