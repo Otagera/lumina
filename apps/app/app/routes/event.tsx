@@ -24,8 +24,10 @@ export default function EventPage() {
 	const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
 	const [selectedImage, setSelectedImage] = useState<any | null>(null);
 	const [isCameraOpen, setIsCameraOpen] = useState(false);
+	const [ctaVisible, setCtaVisible] = useState(false);
 	const queryClient = useQueryClient();
 	const [isOnline, setIsOnline] = useState(true);
+	const ctaImpressionSentRef = useRef(false);
 
 	useEffect(() => {
 		setIsOnline(window.navigator.onLine);
@@ -38,7 +40,6 @@ export default function EventPage() {
 			window.removeEventListener("offline", onOffline);
 		};
 	}, []);
-
 	useEffect(() => {
 		if (selectedImage) {
 			console.log("[Event] Image selected for preview:", selectedImage.imageId);
@@ -127,6 +128,51 @@ export default function EventPage() {
 	const highlightsQueryError = !isHighlightsLoading && !highlightsData;
 	const showOfflineFallback = !isOnline && (albumQueryError || highlightsQueryError);
 
+	const ctaMilestone = searchMutation.data
+		? images.length > 0
+			? "results"
+			: "search"
+		: "discover";
+	const ctaUrl = useMemo(() => {
+		if (!token) return "#";
+		const clientAppUrl =
+			import.meta.env.VITE_CLIENT_APP_URL || "http://localhost:3001";
+		const signup = new URL("/signup", clientAppUrl);
+		signup.searchParams.set("token", token);
+		signup.searchParams.set("referrer", `guest_event_${ctaMilestone}_cta`);
+		if (albumData?.id) signup.searchParams.set("albumId", albumData.id);
+		if (albumData?.albumName) signup.searchParams.set("albumName", albumData.albumName);
+		return signup.toString();
+	}, [albumData?.albumName, albumData?.id, ctaMilestone, token]);
+
+	useEffect(() => {
+		const shouldShowCta = !!searchMutation.data || isNoMatchesState;
+		if (shouldShowCta) {
+			const timer = window.setTimeout(() => setCtaVisible(true), 900);
+			return () => window.clearTimeout(timer);
+		}
+		setCtaVisible(false);
+		return undefined;
+	}, [searchMutation.data, isNoMatchesState]);
+
+	useEffect(() => {
+		ctaImpressionSentRef.current = false;
+	}, [ctaMilestone]);
+
+	useEffect(() => {
+		if (!ctaVisible || ctaImpressionSentRef.current) return;
+		window.dispatchEvent(
+			new CustomEvent("lumina:analytics", {
+				detail: {
+					event: "guest_host_cta_impression",
+					milestone: ctaMilestone,
+					token,
+					albumId: albumData?.id,
+				},
+			}),
+		);
+		ctaImpressionSentRef.current = true;
+	}, [albumData?.id, ctaMilestone, ctaVisible, token]);
 
 	// Combine live reactions with initial data
 	const mergedReactions = useMemo(() => {
@@ -315,6 +361,39 @@ export default function EventPage() {
 							</div>
 						)}
 					</section>
+
+					{ctaVisible && (
+						<section className="mx-2 rounded-[2rem] border border-sage/30 bg-gradient-to-br from-sage/15 to-plum/10 p-5 sm:p-6 text-left animate-in fade-in slide-in-from-bottom-2 duration-500">
+							<p className="text-[11px] uppercase tracking-widest font-black text-sage mb-2">
+								For Event Creators
+							</p>
+							<h4 className="text-lg sm:text-xl font-black tracking-tight text-zinc-900 dark:text-white">
+								Host your own event
+							</h4>
+							<p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300 max-w-md">
+								Create a branded AI face-match gallery in minutes and share it with your guests.
+							</p>
+							<a
+								href={ctaUrl}
+								className="mt-4 inline-flex w-full sm:w-auto items-center justify-center rounded-2xl bg-sage px-5 py-3 text-sm font-bold text-zinc-950 hover:bg-sage/90 transition-colors"
+								onClick={() => {
+									window.dispatchEvent(
+										new CustomEvent("lumina:analytics", {
+											detail: {
+												event: "guest_host_cta_click",
+												milestone: ctaMilestone,
+												token,
+												albumId: albumData?.id,
+												url: ctaUrl,
+											},
+										}),
+									);
+								}}
+							>
+								Host your own event
+							</a>
+						</section>
+					)}
 				</>
 			)}
 
