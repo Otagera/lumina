@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import prisma from "../../../../packages/config/src/db.config.ts";
@@ -140,6 +141,58 @@ describe("Public Access Routes (Native)", () => {
 			try {
 				await fs.unlink(path.join(uploadsDir, "guest-upload.jpg"));
 			} catch (e) {}
+		});
+
+		it("should block guest uploads when per-session threshold is exceeded", async () => {
+			const uploadsDir = path.resolve(process.cwd(), "src/uploads");
+			const guestSessionId = crypto.randomUUID();
+			const createdFiles: string[] = [];
+
+			for (let i = 0; i < 20; i++) {
+				const fileName = `guest-session-${i}.jpg`;
+				createdFiles.push(fileName);
+				await fs.copyFile(path.resolve(__dirname, "fixtures/test.jpg"), path.join(uploadsDir, fileName));
+				const okRes = await app.handle(
+					req.post(`/api/v1/public/albums/${testShareToken}/upload`, {
+						key: fileName,
+						guestSessionId,
+					}),
+				);
+				expect(okRes.status).toBe(HTTP_STATUS_CODES.CREATED);
+			}
+
+			const blockedFile = "guest-session-threshold.jpg";
+			createdFiles.push(blockedFile);
+			await fs.copyFile(path.resolve(__dirname, "fixtures/test.jpg"), path.join(uploadsDir, blockedFile));
+			const blockedRes = await app.handle(
+				req.post(`/api/v1/public/albums/${testShareToken}/upload`, {
+					key: blockedFile,
+					guestSessionId,
+				}),
+			);
+			const blockedBody = await parseRes(blockedRes);
+			expect(blockedRes.status).toBe(HTTP_STATUS_CODES.BADREQUEST);
+			expect(String(blockedBody.message || "")).toContain("session limit exceeded");
+
+			for (const fileName of createdFiles) {
+				await fs.unlink(path.join(uploadsDir, fileName)).catch(() => undefined);
+			}
+		});
+
+		it("should still allow host upload when guest anti-abuse gate is hit", async () => {
+			const res = await app.handle(
+				req.post(
+					"/api/v1/images",
+					{
+						uploadedImages: [{ existingKey: "public-test-image.jpg" }],
+						albumId: testAlbumId,
+					},
+					owner.authHeader,
+				),
+			);
+			const body = await parseRes(res);
+			expect(res.status).toBe(HTTP_STATUS_CODES.CREATED);
+			expect(body.data.images.length).toBeGreaterThan(0);
 		});
 	});
 });

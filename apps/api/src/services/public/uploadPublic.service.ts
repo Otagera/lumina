@@ -42,6 +42,62 @@ const aliasSpec = {
 	},
 };
 
+const GUEST_UPLOAD_QUOTA = {
+	sessionLimit: 20,
+	tokenLimit: 120,
+	windowMs: 60 * 60 * 1000,
+};
+
+const enforceGuestUploadQuota = async ({
+	albumId,
+	guestSessionId,
+	incomingCount,
+}: {
+	albumId: string;
+	guestSessionId?: string;
+	incomingCount: number;
+}) => {
+	const windowStart = new Date(Date.now() - GUEST_UPLOAD_QUOTA.windowMs);
+
+	const [albumWindowCount, sessionWindowCount] = await Promise.all([
+		prisma.album_images.count({
+			where: {
+				album_id: albumId,
+				images: {
+					guest_session_id: { not: null },
+					upload_date: { gte: windowStart },
+				},
+			},
+		}),
+		guestSessionId
+			? prisma.album_images.count({
+					where: {
+						album_id: albumId,
+						images: {
+							guest_session_id: guestSessionId,
+							upload_date: { gte: windowStart },
+						},
+					},
+			  })
+			: Promise.resolve(0),
+	]);
+
+	if (
+		guestSessionId &&
+		sessionWindowCount + incomingCount > GUEST_UPLOAD_QUOTA.sessionLimit
+	) {
+		throw new Error(
+			`Guest upload session limit exceeded: max ${GUEST_UPLOAD_QUOTA.sessionLimit} images per hour.`,
+		);
+	}
+
+	if (albumWindowCount + incomingCount > GUEST_UPLOAD_QUOTA.tokenLimit) {
+		throw new Error(
+			`Guest upload event limit exceeded: max ${GUEST_UPLOAD_QUOTA.tokenLimit} images per hour.`,
+		);
+	}
+};
+
 const service = async (data: any) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const params = validateSpec(spec, aliasReq);
@@ -255,10 +311,19 @@ const service = async (data: any) => {
 		}
 	}
 
-	// 4. Upload via service
 	const status = album.settings?.requires_approval ? "PENDING" : "APPROVED";
 	const newFiles = processedFiles.filter((f) => !f.isDuplicate);
 	const duplicateCount = processedFiles.filter((f) => f.isDuplicate).length;
+
+	if (newFiles.length > 0) {
+		await enforceGuestUploadQuota({
+			albumId: album.album_id,
+			guestSessionId: params.guest_session_id,
+			incomingCount: newFiles.length,
+		});
+	}
+
+	// 4. Upload via service
 
 	let uploadResult = { images: [] };
 	if (newFiles.length > 0) {
@@ -267,7 +332,7 @@ const service = async (data: any) => {
 			files: newFiles,
 			status,
 			guestSessionId: params.guest_session_id,
-			userId: album.created_by || undefined,
+			userId: undefined,
 		});
 	}
 
