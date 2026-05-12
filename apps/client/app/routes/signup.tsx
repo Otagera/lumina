@@ -1,11 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../utils/auth";
 
 const SignupPage = () => {
 	const navigate = useNavigate();
+	const [searchParams] = useSearchParams();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,6 +23,19 @@ const SignupPage = () => {
 	const mutation = useMutation({
 		mutationFn: signup,
 		onSuccess: () => {
+			const referrer = searchParams.get("referrer");
+			if (referrer?.startsWith("guest_event_")) {
+				window.dispatchEvent(
+					new CustomEvent("lumina:analytics", {
+						detail: {
+							event: "guest_host_cta_conversion",
+							referrer,
+							token: searchParams.get("token"),
+							albumId: searchParams.get("albumId"),
+						},
+					}),
+				);
+			}
 			localStorage.setItem("lumina:first-signup-guide", "show");
 			toast.success("Account created successfully!");
 			navigate("/home");

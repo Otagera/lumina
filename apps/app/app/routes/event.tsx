@@ -10,6 +10,7 @@ import {
 	Scan,
 	Sparkles,
 	Trophy,
+	WifiOff,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -51,8 +52,22 @@ export default function EventPage() {
 	const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
 	const [selectedImage, setSelectedImage] = useState<any | null>(null);
 	const [isCameraOpen, setIsCameraOpen] = useState(false);
+	const [ctaVisible, setCtaVisible] = useState(false);
 	const queryClient = useQueryClient();
+	const [isOnline, setIsOnline] = useState(true);
+	const ctaImpressionSentRef = useRef(false);
 
+	useEffect(() => {
+		setIsOnline(window.navigator.onLine);
+		const onOnline = () => setIsOnline(true);
+		const onOffline = () => setIsOnline(false);
+		window.addEventListener("online", onOnline);
+		window.addEventListener("offline", onOffline);
+		return () => {
+			window.removeEventListener("online", onOnline);
+			window.removeEventListener("offline", onOffline);
+		};
+	}, []);
 	useEffect(() => {
 		if (selectedImage) {
 			console.log("[Event] Image selected for preview:", selectedImage.imageId);
@@ -123,6 +138,55 @@ export default function EventPage() {
 	}, [searchMutation.data, highlightsData]);
 
 	const isNoMatchesState = !!searchMutation.data && images.length === 0;
+	const albumQueryError = !isAlbumLoading && !albumData;
+	const highlightsQueryError = !isHighlightsLoading && !highlightsData;
+	const showOfflineFallback = !isOnline && (albumQueryError || highlightsQueryError);
+
+	const ctaMilestone = searchMutation.data
+		? images.length > 0
+			? "results"
+			: "search"
+		: "discover";
+	const ctaUrl = useMemo(() => {
+		if (!token) return "#";
+		const clientAppUrl =
+			import.meta.env.VITE_CLIENT_APP_URL || "http://localhost:3001";
+		const signup = new URL("/signup", clientAppUrl);
+		signup.searchParams.set("token", token);
+		signup.searchParams.set("referrer", `guest_event_${ctaMilestone}_cta`);
+		if (albumData?.id) signup.searchParams.set("albumId", albumData.id);
+		if (albumData?.albumName) signup.searchParams.set("albumName", albumData.albumName);
+		return signup.toString();
+	}, [albumData?.albumName, albumData?.id, ctaMilestone, token]);
+
+	useEffect(() => {
+		const shouldShowCta = !!searchMutation.data || isNoMatchesState;
+		if (shouldShowCta) {
+			const timer = window.setTimeout(() => setCtaVisible(true), 900);
+			return () => window.clearTimeout(timer);
+		}
+		setCtaVisible(false);
+		return undefined;
+	}, [searchMutation.data, isNoMatchesState]);
+
+	useEffect(() => {
+		ctaImpressionSentRef.current = false;
+	}, [ctaMilestone]);
+
+	useEffect(() => {
+		if (!ctaVisible || ctaImpressionSentRef.current) return;
+		window.dispatchEvent(
+			new CustomEvent("lumina:analytics", {
+				detail: {
+					event: "guest_host_cta_impression",
+					milestone: ctaMilestone,
+					token,
+					albumId: albumData?.id,
+				},
+			}),
+		);
+		ctaImpressionSentRef.current = true;
+	}, [albumData?.id, ctaMilestone, ctaVisible, token]);
 
 	// Combine live reactions with initial data
 	const mergedReactions = useMemo(() => {
@@ -142,7 +206,19 @@ export default function EventPage() {
 
 	return (
 		<div className="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12 space-y-10 md:space-y-12">
-			{isAlbumLoading ? (
+			{showOfflineFallback ? (
+				<div className="mx-2 rounded-[2rem] border border-amber-300/50 bg-amber-50 p-6 text-center dark:border-amber-700/40 dark:bg-amber-950/30">
+					<WifiOff className="mx-auto mb-3 h-10 w-10 text-amber-600" />
+					<h2 className="text-xl font-bold">Connection is weak or offline</h2>
+					<p className="mx-auto mt-2 max-w-sm text-sm text-zinc-600 dark:text-zinc-300">
+						We could not refresh this event right now. Cached photos will appear when available, and we'll retry automatically once signal returns.
+					</p>
+					<Button className="mt-4" onClick={() => {
+						queryClient.invalidateQueries({ queryKey: ["album", token] });
+						queryClient.invalidateQueries({ queryKey: ["album-highlights", token] });
+					}}>Retry now</Button>
+				</div>
+			) : isAlbumLoading ? (
 				<div className="p-6 space-y-6">
 					<div className="h-8 w-48 bg-zinc-200 dark:bg-zinc-800 animate-pulse rounded-lg" />
 					<SkeletonImageGrid count={12} />
@@ -166,7 +242,7 @@ export default function EventPage() {
 
 					{/* Action Section */}
 					<div className="flex flex-col items-center justify-center space-y-6 px-4">
-						{!searchMutation.data ? (
+						{!selfiePreview ? (
 							<Button
 								size="lg"
 								className="w-full sm:w-auto h-16 sm:h-20 px-6 sm:px-10 rounded-[2rem] sm:rounded-[2.5rem] text-lg sm:text-xl shadow-2xl shadow-sage/30 hover:scale-105 transition-transform bg-sage hover:bg-sage/90 text-zinc-950 border-none"
@@ -224,7 +300,7 @@ export default function EventPage() {
 					<section className="space-y-8">
 						<div className="flex items-center justify-between gap-2 px-2">
 							<div className="flex items-center gap-3">
-								{!searchMutation.data ? (
+								{!selfiePreview ? (
 									<div className="p-2 bg-sage/10 rounded-xl">
 										<Trophy className="w-5 h-5 text-sage" />
 									</div>
@@ -234,17 +310,30 @@ export default function EventPage() {
 									</div>
 								)}
 								<h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight break-words">
-									{searchMutation.data ? "Photos of You" : "Event Highlights"}
+									{selfiePreview ? "Photos of You" : "Event Highlights"}
 								</h3>
 							</div>
 							<span className="hidden sm:inline-flex px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-full text-[10px] font-black text-zinc-400 uppercase tracking-widest shrink-0">
-								{searchMutation.data
-									? `${images.length} results`
-									: "Trending Now"}
+								{selfiePreview ? `${images.length} results` : "Trending Now"}
 							</span>
 						</div>
 
-						{searchMutation.isPending || isHighlightsLoading ? (
+						{searchMutation.isPending ? (
+							<div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-2">
+								{Array.from({ length: 8 }).map((_, idx) => (
+									<div
+										key={`result-slot-${idx}`}
+										className="aspect-[3/4] rounded-3xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 overflow-hidden"
+									>
+										<div className="h-3/4 bg-gradient-to-br from-zinc-200 dark:from-zinc-800 to-zinc-100 dark:to-zinc-900 animate-pulse" />
+										<div className="p-3 space-y-2">
+											<div className="h-3 w-3/4 rounded-full bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+											<div className="h-3 w-1/2 rounded-full bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+										</div>
+									</div>
+								))}
+							</div>
+						) : isHighlightsLoading ? (
 							<SkeletonImageGrid count={8} />
 						) : images.length > 0 ? (
 							<div className="px-2">
@@ -299,6 +388,39 @@ export default function EventPage() {
 							</div>
 						)}
 					</section>
+
+					{ctaVisible && (
+						<section className="mx-2 rounded-[2rem] border border-sage/30 bg-gradient-to-br from-sage/15 to-plum/10 p-5 sm:p-6 text-left animate-in fade-in slide-in-from-bottom-2 duration-500">
+							<p className="text-[11px] uppercase tracking-widest font-black text-sage mb-2">
+								For Event Creators
+							</p>
+							<h4 className="text-lg sm:text-xl font-black tracking-tight text-zinc-900 dark:text-white">
+								Host your own event
+							</h4>
+							<p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300 max-w-md">
+								Create a branded AI face-match gallery in minutes and share it with your guests.
+							</p>
+							<a
+								href={ctaUrl}
+								className="mt-4 inline-flex w-full sm:w-auto items-center justify-center rounded-2xl bg-sage px-5 py-3 text-sm font-bold text-zinc-950 hover:bg-sage/90 transition-colors"
+								onClick={() => {
+									window.dispatchEvent(
+										new CustomEvent("lumina:analytics", {
+											detail: {
+												event: "guest_host_cta_click",
+												milestone: ctaMilestone,
+												token,
+												albumId: albumData?.id,
+												url: ctaUrl,
+											},
+										}),
+									);
+								}}
+							>
+								Host your own event
+							</a>
+						</section>
+					)}
 				</>
 			)}
 

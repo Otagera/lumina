@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { AlertCircle, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
+import { InstallPrompt } from "~/components/InstallPrompt";
 import {
 	isRouteErrorResponse,
 	Link,
@@ -22,6 +23,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 			<head>
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				<link rel="manifest" href="/manifest.json" />
+				<meta name="theme-color" content="#09090b" />
 				<Meta />
 				<Links />
 			</head>
@@ -116,6 +119,7 @@ export default function Root() {
 				<main>
 					<Outlet />
 				</main>
+				<InstallPrompt />
 			</div>
 			<ReactQueryDevtools initialIsOpen={false} />
 		</QueryClientProvider>
