@@ -85,7 +85,7 @@ export const ImagePreviewModal = ({
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
 			<DialogContent
-				className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] md:w-[90vw] max-w-6xl h-[90vh] p-0 overflow-hidden bg-white dark:bg-zinc-950 border-none rounded-[2rem] z-[110] flex flex-col gap-0 outline-none shadow-2xl"
+				className="fixed inset-0 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full h-full md:w-[92vw] md:h-[92vh] md:max-w-6xl p-0 overflow-hidden bg-white dark:bg-zinc-950 border-none rounded-none md:rounded-[2rem] z-[300] flex flex-col gap-0 outline-none shadow-2xl"
 				showCloseButton={false}
 			>
 				<DialogTitle className="sr-only">Photo Preview</DialogTitle>
@@ -93,12 +93,12 @@ export const ImagePreviewModal = ({
 					Full screen view of the selected event photo
 				</DialogDescription>
 
-				<div className="flex-1 relative w-full flex flex-col min-h-0 bg-transparent">
+				<div className="relative w-full h-full grid grid-rows-[minmax(0,1fr)_auto] bg-transparent">
 					{/* Top Actions / Close Button Overlay */}
-					<div className="absolute top-4 right-4 md:top-6 md:right-6 z-50">
+					<div className="absolute top-3 right-3 md:top-6 md:right-6 z-50">
 						<button
 							onClick={onClose}
-							className="p-3 bg-zinc-100/80 dark:bg-white/10 hover:bg-zinc-200 dark:hover:bg-white/20 text-zinc-900 dark:text-white rounded-2xl backdrop-blur-xl border border-zinc-200 dark:border-white/10 transition-all active:scale-90 shadow-lg"
+							className="p-2.5 md:p-3 bg-zinc-100/90 dark:bg-white/10 hover:bg-zinc-200 dark:hover:bg-white/20 text-zinc-900 dark:text-white rounded-2xl backdrop-blur-xl border border-zinc-200 dark:border-white/10 transition-all active:scale-90 shadow-lg"
 							title="Close (Esc)"
 						>
 							<X size={24} />
@@ -106,16 +106,16 @@ export const ImagePreviewModal = ({
 					</div>
 
 					{/* Main Image Area - Flex 1 to fill available space */}
-					<div className="flex-1 relative w-full flex items-center justify-center bg-zinc-50/50 dark:bg-zinc-900/20 overflow-hidden min-h-0">
+					<div className="relative w-full min-h-0 flex items-center justify-center bg-zinc-50/50 dark:bg-zinc-900/20 overflow-hidden px-3 md:px-6 pt-14 md:pt-6 pb-3 md:pb-4">
 						{/* Navigation Controls - Positioned at far edges */}
-						<div className="absolute inset-x-0 top-0 bottom-0 pointer-events-none z-20 flex items-center justify-between px-4 md:px-8">
+						<div className="absolute inset-y-0 left-0 right-0 pointer-events-none z-20 flex items-center justify-between px-2 md:px-8">
 							{hasPrev ? (
 								<button
 									onClick={(e) => {
 										e.stopPropagation();
 										handlePrev();
 									}}
-									className="pointer-events-auto p-4 md:p-5 bg-white/90 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 text-zinc-900 dark:text-white rounded-3xl backdrop-blur-md border border-zinc-200 dark:border-white/10 transition-all active:scale-90 shadow-xl"
+									className="pointer-events-auto p-2.5 md:p-5 bg-white/90 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 text-zinc-900 dark:text-white rounded-2xl md:rounded-3xl backdrop-blur-md border border-zinc-200 dark:border-white/10 transition-all active:scale-90 shadow-xl"
 									aria-label="Previous image"
 								>
 									<ChevronLeft size={32} strokeWidth={2.5} />
@@ -130,7 +130,7 @@ export const ImagePreviewModal = ({
 										e.stopPropagation();
 										handleNext();
 									}}
-									className="pointer-events-auto p-4 md:p-5 bg-white/90 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 text-zinc-900 dark:text-white rounded-3xl backdrop-blur-md border border-zinc-200 dark:border-white/10 transition-all active:scale-90 shadow-xl"
+									className="pointer-events-auto p-2.5 md:p-5 bg-white/90 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 text-zinc-900 dark:text-white rounded-2xl md:rounded-3xl backdrop-blur-md border border-zinc-200 dark:border-white/10 transition-all active:scale-90 shadow-xl"
 									aria-label="Next image"
 								>
 									<ChevronRight size={32} strokeWidth={2.5} />
@@ -143,12 +143,15 @@ export const ImagePreviewModal = ({
 						<img
 							src={image.imagePath}
 							alt="Preview"
-							className="max-w-full max-h-full w-auto h-auto object-contain z-10 animate-in fade-in zoom-in-95 duration-500 select-none shadow-2xl"
+							className="block max-w-full max-h-full w-auto h-auto object-contain mx-auto my-auto z-10 animate-in fade-in zoom-in-95 duration-500 select-none shadow-2xl rounded-xl"
 						/>
 					</div>
 
 					{/* Bottom Actions Bar - Shrink 0 to keep constant height */}
-					<div className="p-6 md:p-8 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl border-t border-zinc-200 dark:border-white/5 flex flex-wrap items-center justify-between gap-4 shrink-0 z-30">
+					<div className="p-4 md:p-8 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl border-t border-zinc-200 dark:border-white/5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 md:gap-4 shrink-0 z-30">
+						<p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-400 font-semibold">
+							{currentIndex + 1} / {images.length}
+						</p>
 						<div className="flex items-center gap-4">
 							<Button
 								variant="outline"
@@ -173,7 +176,7 @@ export const ImagePreviewModal = ({
 							</Button>
 						</div>
 
-						<div className="flex items-center gap-3">
+						<div className="flex items-center justify-end gap-3">
 							<Button
 								variant="outline"
 								size="icon"
