@@ -79,7 +79,7 @@ function validateService(filePath: string): ValidationResult {
 	};
 }
 
-function validateRoute(filePath: string): ValidationResult {
+export function validateRoute(filePath: string): ValidationResult {
 	const content = readFileSync(filePath, "utf-8");
 	const errors: string[] = [];
 
@@ -105,25 +105,6 @@ function validateRoute(filePath: string): ValidationResult {
 	return {
 		file: filePath.replace(ROUTES_DIR, "routes/"),
 		valid: errors.filter((e) => !e.includes("lines")).length === 0, // Only fail on actual errors
-		errors,
-	};
-
-	// Check for business logic patterns (simple heuristic)
-	const businessLogicPatterns = [
-		"await prisma",
-		'from "../../../../packages/models',
-	];
-
-	const hasBusinessLogic = businessLogicPatterns.some((pattern) =>
-		content.includes(pattern),
-	);
-	if (hasBusinessLogic && !filePath.includes("middleware")) {
-		errors.push("Direct Prisma usage detected - should use services");
-	}
-
-	return {
-		file: filePath.replace(ROUTES_DIR, "routes/"),
-		valid: errors.length === 0,
 		errors,
 	};
 }
@@ -190,4 +171,6 @@ function main() {
 	}
 }
 
-main();
+if (import.meta.main) {
+	main();
+}
