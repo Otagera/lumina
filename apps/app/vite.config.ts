@@ -1,18 +1,48 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 const target = process.env.API_TARGET || "http://localhost:3005";
 
 export default defineConfig({
-	plugins: [react(), tailwindcss(), tsconfigPaths()],
+	plugins: [
+		react(),
+		tailwindcss(),
+		tsconfigPaths(),
+		VitePWA({
+			registerType: "autoUpdate",
+			includeAssets: ["icons/icon-192.svg", "icons/icon-512.svg"],
+			manifest: false,
+			workbox: {
+				globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+				runtimeCaching: [
+					{
+						urlPattern: /\/api\/public\/albums\/.*/,
+						handler: "NetworkFirst",
+						options: {
+							cacheName: "album-api-cache",
+							networkTimeoutSeconds: 3,
+							expiration: {
+								maxEntries: 40,
+								maxAgeSeconds: 60 * 60,
+							},
+							cacheableResponse: {
+								statuses: [0, 200],
+							},
+						},
+					},
+				],
+			},
+		}),
+	],
 	server: {
 		host: true,
 		port: 5174,
 		proxy: {
 			"/api": {
-				target: target,
+				target,
 				changeOrigin: true,
 				secure: false,
 			},

@@ -10,6 +10,7 @@ import {
 	Scan,
 	Sparkles,
 	Trophy,
+	WifiOff,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -24,6 +25,19 @@ export default function EventPage() {
 	const [selectedImage, setSelectedImage] = useState<any | null>(null);
 	const [isCameraOpen, setIsCameraOpen] = useState(false);
 	const queryClient = useQueryClient();
+	const [isOnline, setIsOnline] = useState(true);
+
+	useEffect(() => {
+		setIsOnline(window.navigator.onLine);
+		const onOnline = () => setIsOnline(true);
+		const onOffline = () => setIsOnline(false);
+		window.addEventListener("online", onOnline);
+		window.addEventListener("offline", onOffline);
+		return () => {
+			window.removeEventListener("online", onOnline);
+			window.removeEventListener("offline", onOffline);
+		};
+	}, []);
 
 	useEffect(() => {
 		if (selectedImage) {
@@ -109,6 +123,10 @@ export default function EventPage() {
 	}, [searchMutation.data, highlightsData]);
 
 	const isNoMatchesState = !!searchMutation.data && images.length === 0;
+	const albumQueryError = !isAlbumLoading && !albumData;
+	const highlightsQueryError = !isHighlightsLoading && !highlightsData;
+	const showOfflineFallback = !isOnline && (albumQueryError || highlightsQueryError);
+
 
 	// Combine live reactions with initial data
 	const mergedReactions = useMemo(() => {
@@ -128,7 +146,19 @@ export default function EventPage() {
 
 	return (
 		<div className="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12 space-y-10 md:space-y-12">
-			{isAlbumLoading ? (
+			{showOfflineFallback ? (
+				<div className="mx-2 rounded-[2rem] border border-amber-300/50 bg-amber-50 p-6 text-center dark:border-amber-700/40 dark:bg-amber-950/30">
+					<WifiOff className="mx-auto mb-3 h-10 w-10 text-amber-600" />
+					<h2 className="text-xl font-bold">Connection is weak or offline</h2>
+					<p className="mx-auto mt-2 max-w-sm text-sm text-zinc-600 dark:text-zinc-300">
+						We could not refresh this event right now. Cached photos will appear when available, and we'll retry automatically once signal returns.
+					</p>
+					<Button className="mt-4" onClick={() => {
+						queryClient.invalidateQueries({ queryKey: ["album", token] });
+						queryClient.invalidateQueries({ queryKey: ["album-highlights", token] });
+					}}>Retry now</Button>
+				</div>
+			) : isAlbumLoading ? (
 				<div className="p-6 space-y-6">
 					<div className="h-8 w-48 bg-zinc-200 dark:bg-zinc-800 animate-pulse rounded-lg" />
 					<SkeletonImageGrid count={12} />
