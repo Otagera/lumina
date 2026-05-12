@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import Webcam from "react-webcam";
 import { X, Camera, RefreshCw, Sparkles, Upload, Image as ImageIcon } from "lucide-react";
 import { Button } from "@lumina/ui/components/ui/button";
@@ -15,6 +15,13 @@ export const InAppCamera = ({ isOpen, onClose, onCapture }: InAppCameraProps) =>
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [isCapturing, setIsCapturing] = useState(false);
   const [mode, setMode] = useState<"camera" | "upload">("camera");
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && mode === "camera") {
+      setIsLoaded(false);
+    }
+  }, [isOpen, mode]);
 
   const toggleFacingMode = useCallback(() => {
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
@@ -22,10 +29,10 @@ export const InAppCamera = ({ isOpen, onClose, onCapture }: InAppCameraProps) =>
 
   const handleCapture = useCallback(() => {
     if (!webcamRef.current) return;
-    
+
     setIsCapturing(true);
     const imageSrc = webcamRef.current.getScreenshot();
-    
+
     if (imageSrc) {
       fetch(imageSrc)
         .then((res) => res.blob())
@@ -75,15 +82,33 @@ export const InAppCamera = ({ isOpen, onClose, onCapture }: InAppCameraProps) =>
                 screenshotFormat="image/jpeg"
                 videoConstraints={{
                   facingMode,
-                  width: { ideal: 1280 },
-                  height: { ideal: 720 },
+                  width: 1280,
+                  height: 720,
                 }}
-                className="w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover z-0"
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
                 mirrored={facingMode === "user"}
+                onUserMedia={() => setIsLoaded(true)}
+                onUserMediaError={() => setIsLoaded(false)}
               />
-              
+              {!isLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 z-20">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-sage border-t-transparent rounded-full animate-spin" />
+                    <span className="text-white/60 text-sm font-medium">Starting camera...</span>
+                  </div>
+                </div>
+              )}
+
               {/* Visual Guides */}
-              <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6">
+              <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6 z-30">
                 <div className="w-full max-w-[260px] aspect-[3/4] border-2 border-white/30 rounded-[4rem] bg-white/5 backdrop-blur-[1px]" />
                 <div className="mt-6 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-sage" />
@@ -93,29 +118,29 @@ export const InAppCamera = ({ isOpen, onClose, onCapture }: InAppCameraProps) =>
             </>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-6">
-               <div className="w-24 h-24 bg-sage/10 rounded-[2.5rem] flex items-center justify-center animate-in zoom-in duration-500">
-                  <ImageIcon className="w-10 h-10 text-sage" />
-               </div>
-               <div className="space-y-2">
-                 <h3 className="text-xl font-bold text-white">Upload from Gallery</h3>
-                 <p className="text-zinc-500 text-sm">Choose a clear photo of your face from your device.</p>
-               </div>
-               <Button 
+              <div className="w-24 h-24 bg-sage/10 rounded-[2.5rem] flex items-center justify-center animate-in zoom-in duration-500">
+                <ImageIcon className="w-10 h-10 text-sage" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-white">Upload from Gallery</h3>
+                <p className="text-zinc-500 text-sm">Choose a clear photo of your face from your device.</p>
+              </div>
+              <Button
                 onClick={() => fileInputRef.current?.click()}
-                size="lg" 
+                size="lg"
                 className="rounded-2xl px-8 h-14 bg-sage text-zinc-950 hover:bg-sage/90"
-               >
-                 Select Photo
-               </Button>
+              >
+                Select Photo
+              </Button>
             </div>
           )}
-          
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            accept="image/*" 
-            onChange={handleFileChange} 
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handleFileChange}
           />
         </div>
 
@@ -141,9 +166,9 @@ export const InAppCamera = ({ isOpen, onClose, onCapture }: InAppCameraProps) =>
                 <div className="w-12 h-12 rounded-full border-2 border-zinc-200" />
               </div>
               {isCapturing && (
-                 <div className="absolute inset-0 flex items-center justify-center">
-                    <RefreshCw className="w-8 h-8 text-sage animate-spin" />
-                 </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <RefreshCw className="w-8 h-8 text-sage animate-spin" />
+                </div>
               )}
             </button>
           ) : (
@@ -151,12 +176,12 @@ export const InAppCamera = ({ isOpen, onClose, onCapture }: InAppCameraProps) =>
           )}
 
           <button
-            onClick={mode === "camera" ? toggleFacingMode : onClose}
+            onClick={toggleFacingMode}
             className="p-4 bg-white/5 text-white rounded-2xl hover:bg-white/10 transition-all active:scale-90 flex flex-col items-center gap-1"
           >
-            {mode === "camera" ? <RefreshCw size={20} /> : <X size={20} />}
+            <RefreshCw size={20} />
             <span className="text-[10px] font-bold uppercase opacity-60">
-              {mode === "camera" ? "Flip" : "Cancel"}
+              Flip
             </span>
           </button>
         </div>

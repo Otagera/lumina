@@ -75,21 +75,29 @@ export const ImagePreviewModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-[95vw] md:max-w-5xl h-[90vh] p-0 overflow-hidden bg-black border-none rounded-[2rem] z-[9999] isolate">
+      <DialogContent className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-4xl h-auto max-h-[90vh] p-0 overflow-hidden bg-black border-none rounded-[2rem] z-[110]" showCloseButton={false}>
         <DialogTitle className="sr-only">Image Preview</DialogTitle>
         <DialogDescription className="sr-only">
           View and interact with the selected event photo.
         </DialogDescription>
-        
-        <div className="relative w-full h-full flex flex-col">
+
+        {/* Close Button - Fixed position outside content */}
+        <button
+          onClick={onClose}
+          className="absolute -top-12 right-0 z-50 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-sm transition-all active:scale-90"
+        >
+          <X size={20} />
+        </button>
+
+        <div className="relative w-full flex flex-col z-10">
           {/* Main Image */}
-          <div className="flex-1 relative flex items-center justify-center bg-zinc-950/50 backdrop-blur-3xl overflow-hidden">
+          <div className="relative w-full max-h-[60vh] flex items-center justify-center bg-zinc-950/50 backdrop-blur-3xl overflow-hidden">
             <img
               src={image.imagePath}
               alt="Preview"
-              className="max-w-full max-h-full object-contain z-10"
+              className="max-w-full max-h-[60vh] object-contain"
             />
-            
+
             {/* Navigation Controls */}
             {hasPrev && (
               <button
@@ -122,7 +130,7 @@ export const ImagePreviewModal = ({
                 onClick={handleReaction}
               >
                 <Heart size={20} className={cn("mr-2", (isReacting || reactionCount > 0) && "fill-current text-plum")} />
-                {reactionCount > 0 ? reactionCount : "Love this"}
+                {reactionCount > 0 ? reactionCount : ""}
               </Button>
             </div>
 
@@ -153,14 +161,6 @@ export const ImagePreviewModal = ({
               </Button>
             </div>
           </div>
-
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="absolute top-6 right-6 z-30 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md border border-white/10 transition-all"
-          >
-            <X size={20} />
-          </button>
         </div>
       </DialogContent>
     </Dialog>

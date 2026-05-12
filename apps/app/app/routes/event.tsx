@@ -59,8 +59,8 @@ export default function EventPage() {
       return res.data?.data;
     },
     onSuccess: (data) => {
-      if (data) {
-        toast.success(`Found ${data.length} photos of you!`);
+      if (data?.faces) {
+        toast.success(`Found ${data.faces.length} photos of you!`);
       }
     },
     onError: (error: any) => {
@@ -72,7 +72,7 @@ export default function EventPage() {
   // Reaction Mutation
   const reactMutation = useMutation({
     mutationFn: async (imageId: string) => {
-      const res = await api.v1.reactions.post({
+      const res = await api.reactions.post({
         imageId,
         type: "HEART",
       });
@@ -94,9 +94,9 @@ export default function EventPage() {
   };
 
   const images = useMemo(() => {
-    const searchResults = searchMutation.data || [];
+    const searchResults = searchMutation.data?.faces || [];
     const highlights = highlightsData || [];
-    return searchMutation.data ? searchResults : highlights;
+    return searchMutation.data?.faces ? searchResults : highlights;
   }, [searchMutation.data, highlightsData]);
   
   const isNoMatchesState = !!searchMutation.data && images.length === 0;
@@ -109,8 +109,8 @@ export default function EventPage() {
         base[img.imageId] = img.reactionCount || 0;
       });
     }
-    if (searchMutation.data) {
-      searchMutation.data.forEach((img: any) => {
+    if (searchMutation.data?.faces) {
+      searchMutation.data.faces.forEach((img: any) => {
         base[img.imageId] = img.reactionCount || 0;
       });
     }

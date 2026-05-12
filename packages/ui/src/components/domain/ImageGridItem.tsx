@@ -58,7 +58,6 @@ const ImageGridItem = ({
   };
 
   const handleContainerClick = (e: React.MouseEvent) => {
-    console.log("[GridItem] Container clicked", image.id);
     if (selectionMode && onToggleSelect) {
       onToggleSelect(image.id);
     } else if (onClick) {
@@ -101,81 +100,81 @@ const ImageGridItem = ({
 
       {/* Top Controls (Selection/Menu) */}
       <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-30">
-         <div
+        <div
+          className={cn(
+            "transition-all duration-300 transform",
+            selectionMode || isSelected
+              ? "opacity-100 scale-100"
+              : "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100"
+          )}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect?.(image.id);
+            }}
             className={cn(
-              "transition-all duration-300 transform",
-              selectionMode || isSelected
-                ? "opacity-100 scale-100"
-                : "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100"
+              "w-9 h-9 rounded-xl flex items-center justify-center transition-all border shadow-lg backdrop-blur-md active:scale-90",
+              isSelected
+                ? "bg-sage border-sage text-zinc-950"
+                : "bg-black/20 border-white/20 text-transparent hover:bg-white/40"
             )}
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+
+        {!shared && !selectionMode && onDelete && (
+          <div className="relative">
             <button
               type="button"
+              className="p-2 bg-black/20 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/40 shadow-lg backdrop-blur-md border border-white/10 active:scale-90"
               onClick={(e) => {
                 e.stopPropagation();
-                onToggleSelect?.(image.id);
+                setMenuOpen(!menuOpen);
               }}
-              className={cn(
-                "w-9 h-9 rounded-xl flex items-center justify-center transition-all border shadow-lg backdrop-blur-md active:scale-90",
-                isSelected
-                  ? "bg-sage border-sage text-zinc-950"
-                  : "bg-black/20 border-white/20 text-transparent hover:bg-white/40"
-              )}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
+              <MoreHorizontal size={18} />
             </button>
-          </div>
-
-          {!shared && !selectionMode && onDelete && (
-            <div className="relative">
-              <button
-                type="button"
-                className="p-2 bg-black/20 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/40 shadow-lg backdrop-blur-md border border-white/10 active:scale-90"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setMenuOpen(!menuOpen);
-                }}
+            {menuOpen && (
+              <div
+                className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 py-2 z-[100] animate-in fade-in slide-in-from-top-2"
+                onClick={(e) => e.stopPropagation()}
               >
-                <MoreHorizontal size={18} />
-              </button>
-              {menuOpen && (
-                <div
-                  className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 py-2 z-[100] animate-in fade-in slide-in-from-top-2"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {onSetCover && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onSetCover(image.id);
-                        setMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-full px-4 py-2 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2",
-                        isCover && "text-sage font-bold bg-sage/5"
-                      )}
-                    >
-                      <ImageIcon size={14} />
-                      {isCover ? "Remove Cover" : "Set as Cover"}
-                    </button>
-                  )}
+                {onSetCover && (
                   <button
                     type="button"
                     onClick={() => {
-                      onDelete(image.id);
+                      onSetCover(image.id);
                       setMenuOpen(false);
                     }}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                    className={cn(
+                      "w-full px-4 py-2 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2",
+                      isCover && "text-sage font-bold bg-sage/5"
+                    )}
                   >
-                    <Trash2 size={14} />
-                    Delete
+                    <ImageIcon size={14} />
+                    {isCover ? "Remove Cover" : "Set as Cover"}
                   </button>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    onDelete(image.id);
+                    setMenuOpen(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                >
+                  <Trash2 size={14} />
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Bottom Controls (Reactions) */}
@@ -189,23 +188,23 @@ const ImageGridItem = ({
               reactionCount > 0 ? "opacity-100" : "opacity-0 group-hover:opacity-100"
             )}
           >
-            <Heart 
-              size={16} 
+            <Heart
+              size={16}
               className={cn(
                 "transition-colors duration-300",
                 reactionCount > 0 ? "fill-plum text-plum" : "text-zinc-400 group-hover/heart:text-plum"
-              )} 
+              )}
             />
             {reactionCount > 0 && (
               <span className="text-xs font-black tracking-tight">{reactionCount}</span>
             )}
           </button>
         )}
-        
+
         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-           <button className="pointer-events-auto p-2 bg-white/90 dark:bg-zinc-900/90 text-zinc-600 dark:text-zinc-300 rounded-full shadow-xl border border-white/20 active:scale-90">
-             <Download size={16} />
-           </button>
+          <button className="pointer-events-auto p-2 bg-white/90 dark:bg-zinc-900/90 text-zinc-600 dark:text-zinc-300 rounded-full shadow-xl border border-white/20 active:scale-90">
+            <Download size={16} />
+          </button>
         </div>
       </div>
 
