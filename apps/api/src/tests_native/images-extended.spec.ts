@@ -56,7 +56,29 @@ describe("Images Extended Routes (Native)", () => {
 	});
 
 	describe("POST /api/v1/images/presigned-url", () => {
-		it("should generate presigned URL for upload", async () => {
+		it("should retain supplied key", async () => {
+			const suppliedKey = "custom-key-new-image.jpg";
+			const res = await app.handle(
+				req.post(
+					"/api/v1/images/presigned-url",
+					{
+						albumId: testAlbumId,
+						fileName: "new-image.jpg",
+						contentType: "image/jpeg",
+						key: suppliedKey,
+					},
+					{ Cookie: user.cookie },
+				),
+			);
+			const body = await parseRes(res);
+
+			expect(res.status).toBe(HTTP_STATUS_CODES.OK);
+			expect(body.status).toBe("completed");
+			expect(body.data.uploadUrl).toBeDefined();
+			expect(body.data.key).toBe(suppliedKey);
+		});
+
+		it("should generate key when omitted", async () => {
 			const res = await app.handle(
 				req.post(
 					"/api/v1/images/presigned-url",
@@ -74,6 +96,7 @@ describe("Images Extended Routes (Native)", () => {
 			expect(body.status).toBe("completed");
 			expect(body.data.uploadUrl).toBeDefined();
 			expect(body.data.key).toBeDefined();
+			expect(body.data.key).toContain("-new-image.jpg");
 		});
 	});
 
