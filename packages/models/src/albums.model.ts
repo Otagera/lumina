@@ -302,6 +302,10 @@ const deleteAlbumsByIds = async (albumIds) => {
 };
 
 const deleteAlbumsByUserId = async (userId) => {
+	// Intentionally prefetch deletion scope before opening a transaction.
+	// These reads are used for side-effects (queue jobs/filesystem cleanup) that
+	// must run after a successful commit.
+
 	// Find all albums created by the user
 	const albumsToDelete = await prisma.albums.findMany({
 		where: {
