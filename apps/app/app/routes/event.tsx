@@ -228,7 +228,7 @@ export default function EventPage() {
 
 					{/* Action Section */}
 					<div className="flex flex-col items-center justify-center space-y-6 px-4">
-						{!searchMutation.data ? (
+						{!selfiePreview ? (
 							<Button
 								size="lg"
 								className="w-full sm:w-auto h-16 sm:h-20 px-6 sm:px-10 rounded-[2rem] sm:rounded-[2.5rem] text-lg sm:text-xl shadow-2xl shadow-sage/30 hover:scale-105 transition-transform bg-sage hover:bg-sage/90 text-zinc-950 border-none"
@@ -286,7 +286,7 @@ export default function EventPage() {
 					<section className="space-y-8">
 						<div className="flex items-center justify-between gap-2 px-2">
 							<div className="flex items-center gap-3">
-								{!searchMutation.data ? (
+								{!selfiePreview ? (
 									<div className="p-2 bg-sage/10 rounded-xl">
 										<Trophy className="w-5 h-5 text-sage" />
 									</div>
@@ -296,17 +296,30 @@ export default function EventPage() {
 									</div>
 								)}
 								<h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight break-words">
-									{searchMutation.data ? "Photos of You" : "Event Highlights"}
+									{selfiePreview ? "Photos of You" : "Event Highlights"}
 								</h3>
 							</div>
 							<span className="hidden sm:inline-flex px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-full text-[10px] font-black text-zinc-400 uppercase tracking-widest shrink-0">
-								{searchMutation.data
-									? `${images.length} results`
-									: "Trending Now"}
+								{selfiePreview ? `${images.length} results` : "Trending Now"}
 							</span>
 						</div>
 
-						{searchMutation.isPending || isHighlightsLoading ? (
+						{searchMutation.isPending ? (
+							<div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-2">
+								{Array.from({ length: 8 }).map((_, idx) => (
+									<div
+										key={`result-slot-${idx}`}
+										className="aspect-[3/4] rounded-3xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 overflow-hidden"
+									>
+										<div className="h-3/4 bg-gradient-to-br from-zinc-200 dark:from-zinc-800 to-zinc-100 dark:to-zinc-900 animate-pulse" />
+										<div className="p-3 space-y-2">
+											<div className="h-3 w-3/4 rounded-full bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+											<div className="h-3 w-1/2 rounded-full bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+										</div>
+									</div>
+								))}
+							</div>
+						) : isHighlightsLoading ? (
 							<SkeletonImageGrid count={8} />
 						) : images.length > 0 ? (
 							<div className="px-2">
