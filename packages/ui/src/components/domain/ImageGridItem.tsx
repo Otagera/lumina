@@ -78,7 +78,7 @@ const ImageGridItem = ({
 	return (
 		<div
 			className={cn(
-				"relative group overflow-hidden rounded-[1.5rem] bg-zinc-100 dark:bg-zinc-800 transition-all duration-500 shadow-sm hover:shadow-xl isolate cursor-zoom-in",
+				"relative group overflow-hidden rounded-[1.5rem] bg-zinc-100 dark:bg-zinc-800 transition-all duration-500 shadow-sm hover:shadow-xl isolate cursor-zoom-in w-full h-full",
 				containerClassName,
 				isSelected &&
 					"ring-4 ring-sage ring-offset-4 dark:ring-offset-zinc-950 scale-[0.98]",
@@ -204,7 +204,7 @@ const ImageGridItem = ({
 						onClick={handleReactionClick}
 						className={cn(
 							"pointer-events-auto flex items-center gap-2 px-3 py-1.5 bg-white/90 dark:bg-zinc-900/90 text-zinc-900 dark:text-white rounded-full transition-all duration-300 shadow-xl border border-white/40 dark:border-white/20 active:scale-95 group/heart",
-							reactionCount > 0 && "text-plum",
+							reactionCount > 0 && "text-rose-500",
 						)}
 					>
 						<Heart
@@ -212,8 +212,8 @@ const ImageGridItem = ({
 							className={cn(
 								"transition-colors duration-300",
 								reactionCount > 0
-									? "fill-plum text-plum"
-									: "text-zinc-400 group-hover/heart:text-plum",
+									? "fill-rose-500 text-rose-500"
+									: "text-zinc-400 group-hover/heart:text-rose-500",
 							)}
 						/>
 						{reactionCount > 0 && (

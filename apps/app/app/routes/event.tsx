@@ -1,5 +1,11 @@
+import {
+	createPublicEventClient,
+	eventAlbumKeys,
+	useEventAlbum,
+	useEventAlbumHighlights,
+	useSelfieSearch,
+} from "@lumina/event-sdk";
 import { ImageGrid } from "@lumina/ui/components/domain/ImageGrid";
-import { ImagePreviewModal } from "@lumina/ui/components/domain/ImagePreviewModal";
 import { SkeletonImageGrid } from "@lumina/ui/components/domain/Skeleton";
 import { Button } from "@lumina/ui/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,18 +20,11 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useParams } from "react-router-dom";
+import { useParams } from "wouter";
+import { GuestImageModal } from "~/components/GuestImageModal";
 import { InAppCamera } from "~/components/InAppCamera";
 import { useLiveAlbum } from "~/hooks/useLiveAlbum";
-import {
-	createPublicEventClient,
-	eventAlbumKeys,
-	useEventAlbum,
-	useEventAlbumHighlights,
-	useSelfieSearch,
-} from "@lumina/event-sdk";
 import { api } from "~/utils/eden";
-
 
 const publicEventClient = createPublicEventClient({
 	getAlbum: async (token: string) => {
@@ -48,7 +47,7 @@ const publicEventClient = createPublicEventClient({
 });
 
 export default function EventPage() {
-	const { token } = useParams<{ token: string }>();
+	const { token } = useParams();
 	const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
 	const [selectedImage, setSelectedImage] = useState<any | null>(null);
 	const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -76,7 +75,7 @@ export default function EventPage() {
 
 	// Fetch Album Details
 	const { data: albumData, isLoading: isAlbumLoading } = useEventAlbum({
-		token,
+		token: token!,
 		client: publicEventClient,
 	});
 
@@ -86,13 +85,13 @@ export default function EventPage() {
 	// Fetch Highlights (Trending)
 	const { data: highlightsData, isLoading: isHighlightsLoading } =
 		useEventAlbumHighlights({
-			token,
+			token: token!,
 			client: publicEventClient,
 		});
 
-		// Selfie Search Mutation
+	// Selfie Search Mutation
 	const searchMutation = useSelfieSearch({
-		token,
+		token: token!,
 		client: publicEventClient,
 		onSuccess: (data) => {
 			if (data?.faces) {
@@ -105,7 +104,7 @@ export default function EventPage() {
 		},
 	});
 
-// Reaction Mutation
+	// Reaction Mutation
 	const reactMutation = useMutation({
 		mutationFn: async (imageId: string) => {
 			const res = await api.reactions.post({
@@ -140,7 +139,8 @@ export default function EventPage() {
 	const isNoMatchesState = !!searchMutation.data && images.length === 0;
 	const albumQueryError = !isAlbumLoading && !albumData;
 	const highlightsQueryError = !isHighlightsLoading && !highlightsData;
-	const showOfflineFallback = !isOnline && (albumQueryError || highlightsQueryError);
+	const showOfflineFallback =
+		!isOnline && (albumQueryError || highlightsQueryError);
 
 	const ctaMilestone = searchMutation.data
 		? images.length > 0
@@ -155,7 +155,8 @@ export default function EventPage() {
 		signup.searchParams.set("token", token);
 		signup.searchParams.set("referrer", `guest_event_${ctaMilestone}_cta`);
 		if (albumData?.id) signup.searchParams.set("albumId", albumData.id);
-		if (albumData?.albumName) signup.searchParams.set("albumName", albumData.albumName);
+		if (albumData?.albumName)
+			signup.searchParams.set("albumName", albumData.albumName);
 		return signup.toString();
 	}, [albumData?.albumName, albumData?.id, ctaMilestone, token]);
 
@@ -211,12 +212,20 @@ export default function EventPage() {
 					<WifiOff className="mx-auto mb-3 h-10 w-10 text-amber-600" />
 					<h2 className="text-xl font-bold">Connection is weak or offline</h2>
 					<p className="mx-auto mt-2 max-w-sm text-sm text-zinc-600 dark:text-zinc-300">
-						We could not refresh this event right now. Cached photos will appear when available, and we'll retry automatically once signal returns.
+						We could not refresh this event right now. Cached photos will appear
+						when available, and we'll retry automatically once signal returns.
 					</p>
-					<Button className="mt-4" onClick={() => {
-						queryClient.invalidateQueries({ queryKey: ["album", token] });
-						queryClient.invalidateQueries({ queryKey: ["album-highlights", token] });
-					}}>Retry now</Button>
+					<Button
+						className="mt-4"
+						onClick={() => {
+							queryClient.invalidateQueries({ queryKey: ["album", token] });
+							queryClient.invalidateQueries({
+								queryKey: ["album-highlights", token],
+							});
+						}}
+					>
+						Retry now
+					</Button>
 				</div>
 			) : isAlbumLoading ? (
 				<div className="p-6 space-y-6">
@@ -244,7 +253,7 @@ export default function EventPage() {
 					<div className="flex flex-col items-center justify-center space-y-6 px-4">
 						{!selfiePreview ? (
 							<Button
-								size="lg"
+								size="md"
 								className="w-full sm:w-auto h-16 sm:h-20 px-6 sm:px-10 rounded-[2rem] sm:rounded-[2.5rem] text-lg sm:text-xl shadow-2xl shadow-sage/30 hover:scale-105 transition-transform bg-sage hover:bg-sage/90 text-zinc-950 border-none"
 								onClick={() => setIsCameraOpen(true)}
 								disabled={searchMutation.isPending}
@@ -305,8 +314,8 @@ export default function EventPage() {
 										<Trophy className="w-5 h-5 text-sage" />
 									</div>
 								) : (
-									<div className="p-2 bg-plum/10 rounded-xl">
-										<Heart className="w-5 h-5 text-plum" />
+									<div className="p-2 bg-rose-500/10 rounded-xl">
+										<Heart className="w-5 h-5 text-rose-500" />
 									</div>
 								)}
 								<h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight break-words">
@@ -398,7 +407,8 @@ export default function EventPage() {
 								Host your own event
 							</h4>
 							<p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300 max-w-md">
-								Create a branded AI face-match gallery in minutes and share it with your guests.
+								Create a branded AI face-match gallery in minutes and share it
+								with your guests.
 							</p>
 							<a
 								href={ctaUrl}
@@ -432,7 +442,7 @@ export default function EventPage() {
 						LUMINA
 					</span>{" "}
 					• Shared with{" "}
-					<Heart className="w-3 h-3 text-plum fill-plum animate-pulse" />
+					<Heart className="w-3 h-3 text-rose-500 fill-rose-500 animate-pulse" />
 				</p>
 			</footer>
 
@@ -444,16 +454,12 @@ export default function EventPage() {
 			/>
 
 			{/* Image Preview */}
-			<ImagePreviewModal
-				image={selectedImage}
+			<GuestImageModal
+				initialImage={selectedImage}
 				images={images}
-				isOpen={!!selectedImage}
 				onClose={() => setSelectedImage(null)}
-				onNavigate={(img) => setSelectedImage(img)}
 				onReaction={(id) => reactMutation.mutate(id)}
-				reactionCount={
-					selectedImage ? mergedReactions[selectedImage.imageId] : 0
-				}
+				reactions={mergedReactions}
 			/>
 		</div>
 	);

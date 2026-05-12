@@ -30,8 +30,8 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
 
 	return (
 		<>
-			<div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[70] animate-in fade-in slide-in-from-bottom-8 duration-500 w-max max-w-[95vw]">
-				<div className="bg-zinc-950/90 backdrop-blur-2xl border border-zinc-800/50 px-6 sm:px-8 py-4 rounded-[2.5rem] shadow-2xl flex items-center space-x-6 sm:space-x-8 overflow-x-auto no-scrollbar">
+			<div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[70] animate-in fade-in slide-in-from-bottom-8 duration-500 w-[calc(100%-2rem)] sm:w-max max-w-[95vw]">
+				<div className="bg-zinc-950/90 backdrop-blur-2xl border border-zinc-800/50 px-4 sm:px-8 py-3 sm:py-4 rounded-3xl sm:rounded-[2.5rem] shadow-2xl flex items-center space-x-4 sm:space-x-8 overflow-x-auto no-scrollbar">
 					<div className="flex items-center space-x-4 pr-6 sm:pr-8 border-r border-zinc-800/50">
 						<button
 							type="button"

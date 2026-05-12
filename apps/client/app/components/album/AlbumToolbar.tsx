@@ -18,9 +18,9 @@ export function AlbumToolbar({
 	showDuplicates = false,
 }: AlbumToolbarProps) {
 	return (
-		<div className="flex items-center justify-between gap-4 mb-6">
+		<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 w-full">
 			{(showModeration || showDuplicates) && (
-				<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner">
+				<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl sm:p-1.5 sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner overflow-x-auto no-scrollbar w-full sm:w-auto">
 					<button
 						type="button"
 						onClick={() => onViewChange("gallery")}
@@ -77,7 +77,9 @@ export function AlbumToolbar({
 						className="h-5 w-5"
 						viewBox="0 0 20 20"
 						fill="currentColor"
+						aria-labelledby="grid-view-title"
 					>
+						<title id="grid-view-title">Grid view</title>
 						<path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
 					</svg>
 				</button>
@@ -96,7 +98,9 @@ export function AlbumToolbar({
 						className="h-5 w-5"
 						viewBox="0 0 20 20"
 						fill="currentColor"
+						aria-labelledby="list-view-title"
 					>
+						<title id="list-view-title">List view</title>
 						<path
 							fillRule="evenodd"
 							d="M3 4a1 1 0 011-1h14a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h14a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h14a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h14a1 1 0 110 2H4a1 1 0 01-1-1z"

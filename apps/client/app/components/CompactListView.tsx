@@ -26,8 +26,8 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 }) => {
 	const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 	return (
-		<div className="w-full bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
-			<table className="w-full text-left border-collapse">
+		<div className="w-full bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 overflow-x-auto shadow-sm no-scrollbar">
+			<table className="w-full text-left border-collapse min-w-[600px]">
 				<thead>
 					<tr className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800">
 						<th className="p-4 w-12 text-center">

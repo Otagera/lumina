@@ -5,23 +5,25 @@ export interface LivePayload {
 	data: any;
 }
 
+/**
+ * useLiveAlbum hook now uses Server-Sent Events (SSE) to listen for reactions.
+ * This unifies the real-time delivery mechanism across the monorepo.
+ */
 export const useLiveAlbum = (albumId?: string) => {
 	const [reactions, setReactions] = useState<Record<string, number>>({});
 
 	useEffect(() => {
 		if (!albumId) return;
 
-		// Use relative path for proxy
-		const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-		const host = window.location.host;
-		const wsUrl = `${protocol}//${host}/api/ws?albumId=${albumId}`;
+		// Connect to the unified SSE endpoint
+		const eventSource = new EventSource("/api/v1/events");
 
-		const ws = new WebSocket(wsUrl);
-
-		ws.onmessage = (event) => {
+		eventSource.onmessage = (event) => {
 			try {
 				const payload: LivePayload = JSON.parse(event.data);
-				if (payload.type === "REACTION_ADDED") {
+				
+				// Only update if the reaction belongs to the current album
+				if (payload.type === "REACTION_ADDED" && payload.data.albumId === albumId) {
 					const { imageId, count } = payload.data;
 					setReactions((prev) => ({
 						...prev,
@@ -29,20 +31,17 @@ export const useLiveAlbum = (albumId?: string) => {
 					}));
 				}
 			} catch (err) {
-				console.error("WS parse error:", err);
+				console.error("[SSE] Parse error:", err);
 			}
 		};
 
-		ws.onopen = () => {
-			console.log(`[WS] Connected to album:${albumId}`);
-		};
-
-		ws.onclose = () => {
-			console.log(`[WS] Disconnected from album:${albumId}`);
+		eventSource.onerror = (err) => {
+			console.error("[SSE] Connection error:", err);
+			eventSource.close();
 		};
 
 		return () => {
-			ws.close();
+			eventSource.close();
 		};
 	}, [albumId]);
 

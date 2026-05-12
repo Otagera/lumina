@@ -1,10 +1,10 @@
 import { Button } from "@lumina/ui/components/ui/button";
 import { Camera, Link as LinkIcon, QrCode, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 
 export default function Home() {
-	const navigate = useNavigate();
+	const [, setLocation] = useLocation();
 	const [eventLink, setEventLink] = useState("");
 
 	const handleContinue = () => {
@@ -20,7 +20,7 @@ export default function Home() {
 			const token = pathToken || value.replace(/^\/?e\//, "");
 
 			if (token) {
-				navigate(`/e/${token.trim()}`);
+				setLocation(`/e/${token.trim()}`);
 			}
 		} catch {
 			// No-op: keep user on page with current input

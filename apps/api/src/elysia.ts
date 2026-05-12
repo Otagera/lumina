@@ -171,12 +171,14 @@ export const createElysiaApp = async () => {
 							eventEmitter.on(EVENTS.FACE_DETECTED, handler);
 							eventEmitter.on(EVENTS.FACE_CLUSTERED, handler);
 							eventEmitter.on(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
+							eventEmitter.on(EVENTS.REACTION_ADDED, handler);
 
 							const cleanup = () => {
 								eventEmitter.off(EVENTS.IMAGE_PROCESSED, handler);
 								eventEmitter.off(EVENTS.FACE_DETECTED, handler);
 								eventEmitter.off(EVENTS.FACE_CLUSTERED, handler);
 								eventEmitter.off(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
+								eventEmitter.off(EVENTS.REACTION_ADDED, handler);
 								try {
 									controller.close();
 								} catch (_e) {}
@@ -218,27 +220,7 @@ export const createElysiaApp = async () => {
 				.use(reactionsRoutes),
 		)
 
-		.use(swagger())
-		.ws("/ws", {
-			open(ws) {
-				const albumId = ws.data.query.albumId;
-				if (albumId) {
-					ws.subscribe(`album:${albumId}`);
-					logger.info(`[WS] Client subscribed to album:${albumId}`);
-				}
-			},
-			message(ws, message: any) {
-				if (message.type === "REACTION") {
-					const albumId = ws.data.query.albumId;
-					if (albumId) {
-						ws.publish(`album:${albumId}`, {
-							type: "REACTION_ADDED",
-							data: message.data,
-						});
-					}
-				}
-			},
-		});
+		.use(swagger());
 
 	if (config.env !== "test") {
 		const serverAdapter: any = new ElysiaAdapter("/worker/admin");
@@ -261,18 +243,6 @@ export const createElysiaApp = async () => {
 	}
 
 	eventEmitter.setMaxListeners(100);
-
-	eventEmitter.on(EVENTS.REACTION_ADDED, (payload) => {
-		if (payload.albumId) {
-			app.server?.publish(`album:${payload.albumId}`, {
-				type: "REACTION_ADDED",
-				data: payload,
-			});
-		} else {
-			// If no specific albumId, maybe broadcast to a global channel or find which album the image belongs to
-			// For now, let's assume we always want albumId for scoped updates
-		}
-	});
 
 	return app;
 };

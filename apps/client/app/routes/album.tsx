@@ -400,12 +400,12 @@ const AlbumPage = () => {
 								</p>
 							</div>
 						) : displayMode === "grid" ? (
-							<div className="space-y-6">
+							<div className="space-y-6 w-full min-w-0">
 								{view === "gallery" && dateSections.length > 0 ? (
 									dateSections.map((section) => {
 										const isCollapsed = collapsedSections.has(section.key);
 										return (
-											<div key={section.key} className="space-y-2">
+											<div key={section.key} className="space-y-2 w-full min-w-0">
 												<button
 													type="button"
 													onClick={() => toggleSection(section.key)}
@@ -426,13 +426,13 @@ const AlbumPage = () => {
 													</span>
 												</button>
 												<div
-													className={`overflow-hidden transition-all duration-300 ease-out ${
+													className={`overflow-hidden transition-all duration-300 ease-out w-full ${
 														isCollapsed
 															? "max-h-0 opacity-0"
 															: "max-h-[5000px] opacity-100"
 													}`}
 												>
-													<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5 sm:gap-1 auto-rows-[150px] sm:auto-rows-[200px]">
+													<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5 sm:gap-1 auto-rows-[150px] sm:auto-rows-[200px] w-full min-w-0">
 														{section.images.map((image, idx) => {
 															const width = image.originalSize?.width || 0;
 															const height = image.originalSize?.height || 0;
@@ -481,7 +481,7 @@ const AlbumPage = () => {
 										);
 									})
 								) : (
-									<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5 sm:gap-1 auto-rows-[150px] sm:auto-rows-[200px]">
+									<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5 sm:gap-1 auto-rows-[150px] sm:auto-rows-[200px] w-full min-w-0">
 										{images.map((image, index) => {
 											const width = image.originalSize?.width || 0;
 											const height = image.originalSize?.height || 0;
@@ -565,15 +565,17 @@ const AlbumPage = () => {
 				)}
 			</div>
 
-			<ImageModal
-				image={selectedImage}
-				images={images}
-				albumId={albumId}
-				onClose={() => setSelectedImage(null)}
-				onDelete={handleDeleteImage}
-				onNavigate={(img) => setSelectedImage(img)}
-				onModerate={(status) => handleModerateAction(status)}
-			/>
+			{selectedImage && (
+				<ImageModal
+					image={selectedImage}
+					images={images}
+					albumId={albumId}
+					onClose={() => setSelectedImage(null)}
+					onDelete={handleDeleteImage}
+					onNavigate={(img) => setSelectedImage(img)}
+					onModerate={(status) => handleModerateAction(status)}
+				/>
+			)}
 
 			<RejectReasonModal
 				isOpen={rejectModal.isOpen}

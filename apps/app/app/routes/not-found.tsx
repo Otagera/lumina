@@ -1,9 +1,9 @@
 import { Button } from "@lumina/ui/components/ui/button";
 import { ArrowLeft, Home, Search } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "wouter";
 
 export default function NotFound() {
-	const navigate = useNavigate();
+	const [, setLocation] = useLocation();
 
 	return (
 		<div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-6 antialiased font-sans overflow-hidden">
@@ -32,7 +32,7 @@ export default function NotFound() {
 
 				<div className="flex flex-col gap-4">
 					<Button
-						onClick={() => navigate(-1)}
+						onClick={() => window.history.back()}
 						variant="outline"
 						size="lg"
 						className="w-full rounded-2xl h-14 font-bold border-2"
@@ -40,7 +40,7 @@ export default function NotFound() {
 						<ArrowLeft className="w-5 h-5 mr-2" />
 						Go Back
 					</Button>
-					<Link to="/" className="w-full">
+					<Link href="/" className="w-full">
 						<Button
 							size="lg"
 							className="w-full rounded-2xl h-14 font-bold bg-sage text-zinc-950 hover:bg-sage/90 border-none shadow-xl shadow-sage/20"

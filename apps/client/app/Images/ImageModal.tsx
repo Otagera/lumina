@@ -229,6 +229,8 @@ const ImageModal = ({
 		}
 	};
 
+	if (!image) return null;
+
 	const imageId = image.imageId || image.id;
 
 	return (
@@ -237,7 +239,7 @@ const ImageModal = ({
 			onClick={onClose}
 		>
 			<div
-				className="relative w-full h-full flex flex-col items-center justify-center max-w-[1400px] mx-auto"
+				className="relative w-full h-full flex flex-col items-center justify-center max-w-[1400px] mx-auto overflow-hidden"
 				onClick={(e) => e.stopPropagation()}
 			>
 				{/* Top Bar Actions */}

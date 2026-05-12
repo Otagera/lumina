@@ -1,84 +1,25 @@
-import { Button } from "@lumina/ui/components/ui/button";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { AlertCircle, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { InstallPrompt } from "~/components/InstallPrompt";
-import {
-	isRouteErrorResponse,
-	Link,
-	Links,
-	Meta,
-	Outlet,
-	Scripts,
-	ScrollRestoration,
-	useRouteError,
-} from "react-router";
+import { Route, Switch } from "wouter";
+import EventPage from "./routes/event";
+import Home from "./routes/home";
+import NotFound from "./routes/not-found";
 
 import "./index.css";
 
-export function Layout({ children }: { children: React.ReactNode }) {
-	return (
-		<html lang="en">
-			<head>
-				<meta charSet="utf-8" />
-				<meta name="viewport" content="width=device-width, initial-scale=1" />
-				<link rel="manifest" href="/manifest.json" />
-				<meta name="theme-color" content="#09090b" />
-				<Meta />
-				<Links />
-			</head>
-			<body className="antialiased font-sans transition-colors duration-300">
-				{children}
-				<ScrollRestoration />
-				<Scripts />
-			</body>
-		</html>
-	);
-}
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			staleTime: 60 * 1000,
+		},
+	},
+});
 
-export function ErrorBoundary() {
-	const error = useRouteError();
-
-	return (
-		<div className="flex flex-col items-center justify-center min-h-screen px-4 text-center space-y-6 bg-zinc-50 dark:bg-zinc-950">
-			<div className="p-6 bg-red-100 dark:bg-red-900/20 rounded-[3rem]">
-				<AlertCircle className="w-16 h-16 text-red-500" />
-			</div>
-			<div className="space-y-2">
-				<h1 className="text-4xl font-black tracking-tighter text-zinc-900 dark:text-white uppercase">
-					{isRouteErrorResponse(error)
-						? `${error.status} ${error.statusText}`
-						: error instanceof Error
-							? error.message
-							: "Unexpected Error"}
-				</h1>
-				<p className="text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto">
-					Something went wrong. Our team of highly trained monkeys is
-					investigating.
-				</p>
-			</div>
-			<Link to="/">
-				<Button size="lg" className="rounded-2xl px-8">
-					Refresh Page
-				</Button>
-			</Link>
-		</div>
-	);
-}
-
-export default function Root() {
+export default function App() {
 	const [isDark, setIsDark] = useState(false);
-	const [queryClient] = useState(
-		() =>
-			new QueryClient({
-				defaultOptions: {
-					queries: {
-						staleTime: 60 * 1000,
-					},
-				},
-			}),
-	);
 
 	useEffect(() => {
 		const savedTheme = localStorage.getItem("theme");
@@ -117,7 +58,11 @@ export default function Root() {
 				</button>
 
 				<main>
-					<Outlet />
+					<Switch>
+						<Route path="/" component={Home} />
+						<Route path="/e/:token" component={EventPage} />
+						<Route component={NotFound} />
+					</Switch>
 				</main>
 				<InstallPrompt />
 			</div>
