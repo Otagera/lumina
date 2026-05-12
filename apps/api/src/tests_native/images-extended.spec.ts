@@ -25,16 +25,24 @@ describe("Images Extended Routes (Native)", () => {
 		});
 
 		const albumRes = await app.handle(
-			req.post("/api/v1/albums", { albumName: "Images Extended Test" }, { Cookie: user.cookie }),
+			req.post(
+				"/api/v1/albums",
+				{ albumName: "Images Extended Test" },
+				{ Cookie: user.cookie },
+			),
 		);
 		const albumBody = await parseRes(albumRes);
 		testAlbumId = albumBody.data.id;
 
 		const imageRes = await app.handle(
-			req.post("/api/v1/images", {
-				uploadedImages: [{ existingKey: "test-extended-image.jpg" }],
-				albumId: testAlbumId,
-			}, { Cookie: user.cookie }),
+			req.post(
+				"/api/v1/images",
+				{
+					uploadedImages: [{ existingKey: "test-extended-image.jpg" }],
+					albumId: testAlbumId,
+				},
+				{ Cookie: user.cookie },
+			),
 		);
 		const imageBody = await parseRes(imageRes);
 		testImageId = imageBody.data.images[0].imageId;
@@ -50,11 +58,15 @@ describe("Images Extended Routes (Native)", () => {
 	describe("POST /api/v1/images/presigned-url", () => {
 		it("should generate presigned URL for upload", async () => {
 			const res = await app.handle(
-				req.post("/api/v1/images/presigned-url", {
-					albumId: testAlbumId,
-					fileName: "new-image.jpg",
-					contentType: "image/jpeg",
-				}, { Cookie: user.cookie }),
+				req.post(
+					"/api/v1/images/presigned-url",
+					{
+						albumId: testAlbumId,
+						fileName: "new-image.jpg",
+						contentType: "image/jpeg",
+					},
+					{ Cookie: user.cookie },
+				),
 			);
 			const body = await parseRes(res);
 
@@ -81,7 +93,11 @@ describe("Images Extended Routes (Native)", () => {
 	describe("POST /api/v1/images/:imageId/download", () => {
 		it("should generate download URL", async () => {
 			const res = await app.handle(
-				req.post(`/api/v1/images/${testImageId}/download`, {}, { Cookie: user.cookie }),
+				req.post(
+					`/api/v1/images/${testImageId}/download`,
+					{},
+					{ Cookie: user.cookie },
+				),
 			);
 			const body = await parseRes(res);
 
@@ -94,9 +110,13 @@ describe("Images Extended Routes (Native)", () => {
 	describe("POST /api/v1/images/bulk-download", () => {
 		it("should initiate bulk download job", async () => {
 			const res = await app.handle(
-				req.post("/api/v1/images/bulk-download", {
-					imageIds: [testImageId],
-				}, { Cookie: user.cookie }),
+				req.post(
+					"/api/v1/images/bulk-download",
+					{
+						imageIds: [testImageId],
+					},
+					{ Cookie: user.cookie },
+				),
 			);
 			const body = await parseRes(res);
 

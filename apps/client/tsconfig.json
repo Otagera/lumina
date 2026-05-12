@@ -1,9 +1,5 @@
 {
-	"include": [
-		"app/**/*",
-		"**/.server/**/*",
-		"**/.client/**/*"
-	],
+	"include": ["app/**/*", "**/.server/**/*", "**/.client/**/*"],
 	"compilerOptions": {
 		"lib": ["DOM", "DOM.Iterable", "ES2022"],
 		"types": [
@@ -30,5 +26,11 @@
 		"skipLibCheck": true,
 		"strict": true
 	},
-	"exclude": ["../api", ".react-router", "app/entry.server.tsx", "app/root.tsx", "app/routes/+types"]
+	"exclude": [
+		"../api",
+		".react-router",
+		"app/entry.server.tsx",
+		"app/root.tsx",
+		"app/routes/+types"
+	]
 }

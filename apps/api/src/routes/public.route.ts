@@ -1,10 +1,10 @@
 import { Elysia, t } from "elysia";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
 import { getInviteDetailsService } from "../services/albums/getInviteDetails.service.ts";
+import { getHighlightsService } from "../services/pictures/getHighlights.service.ts";
 import { getPresignedUrlService } from "../services/pictures/getPresignedUrl.service.ts";
 import { getPlansService } from "../services/public/getPlans.service.ts";
 import { getSharedAlbumService } from "../services/public/getSharedAlbum.service.ts";
-import { getHighlightsService } from "../services/pictures/getHighlights.service.ts";
 import { getSharedImageService } from "../services/public/getSharedImage.service.ts";
 import { searchFacesPublicService } from "../services/public/searchFacesPublic.service.ts";
 import { selfieSearchService } from "../services/public/selfieSearch.service.ts";

@@ -1,4 +1,8 @@
-import { createReaction, countReactions, linkGuestReactionsToUser } from "./reactions.model";
+import {
+	countReactions,
+	createReaction,
+	linkGuestReactionsToUser,
+} from "./reactions.model";
 
 const addReaction = async (data) => {
 	return await createReaction(data);

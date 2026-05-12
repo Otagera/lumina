@@ -22,7 +22,11 @@ describe("Notifications Extended Routes (Native)", () => {
 	describe("POST /api/v1/notifications/mark-read", () => {
 		it("should mark all notifications as read", async () => {
 			const res = await app.handle(
-				req.post("/api/v1/notifications/mark-read", {}, { Cookie: user.cookie }),
+				req.post(
+					"/api/v1/notifications/mark-read",
+					{},
+					{ Cookie: user.cookie },
+				),
 			);
 			const body = await parseRes(res);
 

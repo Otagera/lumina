@@ -135,7 +135,10 @@ export const fetchAlbum = async (albumId: string) => {
 	}
 };
 
-export const login = async (credentials: { email: string; password: string }) => {
+export const login = async (credentials: {
+	email: string;
+	password: string;
+}) => {
 	try {
 		const { data, error } = await api.auth.login.post(credentials);
 		if (error) throw error;
@@ -146,7 +149,10 @@ export const login = async (credentials: { email: string; password: string }) =>
 	}
 };
 
-export const signup = async (credentials: { email: string; password: string }) => {
+export const signup = async (credentials: {
+	email: string;
+	password: string;
+}) => {
 	try {
 		const { data, error } = await api.auth.signup.post(credentials);
 		if (error) throw error;
@@ -168,7 +174,10 @@ export const forgotPassword = async (email: string) => {
 	}
 };
 
-export const resetPassword = async (data: { token: string; password: string }) => {
+export const resetPassword = async (data: {
+	token: string;
+	password: string;
+}) => {
 	try {
 		const { data: responseData, error } =
 			await api.auth["reset-password"].post(data);

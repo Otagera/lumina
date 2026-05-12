@@ -1,10 +1,10 @@
 import Joi from "joi";
 import { fetchAlbumHighlights } from "../../../../../packages/models/src/albums.model.ts";
+import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
 import {
 	aliaserSpec,
 	validateSpec,
 } from "../../../../../packages/utils/src/specValidator.util.ts";
-import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
 
 const spec = Joi.object({
 	token: Joi.string().required(),

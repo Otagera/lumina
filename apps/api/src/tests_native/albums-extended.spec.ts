@@ -1,4 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it, beforeEach } from "bun:test";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+} from "bun:test";
 import { Users } from "../../../../packages/models/src/index.model.ts";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
 import { getApp, parseRes, req, setupAuth } from "./test-utils";
@@ -14,7 +21,11 @@ describe("Album Extended Routes (Native)", () => {
 		owner = await setupAuth(app);
 
 		const albumRes = await app.handle(
-			req.post("/api/v1/albums", { albumName: "Extended Test Album" }, { Cookie: owner.cookie }),
+			req.post(
+				"/api/v1/albums",
+				{ albumName: "Extended Test Album" },
+				{ Cookie: owner.cookie },
+			),
 		);
 		const albumBody = await parseRes(albumRes);
 		testAlbumId = albumBody.data.id;
@@ -38,10 +49,14 @@ describe("Album Extended Routes (Native)", () => {
 	describe("POST /api/v1/albums/:albumId/invites", () => {
 		it("should generate an invite for the album", async () => {
 			const res = await app.handle(
-				req.post(`/api/v1/albums/${testAlbumId}/invites`, {
-					role: "VIEWER",
-					expiresInDays: 7,
-				}, { Cookie: owner.cookie }),
+				req.post(
+					`/api/v1/albums/${testAlbumId}/invites`,
+					{
+						role: "VIEWER",
+						expiresInDays: 7,
+					},
+					{ Cookie: owner.cookie },
+				),
 			);
 			const body = await parseRes(res);
 
@@ -59,14 +74,22 @@ describe("Album Extended Routes (Native)", () => {
 				return;
 			}
 			const res = await app.handle(
-				req.post(`/api/v1/albums/${testAlbumId}/invites/${testInviteId}/resend`, {}, { Cookie: owner.cookie }),
+				req.post(
+					`/api/v1/albums/${testAlbumId}/invites/${testInviteId}/resend`,
+					{},
+					{ Cookie: owner.cookie },
+				),
 			);
 			expect(res.status).toBeGreaterThanOrEqual(200);
 		});
 
 		it("should fail for non-existent invite", async () => {
 			const res = await app.handle(
-				req.post(`/api/v1/albums/${testAlbumId}/invites/non-existent/resend`, {}, { Cookie: owner.cookie }),
+				req.post(
+					`/api/v1/albums/${testAlbumId}/invites/non-existent/resend`,
+					{},
+					{ Cookie: owner.cookie },
+				),
 			);
 			expect(res.status).toBeGreaterThanOrEqual(400);
 		});

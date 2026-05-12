@@ -60,7 +60,9 @@ describe("Auth Extended Routes (Native)", () => {
 
 		it("should return same response for non-existent user (security)", async () => {
 			const res = await app.handle(
-				req.post("/api/v1/auth/forgot-password", { email: "nonexistent@example.com" }),
+				req.post("/api/v1/auth/forgot-password", {
+					email: "nonexistent@example.com",
+				}),
 			);
 			const body = await parseRes(res);
 

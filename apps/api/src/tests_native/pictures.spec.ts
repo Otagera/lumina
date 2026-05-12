@@ -41,7 +41,6 @@ describe("Pictures Routes (Native)", () => {
 				),
 			);
 
-
 			const body = await parseRes(res);
 			expect(res.status).toBe(HTTP_STATUS_CODES.CREATED);
 			expect(body.status).toBe("completed");

@@ -5,12 +5,12 @@ import { edenTreaty } from "@elysiajs/eden";
 const API_BASE_URL = "";
 
 export const eden = edenTreaty(API_BASE_URL, {
-  fetch: (url, options) => {
-    return fetch(url, {
-      ...options,
-      credentials: "include",
-    });
-  },
+	fetch: (url, options) => {
+		return fetch(url, {
+			...options,
+			credentials: "include",
+		});
+	},
 });
 
 export const api = eden.api.v1;

@@ -14,13 +14,21 @@ describe("People Extended Routes (Native)", () => {
 		user = await setupAuth(app);
 
 		const p1Res = await app.handle(
-			req.post("/api/v1/people", { name: "Person One" }, { Cookie: user.cookie }),
+			req.post(
+				"/api/v1/people",
+				{ name: "Person One" },
+				{ Cookie: user.cookie },
+			),
 		);
 		const p1Body = await parseRes(p1Res);
 		personId1 = p1Body.data.personId;
 
 		const p2Res = await app.handle(
-			req.post("/api/v1/people", { name: "Person Two" }, { Cookie: user.cookie }),
+			req.post(
+				"/api/v1/people",
+				{ name: "Person Two" },
+				{ Cookie: user.cookie },
+			),
 		);
 		const p2Body = await parseRes(p2Res);
 		personId2 = p2Body.data.personId;
@@ -35,10 +43,14 @@ describe("People Extended Routes (Native)", () => {
 	describe("POST /api/v1/people/merge", () => {
 		it("should merge two people together", async () => {
 			const res = await app.handle(
-				req.post("/api/v1/people/merge", {
-					sourcePersonId: personId1,
-					targetPersonId: personId2,
-				}, { Cookie: user.cookie }),
+				req.post(
+					"/api/v1/people/merge",
+					{
+						sourcePersonId: personId1,
+						targetPersonId: personId2,
+					},
+					{ Cookie: user.cookie },
+				),
 			);
 			const body = await parseRes(res);
 
@@ -48,10 +60,14 @@ describe("People Extended Routes (Native)", () => {
 
 		it("should fail with same person IDs", async () => {
 			const res = await app.handle(
-				req.post("/api/v1/people/merge", {
-					sourcePersonId: personId1,
-					targetPersonId: personId1,
-				}, { Cookie: user.cookie }),
+				req.post(
+					"/api/v1/people/merge",
+					{
+						sourcePersonId: personId1,
+						targetPersonId: personId1,
+					},
+					{ Cookie: user.cookie },
+				),
 			);
 			const body = await parseRes(res);
 

@@ -18,9 +18,10 @@ const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 	}
 
 	// Type guard for coverImage - can be object { id, url } or string or null
-	const coverImageUrl = typeof album.coverImage === 'string' 
-		? album.coverImage 
-		: album.coverImage?.url;
+	const coverImageUrl =
+		typeof album.coverImage === "string"
+			? album.coverImage
+			: album.coverImage?.url;
 
 	// 1. Manual Cover Selection (Priority)
 	if (coverImageUrl) {

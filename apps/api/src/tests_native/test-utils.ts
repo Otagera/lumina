@@ -68,7 +68,11 @@ export const req = {
 			},
 			body: JSON.stringify(body),
 		}),
-	delete: (path: string, bodyOrHeaders: any = {}, headers: Record<string, string> = {}) => {
+	delete: (
+		path: string,
+		bodyOrHeaders: any = {},
+		headers: Record<string, string> = {},
+	) => {
 		const isBody =
 			typeof bodyOrHeaders === "object" &&
 			!bodyOrHeaders.Authorization &&

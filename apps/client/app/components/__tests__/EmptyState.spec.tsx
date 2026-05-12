@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { EmptyState } from "../standard/EmptyState";
 
@@ -9,7 +9,9 @@ describe("EmptyState Component", () => {
 	});
 
 	it("renders description when provided", () => {
-		render(<EmptyState title="No items" description="Try adjusting your filters" />);
+		render(
+			<EmptyState title="No items" description="Try adjusting your filters" />,
+		);
 		expect(screen.getByText("Try adjusting your filters")).toBeInTheDocument();
 	});
 
@@ -22,7 +24,9 @@ describe("EmptyState Component", () => {
 	it("renders action button when provided", () => {
 		const ActionButton = () => <button>Add Item</button>;
 		render(<EmptyState title="Empty" action={<ActionButton />} />);
-		expect(screen.getByRole("button", { name: /add item/i })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: /add item/i }),
+		).toBeInTheDocument();
 	});
 
 	it("applies custom className", () => {

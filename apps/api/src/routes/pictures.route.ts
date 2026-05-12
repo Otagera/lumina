@@ -164,7 +164,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 			bodyLimit: 500 * 1024 * 1024,
 			error({ error }) {
 				console.error("[PICTURES ROUTE ERROR]", error);
-			}
+			},
 		},
 	)
 	.post(

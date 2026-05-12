@@ -33,7 +33,6 @@ const getEnv = (key: string): string | undefined => {
 	return loadedEnv[key] || process.env[key];
 };
 
-
 interface IConfig {
 	env: "development" | "test" | "production";
 	app_name: string;

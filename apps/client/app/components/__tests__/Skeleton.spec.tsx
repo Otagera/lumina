@@ -1,13 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { 
-	Skeleton, 
-	SkeletonText, 
-	SkeletonCard, 
-	SkeletonImageGrid, 
-	SkeletonButton, 
-	SkeletonInput, 
-	SkeletonAvatar 
+import {
+	Skeleton,
+	SkeletonAvatar,
+	SkeletonButton,
+	SkeletonCard,
+	SkeletonImageGrid,
+	SkeletonInput,
+	SkeletonText,
 } from "../standard/Skeleton";
 
 describe("Skeleton Component", () => {
