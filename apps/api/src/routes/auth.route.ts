@@ -4,6 +4,7 @@ import {
 	loginService,
 	logoutService,
 	refreshService,
+	resetPasswordService,
 	signupService,
 } from "../../../../packages/auth/index.ts";
 import config from "../../../../packages/config/src/index.config.ts";
