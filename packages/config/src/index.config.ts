@@ -231,7 +231,7 @@ const config: IConfig = {
 			bucket: process.env.R2_BUCKET,
 			endpoint: process.env.R2_ENDPOINT,
 			region: process.env.R2_REGION || "auto",
-			public_url: process.env.R2_PUBLIC_URL,
+			public_url: getEnv("R2_PUBLIC_URL"),
 		},
 
 		// Email
@@ -262,5 +262,7 @@ const config: IConfig = {
 		},
 	},
 };
+
+console.log(`[Config] Current Env: ${config.env}`);
 
 export default config;

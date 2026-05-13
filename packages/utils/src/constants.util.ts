@@ -28,6 +28,7 @@ export const BULL_QUEUE_NAMES = {
 	FILE_DELETION: "file_deletion",
 	EMAIL: "email",
 	TRASH_CLEANUP: "trash_cleanup",
+	SEMANTIC_EMBEDDING: "semantic_embedding",
 };
 export const DEGREES = ["Bsc.", "B.A", "LLB.", "MSc.", "M.A."];
 export const LEVELS = ["Undergraduate", "Postgraduate"];

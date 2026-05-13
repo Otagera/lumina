@@ -78,7 +78,7 @@ const ImageGridItem = ({
 	return (
 		<div
 			className={cn(
-				"relative group overflow-hidden rounded-[1.5rem] bg-zinc-100 dark:bg-zinc-800 transition-all duration-500 shadow-sm hover:shadow-xl isolate cursor-zoom-in w-full h-full",
+				"relative group overflow-hidden rounded-[1.5rem] bg-zinc-100 dark:bg-zinc-800 transition-all duration-500 shadow-sm hover:shadow-xl cursor-zoom-in w-full h-full",
 				containerClassName,
 				isSelected &&
 					"ring-4 ring-sage ring-offset-4 dark:ring-offset-zinc-950 scale-[0.98]",
@@ -91,7 +91,7 @@ const ImageGridItem = ({
 				alt={image.alt}
 				loading="lazy"
 				className={cn(
-					"w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105 relative z-10 pointer-events-none",
+					"absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 z-10 pointer-events-none",
 					className,
 					isSelected && "opacity-80",
 				)}
@@ -109,7 +109,7 @@ const ImageGridItem = ({
 			)}
 
 			{/* Top Controls (Selection/Menu) */}
-			<div className="absolute top-3 left-3 right-3 flex justify-between items-center z-30">
+			<div className="absolute top-3 left-3 right-3 flex justify-between items-center z-40">
 				<div
 					className={cn(
 						"transition-all duration-300 transform",
@@ -150,17 +150,17 @@ const ImageGridItem = ({
 					<div className="relative">
 						<button
 							type="button"
-							className="p-2 bg-white/40 dark:bg-black/20 text-zinc-900 dark:text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/60 dark:hover:bg-black/40 shadow-lg backdrop-blur-md border border-white/40 dark:border-white/10 active:scale-90"
+							className="p-2.5 bg-white/90 dark:bg-black/60 text-zinc-950 dark:text-white rounded-xl md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 hover:bg-white dark:hover:bg-black shadow-xl backdrop-blur-md border border-white/60 dark:border-white/20 active:scale-90"
 							onClick={(e) => {
 								e.stopPropagation();
 								setMenuOpen(!menuOpen);
 							}}
 						>
-							<MoreHorizontal size={18} />
+							<MoreHorizontal size={20} />
 						</button>
 						{menuOpen && (
 							<div
-								className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 py-2 z-[100] animate-in fade-in slide-in-from-top-2"
+								className="absolute right-0 top-full mt-2 w-max min-w-44 bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 py-2 z-[100] animate-in fade-in slide-in-from-top-2"
 								onClick={(e) => e.stopPropagation()}
 							>
 								{onSetCover && (
@@ -197,8 +197,8 @@ const ImageGridItem = ({
 			</div>
 
 			{/* Bottom Controls (Reactions) */}
-			<div className="absolute bottom-3 left-3 right-3 flex justify-between items-end z-30 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-				{onReaction && !selectionMode && (
+			<div className="absolute bottom-3 left-3 right-3 flex justify-between items-end z-40 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+				{onReaction && !selectionMode ? (
 					<button
 						type="button"
 						onClick={handleReactionClick}
@@ -222,6 +222,8 @@ const ImageGridItem = ({
 							</span>
 						)}
 					</button>
+				) : (
+					<div /> // Spacer to keep download on the right
 				)}
 
 				<div className="flex gap-2">

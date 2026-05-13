@@ -54,14 +54,15 @@ model albums {
 }
 
 model album_settings {
-  album_id            String    @id @db.Uuid
-  is_event            Boolean   @default(false)
-  requires_approval   Boolean   @default(true)
-  tagging_policy      String    @default("HOST_ONLY") // HOST_ONLY, GUESTS_SELF, ANYONE
-  expires_at          DateTime? @db.Timestamptz(6)
-  allow_guest_uploads Boolean   @default(false)
-  webhook_url         String?
-  album               albums    @relation(fields: [album_id], references: [album_id], onDelete: Cascade)
+  album_id                 String    @id @db.Uuid
+  is_event                 Boolean   @default(false)
+  requires_approval        Boolean   @default(true)
+  tagging_policy           String    @default("HOST_ONLY") // HOST_ONLY, GUESTS_SELF, ANYONE
+  expires_at               DateTime? @db.Timestamptz(6)
+  allow_guest_uploads      Boolean   @default(false)
+  webhook_url              String?
+  semantic_search_enabled  Boolean   @default(false)
+  album                    albums    @relation(fields: [album_id], references: [album_id], onDelete: Cascade)
 }
 
 model faces {
@@ -119,6 +120,7 @@ model images {
   optimized_size   Int            @default(0)
   uploaded_by      String?        @db.Uuid
   guest_session_id String?        @db.Uuid
+  embedding        Unsupported("vector(512)")?
   users            users?         @relation(fields: [uploaded_by], references: [user_id], onDelete: Cascade)
   covered_albums   albums[]       @relation("AlbumCover")
   reactions        reactions[]

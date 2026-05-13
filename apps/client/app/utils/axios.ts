@@ -45,7 +45,7 @@ const rewriteImageUrls = (data: unknown, origin: string): unknown => {
 	return rewrite(data);
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL || "");
 
 // Create an Axios instance
 const axiosAPI = axios.create({

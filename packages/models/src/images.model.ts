@@ -1,7 +1,6 @@
 import fs from "node:fs/promises";
 import { queueServices } from "../../../apps/worker/src/queue/queue.service.ts";
 import prisma from "../../config/src/db.config.ts";
-import { deleteFile } from "../../utils/src/file.util.ts";
 import { logUsage } from "./usage.model.ts";
 
 const uploadImage = async (imageData) => {
@@ -525,29 +524,7 @@ const moderateImagesQuery = async (
 	});
 };
 
-export {
-	uploadImage,
-	uploadImages,
-	fetchFaces,
-	fetchImage,
-	fetchImagesByIds,
-	fetchImages,
-	fetchAllImages,
-	softDeleteImagesByIds,
-	restoreImagesByIds,
-	deleteImage,
-	deleteImageById,
-	deleteImagesByIds,
-	deleteImagesByUserId,
-	deleteAllImages,
-	fetchImagesByIdsQuery,
-	fetchAllImagesQuery,
-	deleteImagesByIdsQuery,
-	deleteAllImagesQuery,
-	moderateImagesQuery,
-};
-
-export const cleanupImageSideEffects = async (images: any[]) => {
+const cleanupImageSideEffects = async (images: any[]) => {
 	for (const image of images) {
 		if (image.uploaded_by && image.size) {
 			await logUsage(image.uploaded_by, "storage", "delete", -image.size);
@@ -569,7 +546,7 @@ export const cleanupImageSideEffects = async (images: any[]) => {
 	}
 };
 
-export const deleteImagesWithLogging = async (imageIds: string[]) => {
+const deleteImagesWithLogging = async (imageIds: string[]) => {
 	const images = await prisma.images.findMany({
 		where: { image_id: { in: imageIds } },
 	});
@@ -598,4 +575,89 @@ const linkGuestImagesToUser = async (
 	});
 };
 
-export { linkGuestImagesToUser };
+const searchImagesByEmbedding = async ({
+	embedding,
+	albumId,
+	shareToken,
+	limit = 20,
+}: {
+	embedding: number[];
+	albumId?: string;
+	shareToken?: string;
+	limit?: number;
+}) => {
+	if (shareToken) {
+		const album = await prisma.albums.findUnique({
+			where: { share_token: shareToken },
+			select: { album_id: true },
+		});
+
+		if (!album) throw new Error("Invalid share token");
+
+		return (await prisma.$queryRaw`
+			SELECT 
+				i.image_id, i.image_path, i.optimized_path, i.storage_provider, 
+				i.storage_key, i.status, i.upload_date, i.original_width, i.original_height,
+				i.embedding::text as embedding
+			FROM images i
+			JOIN album_images ai ON i.image_id = ai.image_id
+			WHERE ai.album_id = ${album.album_id}::uuid
+			AND i.deleted_at IS NULL
+			AND i.status = 'APPROVED'
+			ORDER BY i.embedding <=> ${embedding}::vector
+			LIMIT ${limit}
+		`) as any[];
+	}
+
+	if (albumId) {
+		return (await prisma.$queryRaw`
+			SELECT 
+				i.image_id, i.image_path, i.optimized_path, i.storage_provider, 
+				i.storage_key, i.status, i.upload_date, i.original_width, i.original_height,
+				i.embedding::text as embedding
+			FROM images i
+			JOIN album_images ai ON i.image_id = ai.image_id
+			WHERE ai.album_id = ${albumId}::uuid
+			AND i.deleted_at IS NULL
+			ORDER BY i.embedding <=> ${embedding}::vector
+			LIMIT ${limit}
+		`) as any[];
+	}
+
+	return (await prisma.$queryRaw`
+		SELECT 
+			image_id, image_path, optimized_path, storage_provider, 
+			storage_key, status, upload_date, original_width, original_height,
+			embedding::text as embedding
+		FROM images
+		WHERE deleted_at IS NULL
+		ORDER BY embedding <=> ${embedding}::vector
+		LIMIT ${limit}
+	`) as any[];
+};
+
+export {
+	uploadImage,
+	uploadImages,
+	fetchFaces,
+	fetchImage,
+	fetchImagesByIds,
+	fetchImages,
+	fetchAllImages,
+	softDeleteImagesByIds,
+	restoreImagesByIds,
+	deleteImage,
+	deleteImageById,
+	deleteImagesByIds,
+	deleteImagesByUserId,
+	deleteAllImages,
+	fetchImagesByIdsQuery,
+	fetchAllImagesQuery,
+	deleteImagesByIdsQuery,
+	deleteAllImagesQuery,
+	moderateImagesQuery,
+	cleanupImageSideEffects,
+	deleteImagesWithLogging,
+	linkGuestImagesToUser,
+	searchImagesByEmbedding,
+};

@@ -43,10 +43,15 @@ const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 		const baseUrl = port
 			? `${envConfig.base_api_url}:${port}`
 			: envConfig.base_api_url;
-		const imagePathSplit = image_path.split("/");
+		const filename = image_path.split("/").pop();
 		const strucImagePath = image_path
-			? `${baseUrl}/api/uploads/${imagePathSplit[imagePathSplit.length - 1]}`
+			? `${baseUrl}/api/uploads/${encodeURIComponent(filename)}`
 			: image_path;
+		
+		if (image_path.startsWith("/")) {
+			console.log(`[NORMALIZE] Dev/Test normalized ${image_path} -> ${strucImagePath}`);
+		}
+		
 		return strucImagePath;
 	} else {
 		// Production: determine URL based on storage provider
@@ -57,8 +62,8 @@ const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 			if (image_path) {
 				const baseUrl =
 					envConfig.base_api_url || "https://lumina-api.otagera.xyz";
-				const filename = storage_key || image_path.split("/").pop();
-				return `${baseUrl}/api/uploads/${filename}`;
+				const rawFilename = storage_key || image_path.split("/").pop();
+				return `${baseUrl}/api/uploads/${encodeURIComponent(rawFilename)}`;
 			}
 			return image_path;
 		}
@@ -67,16 +72,16 @@ const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 		const r2PublicUrl = envConfig?.r2?.public_url;
 
 		if (r2PublicUrl && image_path) {
-			const filename = storage_key || image_path.split("/").pop();
-			return `${r2PublicUrl}/${filename}`;
+			const rawFilename = storage_key || image_path.split("/").pop();
+			return `${r2PublicUrl}/${encodeURIComponent(rawFilename)}`;
 		}
 
 		// Fallback to API endpoint for external storage
 		if (image_path) {
 			const baseUrl =
 				envConfig.base_api_url || "https://lumina-api.otagera.xyz";
-			const filename = storage_key || image_path.split("/").pop();
-			return `${baseUrl}/api/uploads/${filename}`;
+			const rawFilename = storage_key || image_path.split("/").pop();
+			return `${baseUrl}/api/uploads/${encodeURIComponent(rawFilename)}`;
 		}
 
 		return image_path;

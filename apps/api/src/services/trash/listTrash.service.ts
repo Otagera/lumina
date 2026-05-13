@@ -57,7 +57,7 @@ const service = async (data: any) => {
 		images: deletedImages.map((img) =>
 			aliaserSpec(aliasSpec.image, {
 				...img,
-				path: normalizeImagePath(
+				image_path: normalizeImagePath(
 					img.image_path,
 					img.storage_provider,
 					img.storage_key,

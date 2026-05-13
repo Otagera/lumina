@@ -1,5 +1,14 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, Upload, XCircle } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	CheckCircle,
+	History,
+	Image as ImageIcon,
+	Search,
+	Sparkles,
+	Upload,
+	X,
+	XCircle,
+} from "lucide-react";
 import { Fragment, useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -32,6 +41,7 @@ import type {
 } from "~/types";
 import { getBentoSpanClass } from "~/utils/bento";
 import { groupImagesByDate } from "~/utils/dateGrouping";
+import { api } from "~/utils/eden";
 import { albumKeys } from "~/utils/queryKeys";
 import { AlbumFilters } from "../components/AlbumFilters";
 import { AlbumPermissionsModal } from "../components/AlbumPermissionsModal";
@@ -63,6 +73,8 @@ const AlbumPage = () => {
 
 	const [view, setView] = useState<ViewMode>("gallery");
 	const [displayMode, setDisplayMode] = useState<DisplayMode>("grid");
+	const [searchQuery, setSearchQuery] = useState("");
+	const [isSearching, setIsSearching] = useState(false);
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
 		new Set(),
@@ -130,10 +142,43 @@ const AlbumPage = () => {
 		fetchModerationNext: fetchNextPending,
 	});
 
-	const images = useMemo(
-		() => (view === "gallery" ? approvedImages : pendingImages),
-		[view, approvedImages, pendingImages],
-	);
+	// Semantic Search Query
+	const {
+		data: searchResults,
+		isLoading: isSearchLoading,
+		refetch: runSearch,
+	} = useQuery({
+		queryKey: ["semantic-search", albumId, searchQuery],
+		queryFn: async () => {
+			const res = await api.search.semantic.post({
+				query: searchQuery,
+				albumId: albumId!,
+			});
+			if (res.error) throw res.error;
+			return res.data;
+		},
+		enabled: false, // Only run on manual trigger
+	});
+
+	const handleSearch = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (searchQuery.trim()) {
+			setIsSearching(true);
+			runSearch();
+		}
+	};
+
+	const clearSearch = () => {
+		setSearchQuery("");
+		setIsSearching(false);
+	};
+
+	const displayImages = useMemo(() => {
+		if (isSearching && searchResults?.data?.images) {
+			return searchResults.data.images;
+		}
+		return view === "gallery" ? approvedImages : pendingImages;
+	}, [view, approvedImages, pendingImages, isSearching, searchResults]);
 
 	const dateSections = useMemo(
 		() => (view === "gallery" ? groupImagesByDate(approvedImages) : []),
@@ -145,9 +190,9 @@ const AlbumPage = () => {
 
 	const selectedImageId = searchParams.get("imageId");
 	const selectedImage = useMemo(() => {
-		if (!selectedImageId || !images.length) return null;
-		return images.find((img) => img.imageId === selectedImageId) || null;
-	}, [selectedImageId, images]);
+		if (!selectedImageId || !displayImages.length) return null;
+		return displayImages.find((img) => img.imageId === selectedImageId) || null;
+	}, [selectedImageId, displayImages]);
 
 	const setSelectedImage = useCallback(
 		(image: AlbumImage | null) => {
@@ -231,7 +276,7 @@ const AlbumPage = () => {
 	useKeyboardShortcuts({
 		view,
 		selectedIds,
-		images,
+		displayImages,
 		onModerate: handleModerateWithIds,
 		onNavigateNext: (img) => {
 			setSelectedImage(img);
@@ -347,7 +392,7 @@ const AlbumPage = () => {
 
 			<AlbumHeader
 				album={albumData?.data}
-				imageCount={images.length}
+				imageCount={displayImages.length}
 				isEditingName={isEditingName}
 				editAlbumName={editAlbumName}
 				onEditName={setEditAlbumName}
@@ -363,21 +408,77 @@ const AlbumPage = () => {
 				isRenamePending={editAlbumMutation.isPending}
 			/>
 
-			<div className="mt-8">
-				<AlbumToolbar
-					view={view}
-					displayMode={displayMode}
-					onViewChange={setView}
-					onDisplayModeChange={setDisplayMode}
-					showModeration={showModeration}
-					showDuplicates={true}
-				/>
+			<div className="mt-8 space-y-6">
+				{albumData?.data?.settings?.semantic_search_enabled && (
+					<form
+						onSubmit={handleSearch}
+						className="relative max-w-2xl mx-auto w-full group"
+					>
+						<div className="absolute inset-0 bg-sage/5 rounded-[2rem] blur-xl group-focus-within:bg-sage/10 transition-all" />
+						<div className="relative flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-1.5 shadow-xl shadow-zinc-200/20 dark:shadow-none transition-all focus-within:ring-2 focus-within:ring-sage/50">
+							<div className="pl-4 pr-2 text-zinc-400">
+								<Search size={20} />
+							</div>
+							<input
+								type="text"
+								placeholder="Search for something specific... (e.g. 'sunset at the beach')"
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								className="flex-1 bg-transparent border-none outline-none py-3 text-sm font-bold text-zinc-900 dark:text-white placeholder:text-zinc-500 placeholder:font-medium"
+							/>
+							{searchQuery && (
+								<button
+									type="button"
+									onClick={clearSearch}
+									className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors mr-1"
+								>
+									<X size={16} />
+								</button>
+							)}
+							<Button
+								type="submit"
+								disabled={isSearchLoading || !searchQuery.trim()}
+								className="rounded-[1.5rem] px-6 py-2.5 h-auto bg-sage text-zinc-950 font-black tracking-tighter"
+							>
+								{isSearchLoading ? "..." : "Search"}
+							</Button>
+						</div>
+					</form>
+				)}
 
-				{view === "duplicates" ? (
+				{!isSearching && (
+					<AlbumToolbar
+						view={view}
+						displayMode={displayMode}
+						onViewChange={setView}
+						onDisplayModeChange={setDisplayMode}
+						showModeration={showModeration}
+						showDuplicates={true}
+					/>
+				)}
+
+				{isSearching && (
+					<div className="flex items-center justify-between px-2 mb-4">
+						<div className="flex items-center gap-2 text-sage">
+							<Sparkles size={18} />
+							<p className="text-sm font-black uppercase tracking-widest">
+								AI Results for "{searchQuery}"
+							</p>
+						</div>
+						<button
+							onClick={clearSearch}
+							className="text-xs font-bold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 underline underline-offset-4"
+						>
+							Clear results
+						</button>
+					</div>
+				)}
+
+				{view === "duplicates" && !isSearching ? (
 					<DuplicateReview albumId={albumId!} />
 				) : (
 					<>
-						{view === "moderation" && (
+						{!isSearching && view === "moderation" && (
 							<div className="mb-6">
 								<AlbumFilters
 									filters={moderationFilters}
@@ -387,25 +488,44 @@ const AlbumPage = () => {
 							</div>
 						)}
 
-						{isLoading ? (
+						{isLoading || isSearchLoading ? (
 							<div className="flex justify-center py-20">
 								<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage" />
 							</div>
-						) : images.length === 0 ? (
+						) : displayImages.length === 0 ? (
 							<div className="text-center py-32">
-								<p className="text-zinc-500 font-medium">
-									{view === "moderation"
-										? "No pending photos to moderate. You're all caught up!"
-										: "No photos in this album yet. Start by uploading some!"}
-								</p>
+								{isSearching ? (
+									<div className="space-y-4">
+										<div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-3xl flex items-center justify-center mx-auto text-zinc-300">
+											<ImageIcon size={32} />
+										</div>
+										<p className="text-zinc-500 font-bold">
+											No results found for your search.
+										</p>
+										<Button variant="outline" size="sm" onClick={clearSearch}>
+											Try clearing filters
+										</Button>
+									</div>
+								) : (
+									<p className="text-zinc-500 font-medium">
+										{view === "moderation"
+											? "No pending photos to moderate. You're all caught up!"
+											: "No photos in this album yet. Start by uploading some!"}
+									</p>
+								)}
 							</div>
 						) : displayMode === "grid" ? (
 							<div className="space-y-6 w-full min-w-0">
-								{view === "gallery" && dateSections.length > 0 ? (
+								{!isSearching &&
+								view === "gallery" &&
+								dateSections.length > 0 ? (
 									dateSections.map((section) => {
 										const isCollapsed = collapsedSections.has(section.key);
 										return (
-											<div key={section.key} className="space-y-2 w-full min-w-0">
+											<div
+												key={section.key}
+												className="space-y-2 w-full min-w-0"
+											>
 												<button
 													type="button"
 													onClick={() => toggleSection(section.key)}
@@ -457,8 +577,11 @@ const AlbumPage = () => {
 																			height,
 																			url: image.imagePath,
 																			alt: image.imagePath,
+																			status: image.status,
 																		}}
 																		onClick={() => setSelectedImage(image)}
+																		onReaction={(id) => reactMutation.mutate(id)}
+																		reactionCount={image.reactionCount}
 																		isSelected={selectedIds.has(image.imageId)}
 																		onToggleSelect={() =>
 																			handleToggleSelect(image.imageId)
@@ -482,7 +605,7 @@ const AlbumPage = () => {
 									})
 								) : (
 									<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5 sm:gap-1 auto-rows-[150px] sm:auto-rows-[200px] w-full min-w-0">
-										{images.map((image, index) => {
+										{displayImages.map((image, index) => {
 											const width = image.originalSize?.width || 0;
 											const height = image.originalSize?.height || 0;
 											const area = width * height;
@@ -497,7 +620,7 @@ const AlbumPage = () => {
 											return (
 												<div
 													key={image.imageId}
-													className={`relative ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500`}
+													className={`relative ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500 w-full h-full min-w-0`}
 													style={{ animationDelay: `${index * 50}ms` }}
 												>
 													{view === "moderation" ? (
@@ -522,8 +645,11 @@ const AlbumPage = () => {
 																height: height,
 																url: image.imagePath,
 																alt: image.imagePath,
+																status: image.status,
 															}}
 															onClick={() => setSelectedImage(image)}
+															onReaction={(id) => reactMutation.mutate(id)}
+															reactionCount={image.reactionCount}
 															isSelected={selectedIds.has(image.imageId)}
 															onToggleSelect={() =>
 																handleToggleSelect(image.imageId)
@@ -545,7 +671,7 @@ const AlbumPage = () => {
 							</div>
 						) : (
 							<CompactListView
-								images={images}
+								images={displayImages}
 								onImageClick={setSelectedImage}
 								selectedIds={selectedIds}
 								onToggleSelect={handleToggleSelect}
@@ -568,7 +694,7 @@ const AlbumPage = () => {
 			{selectedImage && (
 				<ImageModal
 					image={selectedImage}
-					images={images}
+					images={displayImages}
 					albumId={albumId}
 					onClose={() => setSelectedImage(null)}
 					onDelete={handleDeleteImage}
@@ -631,7 +757,7 @@ const AlbumPage = () => {
 			) : (
 				<BulkActionBar
 					selectedCount={selectedIds.size}
-					totalCount={images.length}
+					totalCount={displayImages.length}
 					onClear={() => setSelectedIds(new Set())}
 					onSelectAll={toggleSelectAll}
 					onDelete={handleBatchDelete}

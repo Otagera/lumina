@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
+import { addImagesToAlbumService } from "../services/albums/addImagesToAlbum.service.ts";
 import { alterAlbumService } from "../services/albums/alterAlbum.service.ts";
 import { createAlbumService } from "../services/albums/createAlbum.service.ts";
 import { fetchAlbumService } from "../services/albums/fetchAlbum.service.ts";
@@ -172,6 +173,50 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				endDate: t.Optional(t.String()),
 				uploaderId: t.Optional(t.String()),
 			}),
+		},
+	)
+	.post(
+		"/:albumId/images",
+		async ({ params, body, set, userId }) => {
+			try {
+				const albumId = params.albumId;
+				await checkAlbumPermissions(albumId, userId, ["ADMIN", "CONTRIBUTOR"]);
+
+				let payload: any = {};
+				if (body && typeof body === "object") {
+					if (typeof (body as any).get === "function") {
+						payload.imageIds = (body as any).getAll?.("imageIds") || (body as any).get("imageIds");
+					} else {
+						payload = body;
+					}
+				}
+
+				const data = await addImagesToAlbumService({
+					...payload,
+					albumId,
+					userId,
+				});
+
+				set.status = HTTP_STATUS_CODES.OK;
+				return {
+					status: "completed",
+					message: "Images added to album successfully.",
+					data,
+				};
+			} catch (error: any) {
+				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				return {
+					status: "error",
+					message: error?.message || "Internal server error",
+					data: null,
+				};
+			}
+		},
+		{
+			params: t.Object({
+				albumId: t.String(),
+			}),
+			body: t.Any(),
 		},
 	)
 	.put(

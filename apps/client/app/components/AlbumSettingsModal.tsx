@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import toast from "react-hot-toast";
 import { editAlbumSettings, fetchSettings } from "../utils/api";
+import { albumKeys, settingsKeys } from "../utils/queryKeys";
 import { Button } from "./standard/Button";
 import { Heading } from "./standard/Heading";
 import "react-datepicker/dist/react-datepicker.css";
@@ -46,11 +47,12 @@ export const AlbumSettingsModal = ({
 	const updateSettingsMutation = useMutation({
 		mutationFn: (data: { settings: any; storageConfigId: string | null }) =>
 			editAlbumSettings(albumId, {
-				...(data.settings || {}),
+				settings: data.settings,
 				storageConfigId: data.storageConfigId,
 			}),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [`album-${albumId}`] });
+			queryClient.invalidateQueries({ queryKey: albumKeys.detail(albumId) });
+			queryClient.invalidateQueries({ queryKey: settingsKeys.all });
 			toast.success("Album settings updated successfully");
 			onClose();
 		},
@@ -69,7 +71,7 @@ export const AlbumSettingsModal = ({
 	};
 
 	const handleSave = () => {
-		const { album_id, ...settingsToSave } = localSettings;
+		const { album_id, albumId: id, ...settingsToSave } = localSettings;
 		updateSettingsMutation.mutate({
 			settings: settingsToSave,
 			storageConfigId: selectedStorageId,
@@ -301,6 +303,26 @@ export const AlbumSettingsModal = ({
 							Receive POST requests when guests upload photos or clustering
 							completes.
 						</p>
+					</div>
+
+					{/* Semantic Search */}
+					<div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
+						<div>
+							<p className="font-bold text-zinc-900 dark:text-white text-sm">
+								Enable Semantic Search
+							</p>
+							<p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+								Use AI to search photos with natural language. (Higher Compute Cost)
+							</p>
+						</div>
+						<input
+							type="checkbox"
+							checked={localSettings.semantic_search_enabled || false}
+							onChange={(e) =>
+								handleSettingChange("semantic_search_enabled", e.target.checked)
+							}
+							className="h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 checked:bg-sage focus:ring-sage focus:ring-offset-2 transition-colors duration-200 ease-in-out cursor-pointer"
+						/>
 					</div>
 				</div>
 

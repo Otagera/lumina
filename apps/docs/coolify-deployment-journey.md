@@ -6,7 +6,7 @@ For [Lumina](https://lumina.otagera.xyz/) (an AI-powered photo sharing and face-
 
 This time, I chose the **Hetzner CX33 plan (4 vCPUs, 8GB RAM, 80GB NVMe for ~$7/month)** paired with [**Coolify**](https://coolify.io/). It's like having your own personal Vercel and Railway, but for a fraction of the cost and with total control over the environment.
 
-Here is the technical breakdown of how I deployed a Monorepo containing a React Client, Bun API, Python AI Service, BullMQ Worker, Postgres (pgvector), and Redis—starting from absolute scratch, and the trials I faced along the way.
+Here is the technical breakdown of how I deployed a Monorepo containing a React Dashboard, a lightweight Guest App, Bun API, Python AI Service, BullMQ Worker, Postgres (pgvector), and Redis—starting from absolute scratch, and the trials I faced along the way.
 
 ---
 
@@ -47,10 +47,10 @@ Coolify installs its entire orchestration stack (Docker, Traefik proxy, its own 
 ### Step 4: Configuring the Resources
 Lumina is a monorepo, meaning both the frontend and backend live in the same Git repository. My initial instinct was to deploy everything using one giant `docker-compose.yml`. I quickly learned that frontend and backend architectures require entirely different build processes. 
 
-I navigated to **Projects** -> **Add New Project**, connected my GitHub repository, and set up two distinct resources:
+I navigated to **Projects** -> **Add New Project**, connected my GitHub repository, and set up three distinct resources:
 
-#### 1. The Client (Frontend)
-For the React/Vite frontend, I didn't want to use Docker. I wanted it served quickly and cheaply as static files.
+#### 1. The Dashboard (Host Frontend)
+For the React/Vite dashboard, I didn't want to use Docker. I wanted it served quickly and cheaply as static files.
 * I clicked **Add Resource** -> **GitHub Repository**.
 * I chose my `Lumina` repo and selected the **Static** build pack.
 * Under **Configuration -> Build Settings**, I set:
@@ -59,9 +59,17 @@ For the React/Vite frontend, I didn't want to use Docker. I wanted it served qui
   * **Output Directory:** `dist`
 * Under **Configuration -> General**, I set the **FQDN (Domain):** to `https://lumina.otagera.xyz`.
 
-*(Note: I had to create another 'A Record' in Cloudflare for `lumina` pointing to my server IP).*
+#### 2. The Guest App (PWA Frontend)
+Similarly, the lightweight guest experience is deployed as a static PWA.
+* I clicked **Add Resource** -> **GitHub Repository**.
+* I chose the same `Lumina` repo and selected the **Static** build pack.
+* Under **Configuration -> Build Settings**, I set:
+  * **Base Directory:** `apps/app`
+  * **Build Command:** `bun run build`
+  * **Output Directory:** `dist`
+* Under **Configuration -> General**, I set the **FQDN (Domain):** to `https://lumina-app.otagera.xyz`.
 
-#### 2. The Backend Stack (API, DB, Worker, AI)
+#### 3. The Backend Stack (API, DB, Worker, AI)
 For the backend, I needed Docker to orchestrate my database, Redis cache, Bun API, and Python AI service.
 * I clicked **Add Resource** -> **GitHub Repository**.
 * I chose my `Lumina` repo and selected the **Docker Compose** build pack.

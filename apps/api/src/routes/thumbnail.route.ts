@@ -26,3 +26,5 @@ export const thumbnailRoutes = new Elysia({ prefix: "/thumbnail" }).get(
 		query: t.Object({ faceId: t.Optional(t.String()) }),
 	},
 );
+
+export default thumbnailRoutes;

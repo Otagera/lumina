@@ -170,7 +170,14 @@ const fetchAlbumHighlights = async (token: string, limit: number) => {
 			status: "APPROVED",
 			deleted_at: null,
 		},
-		include: {
+		select: {
+			image_id: true,
+			image_path: true,
+			storage_provider: true,
+			storage_key: true,
+			original_width: true,
+			original_height: true,
+			status: true,
 			_count: {
 				select: { reactions: true },
 			},

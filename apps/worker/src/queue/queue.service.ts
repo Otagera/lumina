@@ -36,6 +36,10 @@ const trashCleanupQueue = new Queue(
 	BULL_QUEUE_NAMES.TRASH_CLEANUP,
 	queueConnectionConfig,
 );
+const semanticEmbeddingQueue = new Queue(
+	BULL_QUEUE_NAMES.SEMANTIC_EMBEDDING,
+	queueConnectionConfig,
+);
 
 // The lib that contain adding the job and getting the queue
 export class QueueLib {
@@ -66,6 +70,7 @@ class QueueServices {
 	fileDeletionQueueLib;
 	emailQueueLib;
 	trashCleanupQueueLib;
+	semanticEmbeddingQueueLib;
 
 	constructor() {
 		this.defaultQueueLib = new QueueLib(defaultQueue);
@@ -77,6 +82,7 @@ class QueueServices {
 		this.fileDeletionQueueLib = new QueueLib(fileDeletionQueue);
 		this.emailQueueLib = new QueueLib(emailQueue);
 		this.trashCleanupQueueLib = new QueueLib(trashCleanupQueue);
+		this.semanticEmbeddingQueueLib = new QueueLib(semanticEmbeddingQueue);
 	}
 }
 

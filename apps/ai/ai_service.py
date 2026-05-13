@@ -2,23 +2,8 @@ import os
 import logging
 import json
 import tempfile
+import ssl
 from dotenv import load_dotenv
-
-# Load .env file from project root
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-load_dotenv(os.path.join(project_root, ".env"))
-
-from fastapi import FastAPI, HTTPException, Body, File, UploadFile
-import numpy as np
-import uuid
-from typing import List, Optional, Dict
-from pydantic import BaseModel
-from sklearn.cluster import DBSCAN
-import boto3
-from botocore.config import Config
-
-# Import the new shared face extraction pipeline
-from face_utils import extract_faces
 
 # Setup JSON logging for structured logs
 class JSONFormatter(logging.Formatter):
@@ -39,7 +24,67 @@ handler = logging.StreamHandler()
 handler.setFormatter(JSONFormatter())
 logger.addHandler(handler)
 
-app = FastAPI(title="Lumina AI Face Service")
+# Workaround for SSL certificate verification errors (common on macOS/Proxies)
+if os.environ.get("NODE_ENV") != "production":
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
+    os.environ["CURL_CA_BUNDLE"] = ""
+    os.environ["REQUESTS_CA_BUNDLE"] = ""
+    os.environ["HTTPX_VERIFY"] = "0"
+    os.environ["PYTHONHTTPSVERIFY"] = "0"
+    os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+    
+    # Aggressive monkeypatch for httpx
+    try:
+        import httpx
+        from httpx import Client, AsyncClient
+        
+        class UnverifiedClient(Client):
+            def __init__(self, *args, **kwargs):
+                kwargs['verify'] = False
+                super().__init__(*args, **kwargs)
+        
+        class UnverifiedAsyncClient(AsyncClient):
+            def __init__(self, *args, **kwargs):
+                kwargs['verify'] = False
+                super().__init__(*args, **kwargs)
+        
+        httpx.Client = UnverifiedClient
+        httpx.AsyncClient = UnverifiedAsyncClient
+        logger.info("Monkeypatched httpx to disable SSL verification")
+    except Exception as e:
+        logger.error(f"Failed to monkeypatch httpx: {e}")
+
+# Load .env file from project root
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+load_dotenv(os.path.join(project_root, ".env"))
+
+from fastapi import FastAPI, HTTPException, Body, File, UploadFile
+import numpy as np
+import uuid
+from typing import List, Optional, Dict
+from pydantic import BaseModel
+from sklearn.cluster import DBSCAN
+import boto3
+from botocore.config import Config
+from PIL import Image
+
+# Global for lazy-loaded CLIP model
+clip_model = None
+
+def get_clip_model():
+    global clip_model
+    if clip_model is None:
+        from sentence_transformers import SentenceTransformer
+        logger.info("Loading CLIP model (clip-ViT-B-32)...")
+        # Load clip-ViT-B-32 as it is well supported and produces 512D embeddings
+        clip_model = SentenceTransformer('clip-ViT-B-32')
+    return clip_model
+
+# Import the new shared face extraction pipeline
+from face_utils import extract_faces
+
+app = FastAPI(title="Lumina AI Service")
 
 class ProcessRequest(BaseModel):
     image_path: str
@@ -69,6 +114,12 @@ class ClusterRequest(BaseModel):
 
 class ClusterResponse(BaseModel):
     clusters: List[List[int]]
+
+class EmbedRequest(BaseModel):
+    image_path: Optional[str] = None
+    text: Optional[str] = None
+    storage_provider: Optional[str] = None
+    storage_key: Optional[str] = None
 
 def is_valid_uuid(value):
     try:
@@ -115,6 +166,50 @@ async def fetch_image_from_storage(storage_provider: str, storage_key: str, stor
     
     logger.info(f"Image fetched to: {tmp_path}")
     return tmp_path
+
+@app.post("/embed")
+async def generate_embedding(request: EmbedRequest):
+    """
+    Generates a CLIP embedding for either an image or a text string.
+    """
+    model = get_clip_model()
+    
+    if request.text:
+        logger.info(f"Generating text embedding for: {request.text[:50]}...")
+        embedding = model.encode(request.text)
+        return {"embedding": embedding.tolist()}
+    
+    if request.image_path or (request.storage_provider and request.storage_key):
+        temp_file = None
+        try:
+            if request.storage_provider and request.storage_provider != "local" and request.storage_key:
+                storage_config = {
+                    "access_key_id": os.environ.get("R2_ACCESS_KEY_ID"),
+                    "secret_access_key": os.environ.get("R2_SECRET_ACCESS_KEY"),
+                    "endpoint": os.environ.get("R2_ENDPOINT"),
+                    "bucket": os.environ.get("R2_BUCKET"),
+                    "region": os.environ.get("R2_REGION", "auto"),
+                }
+                temp_file = await fetch_image_from_storage(request.storage_provider, request.storage_key, storage_config)
+                img_path = temp_file
+            else:
+                img_path = os.path.abspath(request.image_path)
+            
+            logger.info(f"Generating image embedding for: {img_path}")
+            img = Image.open(img_path)
+            embedding = model.encode(img)
+            return {"embedding": embedding.tolist()}
+        except Exception as e:
+            logger.exception(f"Embedding error: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
+        finally:
+            if temp_file and os.path.exists(temp_file):
+                try:
+                    os.unlink(temp_file)
+                except:
+                    pass
+    
+    raise HTTPException(status_code=400, detail="Must provide either text or image_path/storage_key")
 
 @app.post("/detect")
 async def detect_faces(file: UploadFile = File(...)):
@@ -239,12 +334,9 @@ async def cluster_faces(request: ClusterRequest):
 
     try:
         logger.info(f"Clustering {len(faces)} faces")
-        # InsightFace ArcFace uses cosine distance. A threshold of 0.4-0.5 is typical.
-        # min_samples=2 means it takes at least 2 similar faces to form a cluster
         clt = DBSCAN(eps=0.45, min_samples=2, metric="cosine")
         clt.fit(encodings)
 
-        # Group face_ids by their cluster label
         clusters_dict: Dict[int, List[int]] = {}
         noise_clusters = []
         
@@ -254,11 +346,8 @@ async def cluster_faces(request: ClusterRequest):
                     clusters_dict[label] = []
                 clusters_dict[label].append(face_id)
             else:
-                # Noise points (-1) are faces that don't belong to any cluster.
-                # Treat each noise face as its own individual cluster.
                 noise_clusters.append([face_id])
 
-        # Convert dictionary values to a list of lists and append noise clusters
         result_clusters = list(clusters_dict.values()) + noise_clusters
         
         logger.info(f"Generated {len(result_clusters)} clusters")
@@ -271,7 +360,7 @@ async def cluster_faces(request: ClusterRequest):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "model": "insightface_buffalo_l", "clustering": "DBSCAN_cosine"}
+    return {"status": "healthy", "model": "insightface_buffalo_l + clip-ViT-B-32", "clustering": "DBSCAN_cosine"}
 
 if __name__ == "__main__":
     import uvicorn

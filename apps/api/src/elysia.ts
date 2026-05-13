@@ -1,264 +1,182 @@
+import { Elysia } from "elysia";
 import path from "node:path";
-import { createBullBoard } from "@bull-board/api";
-import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
-import { ElysiaAdapter } from "@bull-board/elysia";
-import { cors } from "@elysiajs/cors";
-import { staticPlugin } from "@elysiajs/static";
 import { swagger } from "@elysiajs/swagger";
-import * as Sentry from "@sentry/bun";
-import { Elysia, sse } from "elysia";
-import config from "../../../packages/config/src/index.config.ts";
-import {
-	EVENTS,
-	eventEmitter,
-} from "../../../packages/utils/src/events.util.ts";
+import { cors } from "@elysiajs/cors";
+import { logger as elysiaLogger } from "@bogeychan/elysia-logger";
 import { createServiceLogger } from "../../../packages/utils/src/logger.util.ts";
-import { queueServices } from "../../worker/src/queue/queue.service.ts";
+import config from "../../../packages/config/src/index.config.ts";
+import { EVENTS, eventEmitter } from "../../../packages/utils/src/events.util.ts";
+
 import albumsRoutes from "./routes/albums.route";
-import authRoutes, { unsubscribeRoutes } from "./routes/auth.route";
+import authRoutes from "./routes/auth.route";
 import billingWebhookRoutes from "./routes/billing-webhook.route";
 import facesRoutes from "./routes/faces.route";
-import { csrfPlugin } from "./routes/middleware/csrf.plugin.ts";
 import notificationsRoutes from "./routes/notifications.route";
 import peopleRoutes from "./routes/people.route";
-import { picturesRoutes, publicPicturesRoutes } from "./routes/pictures.route";
+import picturesRoutes from "./routes/pictures.route";
 import publicRoutes from "./routes/public.route";
-import { reactionsRoutes } from "./routes/reactions.route";
+import reactionsRoutes from "./routes/reactions.route";
+import searchRoutes from "./routes/search.route";
 import settingsRoutes from "./routes/settings.route";
 import { thumbnailRoutes } from "./routes/thumbnail.route";
 import trashRoutes from "./routes/trash.route";
 import usageRoutes from "./routes/usage.route";
 
-const envConfig = config[config.env || "development"];
-
-Sentry.init({
-	dsn: envConfig.sentry_dsn,
-	environment: config.env,
-	serverName: "api",
-});
+import { createBullBoard } from "@bull-board/api";
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
+import { ElysiaAdapter } from "@bull-board/elysia";
+import { queueServices } from "../../worker/src/queue/queue.service.ts";
 
 const logger = createServiceLogger("api");
 
 export const createElysiaApp = async () => {
-	const app = new Elysia({
-		bodyParser: {
-			limit: "10mb",
-		},
-	});
+	try {
+		const app = new Elysia()
+			.use(
+				elysiaLogger({
+					level: "info",
+				}),
+			)
+			.use(
+				cors({
+					origin: (request) => {
+						const origin = request.headers.get("origin");
+						if (!origin) return true;
 
-	if (config.env !== "test") {
-		app.use(csrfPlugin);
-	}
+						// Allow all localhost origins in development to fix Vite proxy issues
+						if (config.env === "development" && origin.includes("localhost")) {
+							return true;
+						}
 
-	app
-		.onBeforeHandle(({ request, body }) => {
-			console.log(
-				`[${new Date().toISOString()}] ${request.method} ${request.url}`,
-			);
-			if (body && request.url.includes("/auth/signup")) {
-				const debugBody = { ...(body as any) };
-				if (debugBody.password) debugBody.password = "***";
-			}
-		})
-		.onAfterHandle(({ request, set }) => {
-			const status = set.status as number;
-			if (status && status >= 400) {
-				const safeUrl = request.url.replace(
-					/(\/albums\/|\/images\/)[^/?]+/,
-					"$1***",
-				);
-				console.log(`[${set.status}] ${request.method} ${safeUrl}`);
-			}
-		})
-		.onError(({ code, error, set, request }) => {
-			console.error(
-				`[GLOBAL ERROR] Code: ${code}, URL: ${request.url}, Method: ${request.method}`,
-			);
-			console.error(`[GLOBAL ERROR] Message: ${error.message}`);
-			if (error.stack) console.error(`[GLOBAL ERROR] Stack: ${error.stack}`);
-
-			if (code === "VALIDATION") {
-				return {
-					status: "error",
-					message: error.message,
-					data: (error as any).all,
-				};
-			}
-		})
-		.use(
-			cors({
-				credentials: true,
-				origin:
-					config.env === "development"
-						? true
-						: envConfig.cors_origin
-							? envConfig.cors_origin.split(",")
-							: false,
-			}),
-		)
-		.get("/api/health", () => ({
-			status: "ok",
-			timestamp: new Date().toISOString(),
-		}))
-		.get("/api/uploads/:key", async ({ params: { key }, set }) => {
-			const normalizedKey = path.basename(key);
-			if (normalizedKey !== key) {
-				set.status = 400;
-				return { error: "Invalid file path" };
-			}
-
-			const { storage } = await import(
-				"../../../packages/utils/src/storage.util.ts"
-			);
-			const fs = await import("node:fs/promises");
-
-			const localPath = path.resolve(
-				process.cwd(),
-				"src/uploads",
-				normalizedKey,
-			);
-
-			try {
-				await fs.access(localPath);
-				return Bun.file(localPath);
-			} catch (_e) {
+						return config[config.env || "development"]?.cors_origin === origin;
+					},
+					credentials: true,
+					allowedHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],
+					methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+				}),
+			)
+			.get("/api/uploads/*", async ({ params, set }) => {
 				try {
-					const buffer = await storage.getObject(normalizedKey);
+					const filename = decodeURIComponent(params["*"]);
+					// Use import.meta.dir to get the directory of elysia.ts (apps/api/src)
+					const uploadsDir = path.resolve(import.meta.dir, "uploads");
+					const filePath = path.join(uploadsDir, filename);
 
-					const ext = normalizedKey.split(".").pop()?.toLowerCase();
-					const contentTypes: Record<string, string> = {
-						jpg: "image/jpeg",
-						jpeg: "image/jpeg",
-						png: "image/png",
-						webp: "image/webp",
-						gif: "image/gif",
-					};
-					if (ext && contentTypes[ext]) {
-						set.headers["content-type"] = contentTypes[ext];
+					const file = Bun.file(filePath);
+
+					if (!(await file.exists())) {
+						console.error(`[UPLOADS] File not found: ${filePath}`);
+						set.status = 404;
+						return "NOT_FOUND";
 					}
 
-					return buffer;
-				} catch (err) {
-					console.error(`[UPLOADS] Failed to fetch ${key} from storage:`, err);
+					return file;
+				} catch (error: any) {
+					console.error(`[UPLOADS] Error serving file: ${error.message}`);
 					set.status = 404;
-					return { error: "File not found" };
+					return "NOT_FOUND";
 				}
-			}
-		})
-		.use(staticPlugin({ assets: "src/uploads", prefix: "/api/uploads" }))
-		.get("/", () => "Face Search Backend is running with Elysia!")
-		.get(
-			"/api/v1/events",
-			({ request, set }) => {
+			})
+			.get("/api/health", () => ({ status: "ok" }))
+			.get("/api/v1/events", ({ set }) => {
 				set.headers["Content-Type"] = "text/event-stream";
 				set.headers["Cache-Control"] = "no-cache";
-				set.headers.Connection = "keep-alive";
-				const abortSignal = request.signal;
+				set.headers["Connection"] = "keep-alive";
 
-				return sse(
-					new ReadableStream({
-						start(controller) {
-							const handler = (data: any) => {
-								try {
-									const sseData = `data: ${JSON.stringify(data)}\n\n`;
-									controller.enqueue(new TextEncoder().encode(sseData));
-								} catch (_e) {
-									console.error("Error sending SSE:", _e);
-								}
-							};
-
-							eventEmitter.on(EVENTS.IMAGE_PROCESSED, handler);
-							eventEmitter.on(EVENTS.FACE_DETECTED, handler);
-							eventEmitter.on(EVENTS.FACE_CLUSTERED, handler);
-							eventEmitter.on(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
-							eventEmitter.on(EVENTS.REACTION_ADDED, handler);
-
-							const cleanup = () => {
-								eventEmitter.off(EVENTS.IMAGE_PROCESSED, handler);
-								eventEmitter.off(EVENTS.FACE_DETECTED, handler);
-								eventEmitter.off(EVENTS.FACE_CLUSTERED, handler);
-								eventEmitter.off(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
-								eventEmitter.off(EVENTS.REACTION_ADDED, handler);
-								try {
-									controller.close();
-								} catch (_e) {}
-								console.log("SSE connection cleaned up.");
-							};
-
-							if (abortSignal.aborted) {
+				return new ReadableStream({
+					start(controller) {
+						const handler = (payload: any) => {
+							try {
+								const data = `data: ${JSON.stringify(payload)}\n\n`;
+								controller.enqueue(data);
+							} catch (e) {
 								cleanup();
-							} else {
-								abortSignal.addEventListener("abort", cleanup, { once: true });
 							}
-						},
-					}),
-				);
-			},
-			{
+						};
+
+						// Heartbeat to keep connection alive
+						const heartbeat = setInterval(() => {
+							try {
+								controller.enqueue(": heartbeat\n\n");
+							} catch (e) {
+								cleanup();
+							}
+						}, 30000);
+
+						eventEmitter.on(EVENTS.IMAGE_PROCESSED, handler);
+						eventEmitter.on(EVENTS.FACE_DETECTED, handler);
+						eventEmitter.on(EVENTS.FACE_CLUSTERED, handler);
+						eventEmitter.on(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
+						eventEmitter.on(EVENTS.REACTION_ADDED, handler);
+
+						const cleanup = () => {
+							clearInterval(heartbeat);
+							eventEmitter.off(EVENTS.IMAGE_PROCESSED, handler);
+							eventEmitter.off(EVENTS.FACE_DETECTED, handler);
+							eventEmitter.off(EVENTS.FACE_CLUSTERED, handler);
+							eventEmitter.off(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
+							eventEmitter.off(EVENTS.REACTION_ADDED, handler);
+							try {
+								controller.close();
+							} catch (_e) { }
+						};
+
+						// Note: Bun's ReadableStream cancel() is triggered when client closes
+					},
+					cancel() {
+						console.log("SSE connection cancelled by client.");
+					}
+				});
+			}, {
 				detail: {
 					summary: "SSE Events Stream",
 					description: "Server-Sent Events stream for real-time updates",
 				},
-			},
-		)
-		.group("/api/v1", (app) =>
-			app
-				.group("/public", (app) => app.use(publicPicturesRoutes))
-				.use(billingWebhookRoutes)
-				.use(thumbnailRoutes)
-				.use(unsubscribeRoutes)
-				.use(authRoutes)
-				.use(albumsRoutes)
-				.use(picturesRoutes)
-				.use(facesRoutes)
-				.use(publicRoutes)
-				.use(peopleRoutes)
-				.use(settingsRoutes)
-				.use(trashRoutes)
-				.use(notificationsRoutes)
-				.use(usageRoutes)
-				.use(reactionsRoutes),
-		)
+			})
+			.group("/api/v1", (app) =>
+				app
+					.use(authRoutes)
+					.use(albumsRoutes)
+					.use(facesRoutes)
+					.use(peopleRoutes)
+					.use(picturesRoutes)
+					.use(searchRoutes)
+					.use(publicRoutes)
+					.use(thumbnailRoutes)
+					.use(trashRoutes)
+					.use(settingsRoutes)
+					.use(notificationsRoutes)
+					.use(usageRoutes)
+					.use(reactionsRoutes)
+					.use(billingWebhookRoutes),
+			)
 
-		.use(swagger());
+			.use(swagger());
 
-	if (config.env !== "test") {
-		const serverAdapter: any = new ElysiaAdapter("/worker/admin");
+		if (config.env !== "test") {
+			const serverAdapter: any = new ElysiaAdapter("/worker/admin");
 
-		createBullBoard({
-			queues: [
-				new BullMQAdapter(queueServices.defaultQueueLib.getQueue()),
-				new BullMQAdapter(queueServices.imageOptimizationQueueLib.getQueue()),
-				new BullMQAdapter(queueServices.faceRecognitionQueueLib.getQueue()),
-				new BullMQAdapter(queueServices.faceSearchQueueLib.getQueue()),
-				new BullMQAdapter(queueServices.faceClusteringQueueLib.getQueue()),
-				new BullMQAdapter(queueServices.bulkDownloadQueueLib.getQueue()),
-				new BullMQAdapter(queueServices.fileDeletionQueueLib.getQueue()),
-			],
-			serverAdapter: serverAdapter,
-		});
+			createBullBoard({
+				queues: [
+					new BullMQAdapter(queueServices.imageOptimizationQueueLib.getQueue()),
+					new BullMQAdapter(queueServices.faceRecognitionQueueLib.getQueue()),
+					new BullMQAdapter(queueServices.faceSearchQueueLib.getQueue()),
+					new BullMQAdapter(queueServices.faceClusteringQueueLib.getQueue()),
+					new BullMQAdapter(queueServices.bulkDownloadQueueLib.getQueue()),
+					new BullMQAdapter(queueServices.fileDeletionQueueLib.getQueue()),
+					new BullMQAdapter(queueServices.emailQueueLib.getQueue()),
+					new BullMQAdapter(queueServices.trashCleanupQueueLib.getQueue()),
+					new BullMQAdapter(queueServices.semanticEmbeddingQueueLib.getQueue()),
+				],
+				serverAdapter,
+			});
 
-		const bullBoardPlugin = await serverAdapter.registerPlugin();
-		app.use(bullBoardPlugin);
-	}
+			const bullBoardPlugin = serverAdapter.registerPlugin();
+			app.use(bullBoardPlugin);
+		}
 
-	eventEmitter.setMaxListeners(100);
+		eventEmitter.setMaxListeners(100);
 
-	return app;
-};
-
-export type App = Awaited<ReturnType<typeof createElysiaApp>>;
-
-const start = async () => {
-	try {
-		logger.info("Initializing Elysia server...");
-		const app = await createElysiaApp();
-		const port = (config as any).development?.elysia_port || 3005;
-		app.listen(port);
-
-		logger.info(
-			`Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
-		);
 		return app;
 	} catch (error: any) {
 		console.log("Failed to start Elysia server:", error);
@@ -270,8 +188,13 @@ const start = async () => {
 	}
 };
 
-if (import.meta.main) {
-	await start();
-}
+export type App = Awaited<ReturnType<typeof createElysiaApp>>;
 
-export default start;
+// Start the server if this file is run directly
+if (import.meta.main || process.env.NODE_ENV === "production") {
+	const port = config[config.env || "development"]?.elysia_port || 3005;
+	const app = await createElysiaApp();
+	app.listen(port, () => {
+		console.log(`🦊 Elysia is running at http://localhost:${port}`);
+	});
+}

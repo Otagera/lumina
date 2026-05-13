@@ -6,11 +6,13 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY apps/api/package.json apps/api/
 COPY apps/client/package.json apps/client/
+COPY apps/app/package.json apps/app/
 COPY apps/worker/package.json apps/worker/
 COPY packages/auth/package.json packages/auth/
 COPY packages/config/package.json packages/config/
 COPY packages/models/package.json packages/models/
 COPY packages/utils/package.json packages/utils/
+COPY packages/event-sdk/package.json packages/event-sdk/
 
 # Install dependencies (ignoring scripts to avoid running prepare scripts for UI if not needed)
 RUN bun install --ignore-scripts
@@ -41,3 +43,10 @@ RUN cd apps/client && bun run build
 EXPOSE 5173
 # Typically you'd serve this with Nginx or a lightweight static server, but for now we'll run the preview
 CMD ["bun", "run", "start"]
+
+# Stage: Guest App (Builder & Server)
+FROM base AS app
+# Build the guest app
+RUN cd apps/app && bun run build
+EXPOSE 5174
+CMD ["bun", "run", "start:app"]

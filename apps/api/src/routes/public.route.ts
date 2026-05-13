@@ -268,12 +268,54 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 			)
 			.post(
 				"/albums/:token/upload",
-				async ({ params, body, set, guestSessionId }) => {
+				async ({ params, body, set, guestSessionId, request }) => {
 					try {
+						let payload: any = {};
+
+						// 1. Extract data from body (handle both plain object and FormData)
+						if (body && typeof body === "object") {
+							if (typeof (body as any).get === "function") {
+								// It's a FormData-like object
+								payload.key = (body as any).get("key");
+								payload.uploadedImages = (body as any).getAll?.("uploadedImages") || (body as any).get("uploadedImages");
+							} else {
+								// It's a plain object
+								payload = body;
+							}
+						}
+
+						// 2. Fallback: If body is missing, try manual parsing
+						if (!payload.uploadedImages && !payload.key && request.headers.get("content-type")?.includes("multipart")) {
+							try {
+								const formData = await request.formData();
+								payload.key = formData.get("key");
+								payload.uploadedImages = formData.getAll("uploadedImages");
+							} catch (e: any) {
+								console.error("[PUBLIC UPLOAD] Manual fallback failed:", e.message);
+							}
+						}
+
+						if (!payload) {
+							set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+							return {
+								status: "error",
+								message: "Invalid or missing request body.",
+							};
+						}
+
+						// Handle key-only uploads for guests
+						const files = payload.uploadedImages
+							? Array.isArray(payload.uploadedImages)
+								? payload.uploadedImages
+								: [payload.uploadedImages]
+							: payload.key
+								? [{ existingKey: payload.key }]
+								: [];
+
 						const data = await uploadPublicService({
 							token: params.token,
-							files: body.uploadedImages,
-							existingKey: body.key,
+							files,
+							existingKey: payload.key,
 							guestSessionId,
 						});
 
@@ -297,7 +339,7 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 				},
 				{
 					params: t.Object({ token: t.String() }),
-					body: t.Any(),
+					body: t.Optional(t.Any()),
 					bodyLimit: 500 * 1024 * 1024,
 				},
 			),

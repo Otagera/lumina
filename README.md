@@ -9,12 +9,14 @@ Lumina is an **AI Intelligence Layer** for your photo library. It allows users t
 ## Features
 
 - **Collaborative Events:** Host weddings, parties, or gatherings where guests can contribute photos via QR code without an account.
+- **Dedicated Guest App (PWA):** A lightweight, mobile-first web app optimized for fast loading and offline-ready capabilities.
 - **"Selfie to Join":** Guests can take a selfie to instantly find all photos of themselves within a shared event.
+- **Immersive Viewing:** TikTok-style vertical snap-scrolling for viewing images with overlaid actions (Love, Download, Share).
 - **BYOS (Bring Your Own Storage):** Connect your own AWS S3 or Cloudflare R2 bucket. Lumina handles the AI, while you own the files and the costs.
 - **Face Detection & Recognition:** Automatically detects and clusters faces using a high-performance background worker.
-- **Face Search:** Find all occurrences of a specific face across albums or collaborative events.
+- **Semantic Natural Language Search (Planned):** Search your photos using natural language (e.g., "cutting the cake") powered by lightweight vision models (CLIP) and `pgvector`.
 - **Managed Storage (R2):** Sustainable managed storage with zero egress fees powered by Cloudflare R2.
-- **Real-time Updates:** UI updates automatically when image processing is complete via Server-Sent Events (SSE).
+- **Unified Real-time Updates:** Seamless UI synchronization across host dashboards and guest apps via Server-Sent Events (SSE).
 - **Background Uploads:** Persistent upload manager (using IndexedDB) allows uploads to continue in the background and resume after page reloads.
 - **Image Optimization:** Automatically generates optimized WebP versions of images for fast display.
 
@@ -23,10 +25,11 @@ Lumina is an **AI Intelligence Layer** for your photo library. It allows users t
 Lumina is a monorepo managed with [Bun Workspaces](https://bun.sh/docs/install/workspaces).
 - **`apps/`**: Contains the runnable services.
   - `api`: The core backend built with Elysia JS.
-  - `client`: The frontend built with React, Vite, and Tailwind CSS.
-  - `ai`: The Python/FastAPI service for generating face embeddings.
+  - `client`: The host dashboard frontend built with React, Vite, and Tailwind CSS.
+  - `app`: The lightweight, mobile-first guest application (PWA).
+  - `ai`: The Python/FastAPI service for generating face and text embeddings.
   - `worker`: The Bun background processor for image optimization and queues.
-- **`packages/`**: Contains shared libraries and domain models (e.g., `@lumina/models`, `@lumina/auth`) to separate database logic and utilities from the application layer.
+- **`packages/`**: Contains shared libraries and domain models (e.g., `@lumina/models`, `@lumina/auth`, `@lumina/event-sdk`) to separate database logic and utilities from the application layer.
 
 ## Installation
 
@@ -57,20 +60,21 @@ To set up the project locally, follow these steps:
 
 The easiest way to run the entire stack is from the root directory:
 
-**Start All Services (Client, API, Worker, AI):**
+**Start All Services (Client, App, API, Worker, AI):**
 ```bash
 bun run dev:all
 ```
 
 **Alternatively, start services individually:**
 - **API (Elysia):** `bun run dev:api`
-- **Frontend (React):** `bun run dev`
+- **Dashboard (React):** `bun run dev`
+- **Guest App (React):** `bun run dev:app`
 - **Worker:** `bun run dev:worker`
 - **AI Service:** `bun run dev:ai`
 
 ### Docker Deployment
 
-To build and start the entire application in containers:
+To build and start the entire application (including the guest app) in containers:
 ```bash
 docker-compose up --build
 ```
@@ -109,6 +113,14 @@ The API is built with ElysiaJS. Key endpoints include:
 - `PATCH /api/v1/faces/:id`: Update face (assign person).
 - `GET /api/v1/people`: List people.
 - `POST /api/v1/people`: Create a new person.
+
+**Search**
+- `POST /api/v1/search/semantic`: Search images using natural language (CLIP).
+
+**Usage & Billing**
+- `GET /api/v1/usage`: Retrieve user usage statistics.
+- `GET /api/v1/usage/export`: Export usage report as CSV.
+- `POST /api/v1/webhooks/billing`: External billing metering webhook.
 
 **Settings & Storage**
 - `GET /api/v1/settings`: Fetch user preferences and storage configs.

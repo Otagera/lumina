@@ -11,6 +11,7 @@ const spec = joi.object({
 	album_name: joi.string().optional(),
 	share_token: joi.string().optional().allow(null),
 	cover_image_id: joi.string().uuid().optional().allow(null),
+	storage_config_id: joi.string().uuid().optional().allow(null),
 	qr_color: joi.string().optional().allow(null),
 	qr_logo_url: joi.string().optional().allow(null),
 	settings: joi
@@ -20,6 +21,7 @@ const spec = joi.object({
 			tagging_policy: joi.string().valid("HOST_ONLY", "GUESTS_SELF", "ANYONE"),
 			expires_at: joi.date().optional().allow(null),
 			allow_guest_uploads: joi.boolean().optional(),
+			semantic_search_enabled: joi.boolean().optional(),
 		})
 		.optional(),
 });
@@ -31,6 +33,7 @@ const aliasSpec = {
 		albumName: "album_name",
 		shareToken: "share_token",
 		coverImageId: "cover_image_id",
+		storageConfigId: "storage_config_id",
 		qrColor: "qr_color",
 		qrLogoUrl: "qr_logo_url",
 		settings: "settings",
@@ -43,6 +46,7 @@ const aliasSpec = {
 		shared_link: "sharedLink",
 		share_token: "shareToken",
 		cover_image_id: "coverImageId",
+		storage_config_id: "storageConfigId",
 		qr_color: "qrColor",
 		qr_logo_url: "qrLogoUrl",
 		settings: "settings",

@@ -128,19 +128,60 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 	)
 	.post(
 		"/",
-		async ({ body, set, userId, guestSessionId }) => {
+		async ({ body, set, userId, guestSessionId, request }) => {
 			try {
+				let payload: any = {};
+				
+				// 1. Extract data from body (handle both plain object and FormData)
+				if (body && typeof body === "object") {
+					if (typeof (body as any).get === "function") {
+						// It's a FormData-like object
+						payload.albumId = (body as any).get("albumId");
+						payload.key = (body as any).get("key");
+						payload.status = (body as any).get("status");
+						payload.uploadedImages = (body as any).getAll?.("uploadedImages") || (body as any).get("uploadedImages");
+					} else {
+						// It's a plain object
+						payload = body;
+					}
+				}
+
+				// 2. Fallback: If still missing albumId, try manual parsing
+				if (!payload.albumId && request.headers.get("content-type")?.includes("multipart")) {
+					try {
+						const formData = await request.formData();
+						payload.albumId = formData.get("albumId");
+						payload.key = formData.get("key");
+						payload.status = formData.get("status");
+						payload.uploadedImages = formData.getAll("uploadedImages");
+					} catch (e: any) {
+						console.error("[PICTURES] Manual fallback failed:", e.message);
+					}
+				}
+
+				if (!payload.albumId) {
+					set.status = HTTP_STATUS_CODES.BAD_REQUEST;
+					return {
+						status: "error",
+						message: "Invalid or missing request body. albumId is required.",
+					};
+				}
+
+				// Normalize files: can be raw files or objects with existingKey
+				const files = payload.uploadedImages
+					? Array.isArray(payload.uploadedImages)
+						? payload.uploadedImages
+						: [payload.uploadedImages]
+					: payload.key
+						? [{ existingKey: payload.key }]
+						: [];
+
 				const data = await uploadPicturesService({
-					albumId: body.albumId,
+					albumId: payload.albumId,
 					userId: userId,
 					guestSessionId,
-					files: body.uploadedImages
-						? Array.isArray(body.uploadedImages)
-							? body.uploadedImages
-							: [body.uploadedImages]
-						: [],
-					status: body.status,
-					existingKey: body.key,
+					files,
+					status: payload.status,
 				});
 
 				set.status = HTTP_STATUS_CODES.CREATED;
@@ -160,7 +201,6 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 			}
 		},
 		{
-			body: t.Any(),
 			beforeHandle: [checkQuota as any],
 			bodyLimit: 500 * 1024 * 1024,
 			error({ error }) {
@@ -630,3 +670,4 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 	);
 
 export { picturesRoutes, publicPicturesRoutes };
+export default picturesRoutes;

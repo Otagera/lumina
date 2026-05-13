@@ -1,5 +1,6 @@
 import { publicEventClient } from "~/hooks/usePublicEventClient";
 import { api } from "./eden";
+import axiosAPI from "./axios";
 
 export const fetchImages = async ({
 	pageParam = null,
@@ -34,10 +35,14 @@ export const fetchImage = async (imageId: string) => {
 export const uploadImages = async (formData: FormData) => {
 	try {
 		const albumId = formData.get("albumId") as string | undefined;
-		const { data, error } = await (api.images.post as any)(formData);
-		if (error) throw error;
-
-		const uploadResponseData = data as any;
+		// Use axiosAPI for FormData to ensure correct multipart handling and visibility in DevTools
+		const response = await axiosAPI.post("/images", formData, {
+			headers: {
+				"Content-Type": "multipart/form-data",
+			},
+		});
+		
+		const uploadResponseData = response.data;
 
 		if (albumId && albumId !== "undefined" && albumId !== "null") {
 			const { error: albumError } = await api.albums[albumId].images.post({
@@ -598,11 +603,12 @@ export const abortPublicMultipartUpload = async (
 // Events & Guest Uploads
 export const uploadGuestImages = async (token: string, formData: FormData) => {
 	try {
-		const { data, error } = await (api.public.albums[token].upload.post as any)(
-			formData,
-		);
-		if (error) throw error;
-		return data;
+		const response = await axiosAPI.post(`/public/albums/${token}/upload`, formData, {
+			headers: {
+				"Content-Type": "multipart/form-data",
+			},
+		});
+		return response.data;
 	} catch (error) {
 		console.error("Error uploading guest images:", error);
 		throw error;
@@ -615,6 +621,8 @@ export const editAlbumSettings = async (
 		albumName?: string;
 		shareToken?: string | null;
 		coverImageId?: string | null;
+		storageConfigId?: string | null;
+		settings?: any;
 	},
 ) => {
 	try {

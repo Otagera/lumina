@@ -8,7 +8,7 @@ import {
 import { ImageGrid } from "@lumina/ui/components/domain/ImageGrid";
 import { SkeletonImageGrid } from "@lumina/ui/components/domain/Skeleton";
 import { Button } from "@lumina/ui/components/ui/button";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	Camera,
 	Heart,
@@ -17,6 +17,8 @@ import {
 	Sparkles,
 	Trophy,
 	WifiOff,
+	Search,
+	X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -52,6 +54,8 @@ export default function EventPage() {
 	const [selectedImage, setSelectedImage] = useState<any | null>(null);
 	const [isCameraOpen, setIsCameraOpen] = useState(false);
 	const [ctaVisible, setCtaVisible] = useState(false);
+	const [searchQuery, setSearchQuery] = useState("");
+	const [isSearching, setIsSearching] = useState(false);
 	const queryClient = useQueryClient();
 	const [isOnline, setIsOnline] = useState(true);
 	const ctaImpressionSentRef = useRef(false);
@@ -67,17 +71,43 @@ export default function EventPage() {
 			window.removeEventListener("offline", onOffline);
 		};
 	}, []);
-	useEffect(() => {
-		if (selectedImage) {
-			console.log("[Event] Image selected for preview:", selectedImage.imageId);
-		}
-	}, [selectedImage]);
 
 	// Fetch Album Details
 	const { data: albumData, isLoading: isAlbumLoading } = useEventAlbum({
 		token: token!,
 		client: publicEventClient,
 	});
+
+	// Semantic Search Query
+	const {
+		data: searchResults,
+		isLoading: isSearchLoading,
+		refetch: runSearch,
+	} = useQuery({
+		queryKey: ["semantic-search-public", token, searchQuery],
+		queryFn: async () => {
+			const res = await api.search.semantic.public.post({
+				query: searchQuery,
+				shareToken: token!,
+			});
+			if (res.error) throw res.error;
+			return res.data;
+		},
+		enabled: false,
+	});
+
+	const handleSearch = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (searchQuery.trim()) {
+			setIsSearching(true);
+			runSearch();
+		}
+	};
+
+	const clearSearch = () => {
+		setSearchQuery("");
+		setIsSearching(false);
+	};
 
 	const albumId = albumData?.id;
 	const { reactions: liveReactions } = useLiveAlbum(albumId);
@@ -131,12 +161,45 @@ export default function EventPage() {
 	};
 
 	const images = useMemo(() => {
-		const searchResults = searchMutation.data?.faces || [];
+		if (isSearching && searchResults?.data?.images) {
+			return searchResults.data.images;
+		}
+		const searchResultsByFace = searchMutation.data?.faces || [];
 		const highlights = highlightsData || [];
-		return searchMutation.data?.faces ? searchResults : highlights;
-	}, [searchMutation.data, highlightsData]);
+		return searchMutation.data?.faces ? searchResultsByFace : highlights;
+	}, [isSearching, searchResults, searchMutation.data, highlightsData]);
 
-	const isNoMatchesState = !!searchMutation.data && images.length === 0;
+	// Sync selectedImage with URL search params
+	useEffect(() => {
+		const params = new URLSearchParams(window.location.search);
+		const imageIdFromUrl = params.get("imageId");
+
+		if (imageIdFromUrl && images.length > 0) {
+			const img = images.find((i: any) => i.imageId === imageIdFromUrl);
+			if (img && (!selectedImage || selectedImage.imageId !== imageIdFromUrl)) {
+				setSelectedImage(img);
+			}
+		} else if (!imageIdFromUrl && selectedImage) {
+			setSelectedImage(null);
+		}
+	}, [images, selectedImage]);
+
+	const handleImageClick = (img: any) => {
+		const params = new URLSearchParams(window.location.search);
+		params.set("imageId", img.imageId);
+		window.history.pushState({}, "", `?${params.toString()}`);
+		setSelectedImage(img);
+	};
+
+	const handleCloseModal = () => {
+		const params = new URLSearchParams(window.location.search);
+		params.delete("imageId");
+		const newSearch = params.toString();
+		window.history.pushState({}, "", newSearch ? `?${newSearch}` : window.location.pathname);
+		setSelectedImage(null);
+	};
+
+	const isNoMatchesState = !!searchMutation.data && !isSearching && images.length === 0;
 	const albumQueryError = !isAlbumLoading && !albumData;
 	const highlightsQueryError = !isHighlightsLoading && !highlightsData;
 	const showOfflineFallback =
@@ -202,8 +265,15 @@ export default function EventPage() {
 				base[img.imageId] = img.reactionCount || 0;
 			});
 		}
+		if (searchResults?.data?.images) {
+			searchResults.data.images.forEach((img: any) => {
+				base[img.imageId] = img.reactionCount || 0;
+			});
+		}
 		return { ...base, ...liveReactions };
-	}, [highlightsData, searchMutation.data, liveReactions]);
+	}, [highlightsData, searchMutation.data, searchResults, liveReactions]);
+
+	const isLoading = isAlbumLoading || isHighlightsLoading;
 
 	return (
 		<div className="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12 space-y-10 md:space-y-12">
@@ -227,7 +297,7 @@ export default function EventPage() {
 						Retry now
 					</Button>
 				</div>
-			) : isAlbumLoading ? (
+			) : isLoading && !isSearching ? (
 				<div className="p-6 space-y-6">
 					<div className="h-8 w-48 bg-zinc-200 dark:bg-zinc-800 animate-pulse rounded-lg" />
 					<SkeletonImageGrid count={12} />
@@ -236,8 +306,7 @@ export default function EventPage() {
 				<>
 					{/* Hero Section */}
 					<header className="text-center space-y-4">
-						<div className="inline-flex items-center px-3 py-1 rounded-full bg-sage/10 text-sage text-xs font-black uppercase tracking-widest border border-sage/20">
-							<Sparkles className="w-3 h-3 mr-2" />
+						<div className="inline-flex items-center px-3 py-1  text-xs font-black uppercase tracking-widest">
 							Live Event Gallery
 						</div>
 						<h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter text-zinc-900 dark:text-white px-2 sm:px-4 text-balance break-words">
@@ -248,6 +317,44 @@ export default function EventPage() {
 							instantly.
 						</p>
 					</header>
+
+					{/* Semantic Search UI */}
+					{albumData?.settings?.semantic_search_enabled && (
+						<form
+							onSubmit={handleSearch}
+							className="relative max-w-lg mx-auto w-full group px-4"
+						>
+							<div className="absolute inset-0 bg-sage/5 rounded-3xl blur-xl group-focus-within:bg-sage/10 transition-all" />
+							<div className="relative flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-1 shadow-lg transition-all focus-within:ring-2 focus-within:ring-sage/40">
+								<div className="pl-4 pr-2 text-zinc-400">
+									<Search size={18} />
+								</div>
+								<input
+									type="text"
+									placeholder="Search photos... (e.g. 'dancing')"
+									value={searchQuery}
+									onChange={(e) => setSearchQuery(e.target.value)}
+									className="flex-1 bg-transparent border-none outline-none py-3 text-sm font-bold text-zinc-900 dark:text-white placeholder:text-zinc-500 placeholder:font-medium"
+								/>
+								{searchQuery && (
+									<button
+										type="button"
+										onClick={clearSearch}
+										className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400"
+									>
+										<X size={14} />
+									</button>
+								)}
+								<Button
+									type="submit"
+									disabled={isSearchLoading || !searchQuery.trim()}
+									className="rounded-2xl px-5 h-11 bg-sage text-zinc-950 font-black tracking-tight"
+								>
+									{isSearchLoading ? "..." : "Search"}
+								</Button>
+							</div>
+						</form>
+					)}
 
 					{/* Action Section */}
 					<div className="flex flex-col items-center justify-center space-y-6 px-4">
@@ -307,27 +414,46 @@ export default function EventPage() {
 
 					{/* Gallery Section */}
 					<section className="space-y-8">
-						<div className="flex items-center justify-between gap-2 px-2">
-							<div className="flex items-center gap-3">
-								{!selfiePreview ? (
-									<div className="p-2 bg-sage/10 rounded-xl">
-										<Trophy className="w-5 h-5 text-sage" />
-									</div>
-								) : (
-									<div className="p-2 bg-rose-500/10 rounded-xl">
-										<Heart className="w-5 h-5 text-rose-500" />
-									</div>
-								)}
-								<h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight break-words">
-									{selfiePreview ? "Photos of You" : "Event Highlights"}
-								</h3>
+						{isSearching && (
+							<div className="flex items-center justify-between px-2 mb-4">
+								<div className="flex items-center gap-2 text-sage">
+									<Sparkles size={18} />
+									<p className="text-sm font-black uppercase tracking-widest">
+										AI Results for "{searchQuery}"
+									</p>
+								</div>
+								<button
+									onClick={clearSearch}
+									className="text-xs font-bold text-zinc-400 underline underline-offset-4"
+								>
+									Clear
+								</button>
 							</div>
-							<span className="hidden sm:inline-flex px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-full text-[10px] font-black text-zinc-400 uppercase tracking-widest shrink-0">
-								{selfiePreview ? `${images.length} results` : "Trending Now"}
-							</span>
-						</div>
+						)}
 
-						{searchMutation.isPending ? (
+						{!isSearching && (
+							<div className="flex items-center justify-between gap-2 px-2">
+								<div className="flex items-center gap-3">
+									{!selfiePreview ? (
+										<div className="p-2 bg-sage/10 rounded-xl">
+											<Trophy className="w-5 h-5 text-sage" />
+										</div>
+									) : (
+										<div className="p-2 bg-rose-500/10 rounded-xl">
+											<Heart className="w-5 h-5 text-rose-500" />
+										</div>
+									)}
+									<h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight break-words">
+										{selfiePreview ? "Photos of You" : "Event Highlights"}
+									</h3>
+								</div>
+								<span className="hidden sm:inline-flex px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-full text-[10px] font-black text-zinc-400 uppercase tracking-widest shrink-0">
+									{selfiePreview ? `${images.length} results` : "Trending Now"}
+								</span>
+							</div>
+						)}
+
+						{searchMutation.isPending || isSearchLoading ? (
 							<div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-2">
 								{Array.from({ length: 8 }).map((_, idx) => (
 									<div
@@ -342,51 +468,56 @@ export default function EventPage() {
 									</div>
 								))}
 							</div>
-						) : isHighlightsLoading ? (
-							<SkeletonImageGrid count={8} />
 						) : images.length > 0 ? (
 							<div className="px-2">
 								<ImageGrid
 									images={images}
 									reactions={mergedReactions}
 									onReaction={(id) => reactMutation.mutate(id)}
-									onImageClick={(img) => {
-										console.log("[Event] Image clicked:", img.imageId);
-										setSelectedImage(img);
-									}}
+									onImageClick={handleImageClick}
 								/>
 							</div>
-						) : isNoMatchesState ? (
+						) : isNoMatchesState || (isSearching && images.length === 0) ? (
 							<div className="p-8 md:p-12 text-center bg-zinc-50 dark:bg-zinc-900/50 rounded-[3rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 mx-2 space-y-5">
-								<ImageIcon className="w-12 h-12 md:w-16 md:h-16 mx-auto text-zinc-300 mb-2" />
-								<div className="space-y-2 max-w-sm mx-auto">
-									<p className="text-zinc-700 dark:text-zinc-200 font-bold text-base md:text-lg">
-										No face matches yet
-									</p>
-									<p className="text-zinc-500 font-medium text-sm md:text-base">
-										Try a clear front-facing selfie with good lighting and
-										minimal obstructions.
-									</p>
-								</div>
-								<div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
-									<Button
-										onClick={() => setIsCameraOpen(true)}
-										className="w-full sm:w-auto rounded-2xl bg-sage text-zinc-950 hover:bg-sage/90 px-6"
-									>
-										<Camera className="w-4 h-4 mr-2" />
-										Retake Selfie
-									</Button>
-									<Button
-										variant="outline"
-										onClick={() => {
-											searchMutation.reset();
-											setSelfiePreview(null);
-										}}
-										className="w-full sm:w-auto rounded-2xl"
-									>
-										View Highlights Instead
-									</Button>
-								</div>
+								{isSearching ? (
+									<>
+										<ImageIcon className="w-12 h-12 mx-auto text-zinc-300" />
+										<p className="text-zinc-700 dark:text-zinc-200 font-bold">No results for your search.</p>
+										<Button variant="outline" onClick={clearSearch}>Clear Search</Button>
+									</>
+								) : (
+									<>
+										<ImageIcon className="w-12 h-12 md:w-16 md:h-16 mx-auto text-zinc-300 mb-2" />
+										<div className="space-y-2 max-w-sm mx-auto">
+											<p className="text-zinc-700 dark:text-zinc-200 font-bold text-base md:text-lg">
+												No face matches yet
+											</p>
+											<p className="text-zinc-500 font-medium text-sm md:text-base">
+												Try a clear front-facing selfie with good lighting and
+												minimal obstructions.
+											</p>
+										</div>
+										<div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
+											<Button
+												onClick={() => setIsCameraOpen(true)}
+												className="w-full sm:w-auto rounded-2xl bg-sage text-zinc-950 hover:bg-sage/90 px-6"
+											>
+												<Camera className="w-4 h-4 mr-2" />
+												Retake Selfie
+											</Button>
+											<Button
+												variant="outline"
+												onClick={() => {
+													searchMutation.reset();
+													setSelfiePreview(null);
+												}}
+												className="w-full sm:w-auto rounded-2xl"
+											>
+												View Highlights Instead
+											</Button>
+										</div>
+									</>
+								)}
 							</div>
 						) : (
 							<div className="p-10 md:p-20 text-center bg-zinc-50 dark:bg-zinc-900/50 rounded-[3rem] border-2 border-dashed border-zinc-200 dark:border-zinc-800 mx-2">
@@ -399,7 +530,7 @@ export default function EventPage() {
 					</section>
 
 					{ctaVisible && (
-						<section className="mx-2 rounded-[2rem] border border-sage/30 bg-gradient-to-br from-sage/15 to-plum/10 p-5 sm:p-6 text-left animate-in fade-in slide-in-from-bottom-2 duration-500">
+						<section className="mx-2 rounded-[2rem] border border-sage/30 bg-gradient-to-br from-sage/15 to-rose-500/10 p-5 sm:p-6 text-left animate-in fade-in slide-in-from-bottom-2 duration-500">
 							<p className="text-[11px] uppercase tracking-widest font-black text-sage mb-2">
 								For Event Creators
 							</p>
@@ -457,9 +588,16 @@ export default function EventPage() {
 			<GuestImageModal
 				initialImage={selectedImage}
 				images={images}
-				onClose={() => setSelectedImage(null)}
+				onClose={handleCloseModal}
 				onReaction={(id) => reactMutation.mutate(id)}
 				reactions={mergedReactions}
+				onActiveImageChange={(img) => {
+					const params = new URLSearchParams(window.location.search);
+					if (params.get("imageId") !== img.imageId) {
+						params.set("imageId", img.imageId);
+						window.history.replaceState({}, "", `?${params.toString()}`);
+					}
+				}}
 			/>
 		</div>
 	);

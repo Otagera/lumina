@@ -31,8 +31,7 @@ export default function Home() {
 		<div className="min-h-dvh bg-zinc-50 dark:bg-zinc-950 px-4 py-6 sm:py-8 md:py-14">
 			<div className="max-w-4xl mx-auto space-y-8 sm:space-y-10 md:space-y-14">
 				<header className="text-center space-y-4 md:space-y-6">
-					<div className="inline-flex items-center px-3 py-1 rounded-full bg-sage/10 text-sage text-xs font-black uppercase tracking-widest border border-sage/20">
-						<Sparkles className="w-3 h-3 mr-2" />
+					<div className="inline-flex items-center px-3 py-1  font-black uppercase tracking-widest">
 						Friendly Event Experience
 					</div>
 					<h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter text-zinc-900 dark:text-white text-balance">

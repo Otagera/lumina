@@ -19,6 +19,9 @@ COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt
 
+# Pre-download CLIP model
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('clip-ViT-B-32')"
+
 # Copy the AI service code
 COPY apps/ai /app/apps/ai
 

@@ -1,3 +1,4 @@
+import { cn } from "@lumina/ui/lib/utils";
 import { Button } from "@lumina/ui/components/ui/button";
 import {
 	AlertTriangle,
@@ -262,7 +263,7 @@ export const InAppCamera = ({
 					/>
 				</div>
 
-				<div className="p-6 pb-10 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-white/5 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-40">
+				<div className="p-6 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-white/5 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-40">
 					<button
 						onClick={() => setMode(mode === "camera" ? "upload" : "camera")}
 						className="p-4 bg-zinc-100 dark:bg-white/5 text-zinc-900 dark:text-white rounded-2xl hover:bg-zinc-200 dark:hover:bg-white/10 transition-all active:scale-90 flex flex-col items-center gap-1 shadow-sm min-w-[70px]"
@@ -303,15 +304,25 @@ export const InAppCamera = ({
 					</button>
 				</div>
 				{mode === "camera" && (
-					<div className="px-6 pb-4 -mt-4 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-white/5">
-						<div className="grid grid-cols-2 gap-2 text-[10px] font-black uppercase tracking-wider">
-							<div className={`rounded-xl px-3 py-2 flex items-center gap-2 ${readiness.faceCentered ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-zinc-100 text-zinc-500 dark:bg-white/5 dark:text-zinc-400"}`}>
-								<UserRound className="w-3 h-3" />
-								Face centered
+					<div className="px-6 py-4 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-100 dark:border-white/5">
+						<div className="grid grid-cols-2 gap-3">
+							<div className={cn(
+								"rounded-2xl px-4 py-3 flex items-center justify-center gap-2 border transition-all duration-500",
+								readiness.faceCentered 
+									? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]" 
+									: "bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-white/5 dark:border-white/10"
+							)}>
+								<UserRound className={cn("w-4 h-4", readiness.faceCentered && "animate-pulse")} />
+								<span className="text-[11px] font-black uppercase tracking-widest">Face centered</span>
 							</div>
-							<div className={`rounded-xl px-3 py-2 flex items-center gap-2 ${readiness.lightingGood ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-zinc-100 text-zinc-500 dark:bg-white/5 dark:text-zinc-400"}`}>
-								<Sun className="w-3 h-3" />
-								Lighting good
+							<div className={cn(
+								"rounded-2xl px-4 py-3 flex items-center justify-center gap-2 border transition-all duration-500",
+								readiness.lightingGood 
+									? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]" 
+									: "bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-white/5 dark:border-white/10"
+							)}>
+								<Sun className={cn("w-4 h-4", readiness.lightingGood && "animate-pulse")} />
+								<span className="text-[11px] font-black uppercase tracking-widest">Lighting good</span>
 							</div>
 						</div>
 					</div>

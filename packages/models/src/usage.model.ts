@@ -150,3 +150,30 @@ export const getUserUsageStats = async (userId: string) => {
 		};
 	}
 };
+
+/**
+ * Checks if a user has exceeded their compute limit or hit a soft limit threshold.
+ * Returns { allowed: boolean, notification?: string }
+ */
+export const checkComputeLimit = async (userId: string) => {
+	const stats = await getUserUsageStats(userId);
+	const ratio = stats.computeUnitsUsed / stats.computeUnitsLimit;
+
+	if (ratio >= 1.0) {
+		return {
+			allowed: true, // Soft limit allowed for demo
+			notification: "CRITICAL: You have reached 100% of your compute limit.",
+			status: "EXCEEDED" as const,
+		};
+	}
+
+	if (ratio >= 0.8) {
+		return {
+			allowed: true,
+			notification: "WARNING: You have reached 80% of your compute limit.",
+			status: "WARNING" as const,
+		};
+	}
+
+	return { allowed: true, status: "OK" as const };
+};

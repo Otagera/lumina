@@ -1,6 +1,6 @@
 import { cn } from "@lumina/ui/lib/utils";
-import { Download, Heart, Share2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Download, Heart, Share2, X, ChevronUp, ChevronDown } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface GuestImageModalProps {
 	initialImage: any | null;
@@ -8,6 +8,7 @@ interface GuestImageModalProps {
 	onClose: () => void;
 	onReaction?: (imageId: string) => void;
 	reactions: Record<string, number>;
+	onActiveImageChange?: (image: any) => void;
 }
 
 export const GuestImageModal = ({
@@ -16,6 +17,7 @@ export const GuestImageModal = ({
 	onClose,
 	onReaction,
 	reactions,
+	onActiveImageChange,
 }: GuestImageModalProps) => {
 	const [activeReactingId, setActiveReactingId] = useState<string | null>(null);
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +34,33 @@ export const GuestImageModal = ({
 				setHasScrolledInit(true);
 			}
 		}
-	}, [initialImage, images, hasScrolledInit]);
+	}, [initialImage, hasScrolledInit]);
+
+	// Intersection Observer to track active image
+	useEffect(() => {
+		if (!onActiveImageChange) return;
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						const id = entry.target.id.replace("modal-img-", "");
+						const img = images.find((i) => i.imageId === id);
+						if (img) onActiveImageChange(img);
+					}
+				}
+			},
+			{ threshold: 0.6 },
+		);
+
+		const container = scrollContainerRef.current;
+		if (container) {
+			const items = container.querySelectorAll("[id^='modal-img-']");
+			for (const item of items) observer.observe(item);
+		}
+
+		return () => observer.disconnect();
+	}, [images, onActiveImageChange]);
 
 	const handleReaction = (image: any) => {
 		setActiveReactingId(image.imageId);
@@ -58,6 +86,36 @@ export const GuestImageModal = ({
 		}
 	};
 
+	const scrollToNext = useCallback(() => {
+		if (scrollContainerRef.current) {
+			scrollContainerRef.current.scrollBy({
+				top: window.innerHeight,
+				behavior: "smooth",
+			});
+		}
+	}, []);
+
+	const scrollToPrev = useCallback(() => {
+		if (scrollContainerRef.current) {
+			scrollContainerRef.current.scrollBy({
+				top: -window.innerHeight,
+				behavior: "smooth",
+			});
+		}
+	}, []);
+
+	// Keyboard navigation
+	useEffect(() => {
+		if (!initialImage) return;
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "ArrowDown") scrollToNext();
+			if (e.key === "ArrowUp") scrollToPrev();
+			if (e.key === "Escape") onClose();
+		};
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [initialImage, onClose, scrollToNext, scrollToPrev]);
+
 	// Prevent body scroll when modal is open
 	useEffect(() => {
 		if (initialImage) {
@@ -74,9 +132,9 @@ export const GuestImageModal = ({
 	if (!initialImage) return null;
 
 	return (
-		<div className="fixed inset-0 w-full h-[100dvh] bg-black z-[500] animate-in fade-in duration-300">
-			{/* Close Button - Top Left */}
-			<div className="absolute top-6 left-6 z-[510]">
+		<div className="fixed inset-0 w-full h-[100dvh] bg-black z-[500] animate-in fade-in duration-300 overflow-hidden">
+			{/* Close Button - Top Right */}
+			<div className="absolute top-6 right-6 z-[520]">
 				<button
 					type="button"
 					onClick={onClose}
@@ -84,6 +142,26 @@ export const GuestImageModal = ({
 					aria-label="Close"
 				>
 					<X size={24} />
+				</button>
+			</div>
+
+			{/* Desktop Navigation Buttons (Moved to Left) */}
+			<div className="hidden md:flex fixed left-6 top-1/2 -translate-y-1/2 z-[520] flex-col gap-4">
+				<button
+					type="button"
+					onClick={scrollToPrev}
+					className="p-4 bg-zinc-900/60 hover:bg-zinc-800/80 text-white rounded-full backdrop-blur-xl border border-white/10 transition-all active:scale-90"
+					aria-label="Previous Photo"
+				>
+					<ChevronUp size={24} />
+				</button>
+				<button
+					type="button"
+					onClick={scrollToNext}
+					className="p-4 bg-zinc-900/60 hover:bg-zinc-800/80 text-white rounded-full backdrop-blur-xl border border-white/10 transition-all active:scale-90"
+					aria-label="Next Photo"
+				>
+					<ChevronDown size={24} />
 				</button>
 			</div>
 

@@ -41,3 +41,4 @@ const reactionsRoutes = new Elysia({ prefix: "/reactions" })
 	);
 
 export { reactionsRoutes };
+export default reactionsRoutes;
