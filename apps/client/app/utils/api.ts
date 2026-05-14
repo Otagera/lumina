@@ -18,7 +18,9 @@ export const fetchImages = async ({
 		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error: any) {
-		throw new Error(error.response?.data?.message || error.message || "API request failed");
+		throw new Error(
+			error.response?.data?.message || error.message || "API request failed",
+		);
 	}
 };
 
@@ -56,7 +58,9 @@ export const uploadImages = async (formData: FormData) => {
 		return uploadResponseData;
 	} catch (error: any) {
 		console.error("Error uploading images:", error);
-		throw new Error(error.response?.data?.message || error.message || "Upload failed");
+		throw new Error(
+			error.response?.data?.message || error.message || "Upload failed",
+		);
 	}
 };
 
@@ -171,7 +175,9 @@ export const forgotPassword = async (email: string) => {
 		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error: any) {
-		throw new Error(error.response?.data?.message || error.message || "Request failed");
+		throw new Error(
+			error.response?.data?.message || error.message || "Request failed",
+		);
 	}
 };
 

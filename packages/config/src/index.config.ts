@@ -48,6 +48,9 @@ const config: IConfig = {
 		| "production",
 	app_name: getEnv("APP_NAME") || "Lumina",
 	development: {
+		// System user for orphan records
+		system_user_id: getEnv("SYSTEM_USER_ID"),
+
 		// DB
 		db_user: getEnv("PG_USERNAME"),
 		db_host: getEnv("PG_HOSTNAME"),
@@ -139,6 +142,9 @@ const config: IConfig = {
 		},
 	},
 	test: {
+		// System user for orphan records
+		system_user_id: getEnv("SYSTEM_USER_ID"),
+
 		db_url: `${getEnv("TEST_DB_URL")}/${getEnv("TEST_DB_NAME")}`,
 		base_api_url: getEnv("TEST_BASE_API_URL") || "http://localhost",
 		port: getEnv("TEST_PORT") || 5001,
@@ -191,6 +197,9 @@ const config: IConfig = {
 		is_api: process.env.IS_API === "true",
 	},
 	production: {
+		// System user for orphan records
+		system_user_id: getEnv("SYSTEM_USER_ID"),
+
 		db_url: getEnv("DB_URL"),
 		base_api_url: getEnv("BASE_API_URL") || "https://lumina-api.otagera.xyz",
 		port: getEnv("PORT") || 5001,

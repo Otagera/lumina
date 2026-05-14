@@ -100,7 +100,8 @@ const run = async (jobData) => {
 		});
 
 		if (!image) {
-			throw new Error(`Image record ${imageId} not found`);
+			console.warn(`[IMAGE-OPT] Image ${imageId} not found, skipping optimization`);
+			return { status: "skipped", reason: "image_not_found", imageId, albumId };
 		}
 
 		let albumStorageConfig = null;
@@ -162,8 +163,11 @@ const run = async (jobData) => {
 			optimizedSize = (await fs.stat(optimizedLocalPath)).size;
 
 			// Log usage
-			if (image.uploaded_by) {
+			// Log usage with graceful handling
+			try {
 				await logUsage(image.uploaded_by, "storage", "optimize", optimizedSize);
+			} catch (logError) {
+				console.warn(`[IMAGE-OPT] Failed to log usage for image ${imageId}:`, logError);
 			}
 		} else {
 			// Upload to external storage (R2/BYOS)
@@ -176,8 +180,11 @@ const run = async (jobData) => {
 			optimizedPathOrKey = optimizedKey;
 			optimizedSize = optimizedBuffer.length;
 
-			if (image.uploaded_by) {
+			// Log usage with graceful handling
+			try {
 				await logUsage(image.uploaded_by, "storage", "optimize", optimizedSize);
+			} catch (logError) {
+				console.warn(`[IMAGE-OPT] Failed to log usage for image ${imageId}:`, logError);
 			}
 		}
 
@@ -215,8 +222,8 @@ const run = async (jobData) => {
 			message: `Image optimization completed for ${imagePath || storageKey}`,
 		};
 	} catch (error) {
-		console.error("Error processing image optimization task:", error);
-		throw error;
+		console.error(`[IMAGE-OPT] Error processing image ${imageId}:`, error);
+		return { status: "error", reason: error.message, imageId, albumId };
 	}
 };
 

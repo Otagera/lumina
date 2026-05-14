@@ -76,6 +76,23 @@ async function main() {
 		});
 	}
 
+	console.log("Seeding system user...");
+
+	const systemUserEmail = "system@lumina.otagera.xyz";
+	const systemUser = await prisma.users.upsert({
+		where: { email: systemUserEmail },
+		update: {},
+		create: {
+			email: systemUserEmail,
+			password:
+				"$2a$12$placeholder_hash_for_system_user_do_not_use_this_to_login",
+			plan_name: "free",
+			plan_id: freePlan?.id,
+		},
+	});
+
+	console.log(`System user created/updated: ${systemUser.user_id}`);
+
 	console.log("Seeding completed.");
 }
 

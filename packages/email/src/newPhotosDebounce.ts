@@ -29,14 +29,23 @@ export const incrementPendingUpload = async (
 		const data = JSON.parse(existing) as PendingUpload;
 		data.photoCount += photoCount;
 		data.lastUpdated = Date.now();
-		await redisClient.setex(key, Math.ceil(DEBOUNCE_DELAY_MS / 1000), JSON.stringify(data));
+		await redisClient.setex(
+			key,
+			Math.ceil(DEBOUNCE_DELAY_MS / 1000),
+			JSON.stringify(data),
+		);
 
 		if (data.photoCount >= IMMEDIATE_THRESHOLD) {
 			await sendNewPhotosEmailDebounced(albumId);
 			return { shouldSendImmediately: true, totalCount: data.photoCount };
 		}
 
-		await redisClient.set(getTimeoutKey(albumId), "1", "EX", Math.ceil(DEBOUNCE_DELAY_MS / 1000));
+		await redisClient.set(
+			getTimeoutKey(albumId),
+			"1",
+			"EX",
+			Math.ceil(DEBOUNCE_DELAY_MS / 1000),
+		);
 
 		return { shouldSendImmediately: false, totalCount: data.photoCount };
 	}
@@ -48,13 +57,24 @@ export const incrementPendingUpload = async (
 		photoCount,
 		lastUpdated: Date.now(),
 	};
-	await redisClient.setex(key, Math.ceil(DEBOUNCE_DELAY_MS / 1000), JSON.stringify(newData));
-	await redisClient.set(getTimeoutKey(albumId), "1", "EX", Math.ceil(DEBOUNCE_DELAY_MS / 1000));
+	await redisClient.setex(
+		key,
+		Math.ceil(DEBOUNCE_DELAY_MS / 1000),
+		JSON.stringify(newData),
+	);
+	await redisClient.set(
+		getTimeoutKey(albumId),
+		"1",
+		"EX",
+		Math.ceil(DEBOUNCE_DELAY_MS / 1000),
+	);
 
 	return { shouldSendImmediately: false, totalCount: photoCount };
 };
 
-export const sendNewPhotosEmailDebounced = async (albumId: string): Promise<void> => {
+export const sendNewPhotosEmailDebounced = async (
+	albumId: string,
+): Promise<void> => {
 	const timeoutKey = getTimeoutKey(albumId);
 	const timeoutExists = await redisClient.get(timeoutKey);
 	if (!timeoutExists) return;
@@ -75,7 +95,9 @@ export const sendNewPhotosEmailDebounced = async (albumId: string): Promise<void
 };
 
 const queueEmailJob = async (data: PendingUpload) => {
-	const { queueServices } = await import("../../../apps/worker/src/queue/queue.service.ts");
+	const { queueServices } = await import(
+		"../../../apps/worker/src/queue/queue.service.ts"
+	);
 	await queueServices.emailQueueLib.addJob("email", {
 		worker: "email",
 		type: "new_photos",

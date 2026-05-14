@@ -150,7 +150,11 @@ export const cursorPagination = async (
 			return 0;
 		});
 	} else {
-		data = data.sort((x, y) => x.image_id - y.image_id);
+		data = data.sort((x, y) => {
+			if (x.image_id > y.image_id) return 1;
+			if (x.image_id < y.image_id) return -1;
+			return 0;
+		});
 	}
 
 	// Check if there's a next page by inspecting if we fetched an extra item

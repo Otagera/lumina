@@ -1,16 +1,64 @@
 import prisma from "../../config/src/db.config.ts";
+import config from "../../config/src/index.config.ts";
+
+const SYSTEM_USER_EMAIL = "system@lumina.otagera.xyz";
+
+const getSystemUserId = async (): Promise<string | null> => {
+	const envConfig = config[config.env || "development"];
+	const configSystemId = envConfig.system_user_id;
+
+	if (configSystemId && configSystemId.length === 36) {
+		return configSystemId;
+	}
+
+	const systemUser = await prisma.users
+		.findUnique({
+			where: { email: SYSTEM_USER_EMAIL },
+			select: { user_id: true },
+		})
+		.catch(() => null);
+
+	return systemUser?.user_id || null;
+};
+
+const resolveUserId = async (userId: string | null | undefined): Promise<string | null> => {
+	if (!userId) {
+		return getSystemUserId();
+	}
+
+	const userExists = await prisma.users
+		.findUnique({
+			where: { user_id: userId },
+			select: { user_id: true },
+		})
+		.catch(() => null);
+
+	if (!userExists) {
+		console.warn(`[USAGE-LOG] User ${userId} not found, using system user`);
+		return getSystemUserId();
+	}
+
+	return userId;
+};
 
 export const logUsage = async (
-	userId: string,
+	userId: string | null | undefined,
 	resource: string,
 	operation: string,
 	quantity: number = 1,
 	albumId?: string,
 	metadata?: Record<string, any>,
 ) => {
+	const actualUserId = await resolveUserId(userId);
+
+	if (!actualUserId) {
+		console.error("[USAGE-LOG] No system user found, cannot log usage");
+		return;
+	}
+
 	return await prisma.usage_logs.create({
 		data: {
-			user_id: userId,
+			user_id: actualUserId,
 			album_id: albumId || null,
 			resource,
 			operation,
@@ -21,20 +69,26 @@ export const logUsage = async (
 };
 
 export const logStorageUsage = async (
-	userId: string,
+	userId: string | null | undefined,
 	operation: string,
 	quantity: number,
 	albumId?: string,
 	metadata?: Record<string, any>,
 ) => {
-	// For storage, we track delta changes (positive for add, negative for delete)
+	const actualUserId = await resolveUserId(userId);
+
+	if (!actualUserId) {
+		console.error("[USAGE-LOG] No system user found, cannot log storage usage");
+		return;
+	}
+
 	return await prisma.usage_logs.create({
 		data: {
-			user_id: userId,
+			user_id: actualUserId,
 			album_id: albumId || null,
 			resource: "storage",
 			operation,
-			quantity, // bytes
+			quantity,
 			metadata: metadata || {},
 		},
 	});

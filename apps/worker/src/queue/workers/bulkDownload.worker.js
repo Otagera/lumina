@@ -77,7 +77,33 @@ const run = async (jobData) => {
 		});
 
 		if (images.length === 0) {
-			throw new Error("No images found.");
+			console.warn(`[BULK-DOWNLOAD] No images found for job ${jobId}`);
+
+			if (userId) {
+				try {
+					await prisma.notifications.create({
+						data: {
+							user_id: userId,
+							type: "DOWNLOAD_FAILED",
+							metadata: {
+								jobId,
+								message:
+									"Download failed - some images were removed before download.",
+								requestedCount: imageIds.length,
+							},
+						},
+					});
+				} catch (notifError) {
+					console.warn(`[BULK-DOWNLOAD] Failed to create notification:`, notifError);
+				}
+			}
+
+			return {
+				status: "failed",
+				reason: "no_images",
+				requestedCount: imageIds.length,
+				userId,
+			};
 		}
 
 		const output = createWriteStream(zipPath);
@@ -176,24 +202,43 @@ const run = async (jobData) => {
 			})().catch(reject);
 		});
 	} catch (error) {
-		console.error("Bulk download worker failed:", error);
+		console.error(`[BULK-DOWNLOAD] Error for job ${jobId}:`, error);
 		if (fs.existsSync(zipPath)) {
 			await unlink(zipPath).catch(() => {});
 		}
 
-		// Log compute usage for bulk download (on failure too, to track attempts)
+		// Create notification for user
 		if (userId) {
-			await logUsage(
-				userId,
-				"compute",
-				"bulk_download",
-				Math.ceil(imageIds.length / 10), // 1 unit per 10 images
-				null,
-				{ image_count: imageIds.length, job_id: jobId },
-			);
+			try {
+				await prisma.notifications.create({
+					data: {
+						user_id: userId,
+						type: "DOWNLOAD_FAILED",
+						metadata: {
+							jobId,
+							message: "Download failed. Please try again or contact support.",
+						},
+					},
+				});
+			} catch (notifError) {
+				console.warn(`[BULK-DOWNLOAD] Failed to create notification:`, notifError);
+			}
+
+			try {
+				await logUsage(
+					userId,
+					"compute",
+					"bulk_download",
+					Math.ceil(imageIds.length / 10),
+					null,
+					{ image_count: imageIds.length, job_id: jobId },
+				);
+			} catch (logError) {
+				console.warn(`[BULK-DOWNLOAD] Failed to log usage:`, logError);
+			}
 		}
 
-		throw error;
+		return { status: "error", reason: error.message, jobId, userId };
 	}
 };
 
