@@ -23,14 +23,19 @@ afterEach(() => {
 
 describe("validateRoute", () => {
 	it("keeps routes with only line-count warning as valid", () => {
-		const longRoute = Array.from({ length: 101 }, (_, idx) => `// line ${idx + 1}`).join("\n");
+		const longRoute = Array.from(
+			{ length: 101 },
+			(_, idx) => `// line ${idx + 1}`,
+		).join("\n");
 		const filePath = createRouteFile(longRoute);
 
 		const result = validateRoute(filePath);
 
 		expect(result.valid).toBe(true);
 		expect(result.errors).toEqual([
-			expect.stringContaining("Route has 101 lines - consider moving logic to services"),
+			expect.stringContaining(
+				"Route has 101 lines - consider moving logic to services",
+			),
 		]);
 	});
 
@@ -40,6 +45,8 @@ describe("validateRoute", () => {
 		const result = validateRoute(filePath);
 
 		expect(result.valid).toBe(false);
-		expect(result.errors).toContain("Direct Prisma usage detected - should use services");
+		expect(result.errors).toContain(
+			"Direct Prisma usage detected - should use services",
+		);
 	});
 });

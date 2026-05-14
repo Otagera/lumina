@@ -3,7 +3,10 @@ import path from "node:path";
 import axios from "axios";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import config from "../../../../../packages/config/src/index.config.ts";
-import { logUsage, checkComputeLimit } from "../../../../../packages/models/src/usage.model.ts";
+import {
+	checkComputeLimit,
+	logUsage,
+} from "../../../../../packages/models/src/usage.model.ts";
 import { UPLOADS_DIR } from "../../../../../packages/utils/src/constants.util.ts";
 import { storage } from "../../../../../packages/utils/src/storage.util.ts";
 
@@ -71,9 +74,9 @@ const run = async (jobData) => {
 
 		const album = await prisma.albums.findUnique({
 			where: { album_id: albumId },
-			include: { 
+			include: {
 				storage_config: true,
-				settings: true
+				settings: true,
 			},
 		});
 
@@ -87,13 +90,18 @@ const run = async (jobData) => {
 		if (image.uploaded_by) {
 			const limitCheck = await checkComputeLimit(image.uploaded_by);
 			if (limitCheck.status !== "OK") {
-				console.log(`[Soft Limit] ${limitCheck.notification} Proceeding with demo.`);
+				console.log(
+					`[Soft Limit] ${limitCheck.notification} Proceeding with demo.`,
+				);
 				// In a real production app, we might block here if status was EXCEEDED and we wanted hard limits
 			}
 		}
 
 		// 3. Get image source
-		const { provider, isLocal } = getStorageProvider(image, album.storage_config);
+		const { provider, isLocal } = getStorageProvider(
+			image,
+			album.storage_config,
+		);
 
 		let imageBuffer;
 		if (isLocal) {
@@ -120,7 +128,9 @@ const run = async (jobData) => {
 
 		// Note: The AI service has a /embed endpoint as defined in Part 1
 		const response = await axios.post(`${aiServiceUrl}/embed`, {
-			image_path: isLocal ? path.resolve(process.cwd(), UPLOADS_DIR, image.image_path) : null,
+			image_path: isLocal
+				? path.resolve(process.cwd(), UPLOADS_DIR, image.image_path)
+				: null,
 			storage_provider: !isLocal ? image.storage_provider : null,
 			storage_key: !isLocal ? image.storage_key : null,
 		});

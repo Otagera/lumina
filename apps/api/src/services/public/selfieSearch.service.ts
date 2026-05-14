@@ -104,6 +104,10 @@ const service = async (data: any) => {
 			result.storageProvider,
 			result.storageKey,
 		),
+		originalSize: {
+			width: result.originalWidth,
+			height: result.originalHeight,
+		},
 	}));
 
 	return { faces: formattedResults };

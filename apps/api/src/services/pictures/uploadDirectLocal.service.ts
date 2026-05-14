@@ -76,4 +76,3 @@ export const uploadDirectLocalService = async (data: any) => {
 
 	return aliaserSpec(aliasSpec.response, { key: params.key });
 };
-

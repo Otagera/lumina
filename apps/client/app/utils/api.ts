@@ -1,6 +1,6 @@
 import { publicEventClient } from "~/hooks/usePublicEventClient";
-import { api } from "./eden";
 import axiosAPI from "./axios";
+import { api } from "./eden";
 
 export const fetchImages = async ({
 	pageParam = null,
@@ -15,17 +15,17 @@ export const fetchImages = async ({
 				...(pageParam ? { nextCursor: pageParam } : {}),
 			},
 		});
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
-	} catch (error) {
-		console.error("Error fetching images:", error);
+	} catch (error: any) {
+		throw new Error(error.response?.data?.message || error.message || "API request failed");
 	}
 };
 
 export const fetchImage = async (imageId: string) => {
 	try {
 		const { data, error } = await api.images[imageId].get();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error fetching image:", error);
@@ -41,7 +41,7 @@ export const uploadImages = async (formData: FormData) => {
 				"Content-Type": "multipart/form-data",
 			},
 		});
-		
+
 		const uploadResponseData = response.data;
 
 		if (albumId && albumId !== "undefined" && albumId !== "null") {
@@ -54,16 +54,16 @@ export const uploadImages = async (formData: FormData) => {
 		}
 
 		return uploadResponseData;
-	} catch (error) {
+	} catch (error: any) {
 		console.error("Error uploading images:", error);
-		throw error;
+		throw new Error(error.response?.data?.message || error.message || "Upload failed");
 	}
 };
 
 export const deleteImage = async (imageId: string) => {
 	try {
 		const { data, error } = await api.images[imageId].delete();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error deleting image:", error);
@@ -73,7 +73,7 @@ export const deleteImage = async (imageId: string) => {
 export const fetchAlbums = async () => {
 	try {
 		const { data, error } = await api.albums.get();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error fetching albums:", error);
@@ -83,7 +83,7 @@ export const fetchAlbums = async () => {
 export const fetchPlans = async () => {
 	try {
 		const { data, error } = await api.public.plans.get();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error fetching plans:", error);
@@ -120,7 +120,7 @@ export const fetchImagesInAlbum = async ({
 				...(sortBy ? { sortBy } : {}),
 			},
 		});
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error fetching images in album:", error);
@@ -133,7 +133,7 @@ export const fetchAlbum = async (albumId: string) => {
 		if (status === 404) {
 			throw new Error("Album not found");
 		}
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error fetching album:", error);
@@ -145,38 +145,33 @@ export const login = async (credentials: {
 	email: string;
 	password: string;
 }) => {
-	try {
-		const { data, error } = await api.auth.login.post(credentials);
-		if (error) throw error;
-		return data;
-	} catch (error) {
-		console.error("Error logging in:", error);
-		throw error;
+	const { data, error } = await api.auth.login.post(credentials);
+	if (error) {
+		const err = new Error(error.value?.message || "Login failed");
+		throw err;
 	}
+	return data;
 };
 
 export const signup = async (credentials: {
 	email: string;
 	password: string;
 }) => {
-	try {
-		const { data, error } = await api.auth.signup.post(credentials);
-		if (error) throw error;
-		return data;
-	} catch (error) {
-		console.error("Error signing up:", error);
-		throw error;
+	const { data, error } = await api.auth.signup.post(credentials);
+	if (error) {
+		const err = new Error(error.value?.message || "Signup failed");
+		throw err;
 	}
+	return data;
 };
 
 export const forgotPassword = async (email: string) => {
 	try {
 		const { data, error } = await api.auth["forgot-password"].post({ email });
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
-	} catch (error) {
-		console.error("Error sending forgot password link:", error);
-		throw error;
+	} catch (error: any) {
+		throw new Error(error.response?.data?.message || error.message || "Request failed");
 	}
 };
 
@@ -187,7 +182,7 @@ export const resetPassword = async (data: {
 	try {
 		const { data: responseData, error } =
 			await api.auth["reset-password"].post(data);
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return responseData;
 	} catch (error) {
 		console.error("Error resetting password:", error);
@@ -198,7 +193,7 @@ export const resetPassword = async (data: {
 export const createAlbum = async (albumName: string) => {
 	try {
 		const { data, error } = await api.albums.post({ albumName });
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error creating album:", error);
@@ -222,7 +217,7 @@ export const editAlbum = async ({
 			shareToken,
 			coverImageId,
 		});
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error editing album:", error);
@@ -232,7 +227,7 @@ export const editAlbum = async ({
 export const deleteAlbum = async (albumId: string) => {
 	try {
 		const { data, error } = await api.albums[albumId].delete();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error deleting album:", error);
@@ -242,7 +237,7 @@ export const deleteAlbum = async (albumId: string) => {
 export const triggerClustering = async (albumId: string) => {
 	try {
 		const { data, error } = await api.albums[albumId].cluster.post();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error triggering clustering:", error);
@@ -253,7 +248,7 @@ export const triggerClustering = async (albumId: string) => {
 export const reprocessImage = async (imageId: string) => {
 	try {
 		const { data, error } = await api.images[imageId].reprocess.post();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error reprocessing image:", error);
@@ -264,7 +259,7 @@ export const reprocessImage = async (imageId: string) => {
 export const downloadImage = async (imageId: string) => {
 	try {
 		const { data, error } = await api.images[imageId].download.post();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error downloading image:", error);
@@ -293,7 +288,7 @@ export const searchFaces = async ({
 				threshold,
 				limit,
 			});
-			if (error) throw error;
+			if (error) throw new Error(error.value?.message || "Request failed");
 			return data;
 		} else {
 			const { data, error } = await api.faces.search.post({
@@ -302,7 +297,7 @@ export const searchFaces = async ({
 				threshold,
 				limit,
 			});
-			if (error) throw error;
+			if (error) throw new Error(error.value?.message || "Request failed");
 			return data;
 		}
 	} catch (error) {
@@ -321,7 +316,7 @@ export const fetchSharedAlbum = async (token: string) => {
 export const fetchSharedImage = async (token: string, imageId: string) => {
 	try {
 		const { data, error } = await api.public.images[token][imageId].get();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error fetching shared image:", error);
@@ -331,7 +326,7 @@ export const fetchSharedImage = async (token: string, imageId: string) => {
 export const fetchPeople = async () => {
 	try {
 		const { data, error } = await api.people.get();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error fetching people:", error);
@@ -341,7 +336,7 @@ export const fetchPeople = async () => {
 export const createPerson = async (name: string) => {
 	try {
 		const { data, error } = await api.people.post({ name });
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error creating person:", error);
@@ -351,7 +346,7 @@ export const createPerson = async (name: string) => {
 export const updatePerson = async (personId: string, name: string) => {
 	try {
 		const { data, error } = await api.people[personId].put({ name });
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error updating person:", error);
@@ -361,7 +356,7 @@ export const updatePerson = async (personId: string, name: string) => {
 export const deletePerson = async (personId: string) => {
 	try {
 		const { data, error } = await api.people[personId].delete();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error deleting person:", error);
@@ -375,7 +370,7 @@ export const updateFace = async (
 ) => {
 	try {
 		const { data: responseData, error } = await api.faces[faceId].patch(data);
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return responseData;
 	} catch (error) {
 		console.error("Error updating face:", error);
@@ -387,7 +382,7 @@ export const ignoreFace = async (faceId: number, personId: string) => {
 		const { data, error } = await api.faces[faceId].ignore.post({
 			personId,
 		});
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error ignoring face:", error);
@@ -400,7 +395,7 @@ export const unignoreFace = async (faceId: number, personId: string) => {
 		const { data, error } = await api.faces[faceId].unignore.post({
 			personId,
 		});
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error un-ignoring face:", error);
@@ -412,7 +407,7 @@ export const unignoreFace = async (faceId: number, personId: string) => {
 export const fetchSettings = async () => {
 	try {
 		const { data, error } = await api.settings.get();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error fetching settings:", error);
@@ -423,7 +418,7 @@ export const fetchSettings = async () => {
 export const fetchUsage = async () => {
 	try {
 		const { data, error } = await api.usage.get();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error fetching usage:", error);
@@ -442,7 +437,7 @@ export const createStorageConfig = async (data: {
 }) => {
 	try {
 		const { data: responseData, error } = await api.settings.storage.post(data);
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return responseData;
 	} catch (error) {
 		console.error("Error creating storage config:", error);
@@ -465,7 +460,7 @@ export const updateStorageConfig = async (
 	try {
 		const { data: responseData, error } =
 			await api.settings.storage[configId].put(data);
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return responseData;
 	} catch (error) {
 		console.error("Error updating storage config:", error);
@@ -476,7 +471,7 @@ export const updateStorageConfig = async (
 export const deleteStorageConfig = async (configId: string) => {
 	try {
 		const { data, error } = await api.settings.storage[configId].delete();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error deleting storage config:", error);
@@ -492,7 +487,7 @@ export const getPresignedUrl = async (data: {
 	try {
 		const { data: responseData, error } =
 			await api.images["presigned-url"].post(data);
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return responseData;
 	} catch (error) {
 		console.error("Error getting presigned URL:", error);
@@ -514,7 +509,7 @@ export const getPublicPresignedUrl = async (
 	try {
 		const { data: responseData, error } =
 			await api.public.albums[token]["presigned-url"].post(data);
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return responseData;
 	} catch (error) {
 		console.error("Error getting public presigned URL:", error);
@@ -531,7 +526,7 @@ export const completeMultipartUpload = async (data: {
 	try {
 		const { data: responseData, error } =
 			await api.images["complete-multipart"].post(data);
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return responseData;
 	} catch (error) {
 		console.error("Error completing multipart upload:", error);
@@ -554,7 +549,7 @@ export const completePublicMultipartUpload = async (
 			...data,
 			shareToken: token,
 		});
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return responseData;
 	} catch (error) {
 		console.error("Error completing public multipart upload:", error);
@@ -570,7 +565,7 @@ export const abortMultipartUpload = async (data: {
 	try {
 		const { data: responseData, error } =
 			await api.images["abort-multipart"].post(data);
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return responseData;
 	} catch (error) {
 		console.error("Error aborting multipart upload:", error);
@@ -592,7 +587,7 @@ export const abortPublicMultipartUpload = async (
 			...data,
 			shareToken: token,
 		});
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return responseData;
 	} catch (error) {
 		console.error("Error aborting public multipart upload:", error);
@@ -603,11 +598,15 @@ export const abortPublicMultipartUpload = async (
 // Events & Guest Uploads
 export const uploadGuestImages = async (token: string, formData: FormData) => {
 	try {
-		const response = await axiosAPI.post(`/public/albums/${token}/upload`, formData, {
-			headers: {
-				"Content-Type": "multipart/form-data",
+		const response = await axiosAPI.post(
+			`/public/albums/${token}/upload`,
+			formData,
+			{
+				headers: {
+					"Content-Type": "multipart/form-data",
+				},
 			},
-		});
+		);
 		return response.data;
 	} catch (error) {
 		console.error("Error uploading guest images:", error);
@@ -627,7 +626,7 @@ export const editAlbumSettings = async (
 ) => {
 	try {
 		const { data: responseData, error } = await api.albums[albumId].put(data);
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return responseData;
 	} catch (error) {
 		console.error("Error editing album settings:", error);
@@ -647,7 +646,7 @@ export const moderateImages = async (
 			status,
 			reason,
 		});
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error moderating images:", error);
@@ -664,7 +663,7 @@ export const generateInvite = async (
 		const { data, error } = await api.albums[albumId].invites.post({
 			role,
 		});
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error generating invite:", error);
@@ -681,7 +680,7 @@ export const updateMemberRole = async (
 		const { data, error } = await api.albums[albumId].members[memberId].patch({
 			role,
 		});
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error updating member role:", error);
@@ -693,7 +692,7 @@ export const removeMember = async (albumId: string, memberId: string) => {
 	try {
 		const { data, error } =
 			await api.albums[albumId].members[memberId].delete();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error removing member:", error);
@@ -705,7 +704,7 @@ export const deleteInvite = async (albumId: string, memberId: string) => {
 	try {
 		const { data, error } =
 			await api.albums[albumId].invites[memberId].delete();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error deleting invite:", error);
@@ -717,7 +716,7 @@ export const resendInvite = async (albumId: string, memberId: string) => {
 	try {
 		const { data, error } =
 			await api.albums[albumId].invites[memberId].resend.post();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error resending invite:", error);
@@ -730,7 +729,7 @@ export const joinAlbum = async (inviteToken: string) => {
 		const { data, error } = await api.albums.join.post({
 			inviteToken,
 		});
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error joining album:", error);
@@ -741,7 +740,7 @@ export const joinAlbum = async (inviteToken: string) => {
 export const fetchTrash = async () => {
 	try {
 		const { data, error } = await api.trash.get();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error fetching trash:", error);
@@ -754,7 +753,7 @@ export const restoreImages = async (imageIds: string[]) => {
 		const { data, error } = await api.trash.images.restore.post({
 			imageIds,
 		});
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error restoring images:", error);
@@ -765,7 +764,7 @@ export const restoreImages = async (imageIds: string[]) => {
 export const restoreAlbum = async (albumId: string) => {
 	try {
 		const { data, error } = await api.trash.albums[albumId].restore.post();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error restoring album:", error);
@@ -776,7 +775,7 @@ export const restoreAlbum = async (albumId: string) => {
 export const permanentlyDeleteImages = async (imageIds: string[]) => {
 	try {
 		const { data, error } = await api.trash.images.delete({ imageIds });
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error permanently deleting images:", error);
@@ -787,7 +786,7 @@ export const permanentlyDeleteImages = async (imageIds: string[]) => {
 export const permanentlyDeleteAlbums = async (albumIds: string[]) => {
 	try {
 		const { data, error } = await api.trash.albums.delete({ albumIds });
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error permanently deleting albums:", error);
@@ -798,7 +797,7 @@ export const permanentlyDeleteAlbums = async (albumIds: string[]) => {
 export const emptyTrash = async () => {
 	try {
 		const { data, error } = await api.trash.delete();
-		if (error) throw error;
+		if (error) throw new Error(error.value?.message || "Request failed");
 		return data;
 	} catch (error) {
 		console.error("Error emptying trash:", error);

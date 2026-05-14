@@ -21,9 +21,12 @@ export const useLiveAlbum = (albumId?: string) => {
 		eventSource.onmessage = (event) => {
 			try {
 				const payload: LivePayload = JSON.parse(event.data);
-				
+
 				// Only update if the reaction belongs to the current album
-				if (payload.type === "REACTION_ADDED" && payload.data.albumId === albumId) {
+				if (
+					payload.type === "REACTION_ADDED" &&
+					payload.data.albumId === albumId
+				) {
 					const { imageId, count } = payload.data;
 					setReactions((prev) => ({
 						...prev,

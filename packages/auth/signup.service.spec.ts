@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 const addJobMock = mock(() => undefined);
 const getUserMock = mock(async () => null);
-const createUserMock = mock(async ({ email }) => ({ user_id: "user-1", email }));
+const createUserMock = mock(async ({ email }) => ({
+	user_id: "user-1",
+	email,
+}));
 const encryptPasswordMock = mock(async () => "encrypted-password");
 const createUserAuthTokenMock = mock(async () => ({
 	accessToken: "access-token",
@@ -24,7 +27,7 @@ const joiChain = {
 mock.module("joi", () => ({
 	default: {
 		string: () => joiChain,
-		object: () => ({})
+		object: () => ({}),
 	},
 }));
 
@@ -33,11 +36,9 @@ mock.module("../utils/src/specValidator.util.ts", () => ({
 	validateSpec: (_spec: any, data: any) => data,
 }));
 
-
 mock.module("../utils/src/error.util.ts", () => ({
 	ResourceInUseError: class ResourceInUseError extends Error {},
 }));
-
 
 mock.module("../../apps/worker/src/queue/queue.service.ts", () => ({
 	queueServices: {
@@ -61,9 +62,12 @@ mock.module("../models/src/refreshTokens.lib.ts", () => ({
 	createRefreshToken: createRefreshTokenMock,
 }));
 
-mock.module("../../apps/api/src/services/auth/mergeGuestData.service.ts", () => ({
-	mergeGuestDataService: mergeGuestDataServiceMock,
-}));
+mock.module(
+	"../../apps/api/src/services/auth/mergeGuestData.service.ts",
+	() => ({
+		mergeGuestDataService: mergeGuestDataServiceMock,
+	}),
+);
 
 const { signupService } = await import("./signup.service.ts");
 

@@ -339,6 +339,7 @@ const ImageGallery: FC = () => {
 					onToggleSelect={toggleSelect}
 					onImageClick={handleImageClick}
 					onDelete={handleDeleteImage}
+					variant="admin"
 				/>
 			) : (
 				<div>

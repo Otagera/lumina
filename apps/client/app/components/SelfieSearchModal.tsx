@@ -1,6 +1,6 @@
+import { useSelfieSearch } from "@lumina/event-sdk";
 import type React from "react";
 import { useRef, useState } from "react";
-import { useSelfieSearch } from "@lumina/event-sdk";
 import toast from "react-hot-toast";
 import { publicEventClient } from "~/hooks/usePublicEventClient";
 
@@ -61,32 +61,34 @@ export const SelfieSearchModal: React.FC<SelfieSearchModalProps> = ({
 	};
 
 	const searchMutation = useSelfieSearch({
-	token,
-	client: publicEventClient,
-	onSuccess: (result) => {
-		if (result.faces.length === 0) {
-			toast.error("No matches found in this album.");
-			return;
+		token,
+		client: publicEventClient,
+		onSuccess: (result) => {
+			if (result.faces.length === 0) {
+				toast.error("No matches found in this album.");
+				return;
+			}
+			toast.success(`Found ${result.faces.length} photos of you!`);
+			onResults(result.faces);
+			onClose();
+		},
+		onError: (err: any) => {
+			toast.error(
+				err.response?.data?.message || err.message || "Search failed",
+			);
+		},
+	});
+
+	const handleSearch = async (blob: Blob) => {
+		setIsProcessing(true);
+		try {
+			await searchMutation.mutateAsync(blob);
+		} finally {
+			setIsProcessing(false);
 		}
-		toast.success(`Found ${result.faces.length} photos of you!`);
-		onResults(result.faces);
-		onClose();
-	},
-	onError: (err: any) => {
-		toast.error(err.response?.data?.message || err.message || "Search failed");
-	},
-});
+	};
 
-const handleSearch = async (blob: Blob) => {
-	setIsProcessing(true);
-	try {
-		await searchMutation.mutateAsync(blob);
-	} finally {
-		setIsProcessing(false);
-	}
-};
-
-const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (file) {
 			handleSearch(file);

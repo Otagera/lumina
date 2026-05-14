@@ -339,6 +339,7 @@ const SearchPage = () => {
 									shared={true}
 									className="w-full h-full object-cover cursor-pointer"
 									onClick={() => setSelectedImage(face)}
+									variant="admin"
 								/>
 							)}
 

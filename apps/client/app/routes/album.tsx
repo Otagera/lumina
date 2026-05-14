@@ -298,7 +298,7 @@ const AlbumPage = () => {
 	};
 
 	const toggleSelectAll = () => {
-		const allImageIds = images.map((img) => img.imageId);
+		const allImageIds = displayImages.map((img) => img.imageId);
 		const allSelected = allImageIds.every((id) => selectedIds.has(id));
 		setSelectedIds(allSelected ? new Set() : new Set(allImageIds));
 	};
@@ -580,7 +580,9 @@ const AlbumPage = () => {
 																			status: image.status,
 																		}}
 																		onClick={() => setSelectedImage(image)}
-																		onReaction={(id) => reactMutation.mutate(id)}
+																		onReaction={(id) =>
+																			reactMutation.mutate(id)
+																		}
 																		reactionCount={image.reactionCount}
 																		isSelected={selectedIds.has(image.imageId)}
 																		onToggleSelect={() =>
@@ -594,6 +596,7 @@ const AlbumPage = () => {
 																			) === image.imageId
 																		}
 																		selectionMode={selectedIds.size > 0}
+																		variant="admin"
 																	/>
 																</div>
 															);
@@ -661,6 +664,7 @@ const AlbumPage = () => {
 																image.imageId
 															}
 															selectionMode={selectedIds.size > 0}
+															variant="admin"
 														/>
 													)}
 												</div>

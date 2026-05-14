@@ -13,7 +13,11 @@ mock.module("sharp", () => ({
 		extract: () => {
 			tracker.extractCalled = true;
 			return {
-				resize: (w: number, h: number, opts: { fit: string; kernel: string }) => {
+				resize: (
+					w: number,
+					h: number,
+					opts: { fit: string; kernel: string },
+				) => {
 					tracker.resizeArgs = [w, h, opts];
 					return {
 						sharpen: () => ({
@@ -67,7 +71,9 @@ mock.module("../../../../../packages/config/src/index.config.ts", () => ({
 
 mock.module("../../../../../packages/utils/src/storage.util.ts", () => ({
 	storage: {
-		getProvider: () => ({ getObject: async () => new Uint8Array([10, 20, 30]) }),
+		getProvider: () => ({
+			getObject: async () => new Uint8Array([10, 20, 30]),
+		}),
 	},
 }));
 
@@ -75,7 +81,9 @@ describe("thumbnailService", () => {
 	let thumbnailService: typeof import("../services/pictures/thumbnail.service").thumbnailService;
 
 	beforeAll(async () => {
-		({ thumbnailService } = await import("../services/pictures/thumbnail.service"));
+		({ thumbnailService } = await import(
+			"../services/pictures/thumbnail.service"
+		));
 	});
 
 	it("generates thumbnail via sharp pipeline", async () => {
@@ -87,7 +95,11 @@ describe("thumbnailService", () => {
 		expect(result.contentType).toBe("image/webp");
 		expect(result.imageBuffer).toEqual(mockOutput);
 		expect(tracker.extractCalled).toBe(true);
-		expect(tracker.resizeArgs).toEqual([250, 250, { fit: "cover", kernel: "lanczos3" }]);
+		expect(tracker.resizeArgs).toEqual([
+			250,
+			250,
+			{ fit: "cover", kernel: "lanczos3" },
+		]);
 		expect(tracker.toFormatArgs).toEqual(["webp", { quality: 85 }]);
 	});
 });

@@ -81,8 +81,7 @@ export function useAlbumImages({
 				(page: ApiResponse<ImagesInAlbumResponse>) =>
 					page?.data?.imagesInAlbum?.map(
 						(albumImageJoin: ImagesInAlbum) => albumImageJoin.images,
-					) ||
-					[],
+					) || [],
 			) || []
 		);
 	}, [approvedQuery.data]);
@@ -93,8 +92,7 @@ export function useAlbumImages({
 				(page: ApiResponse<ImagesInAlbumResponse>) =>
 					page?.data?.imagesInAlbum?.map(
 						(albumImageJoin: ImagesInAlbum) => albumImageJoin.images,
-					) ||
-					[],
+					) || [],
 			) || []
 		);
 	}, [pendingQuery.data]);

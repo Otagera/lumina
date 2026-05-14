@@ -14,9 +14,11 @@ export interface ImageGridProps {
 	onImageClick?: (image: any) => void;
 	onDelete?: (id: string) => void;
 	onReaction?: (id: string) => void;
+	onDownload?: (id: string) => void;
 	reactions?: Record<string, number>;
 	className?: string;
 	masonry?: boolean;
+	variant?: "admin" | "guest";
 }
 
 export const ImageGrid = ({
@@ -26,9 +28,11 @@ export const ImageGrid = ({
 	onImageClick,
 	onDelete,
 	onReaction,
+	onDownload,
 	reactions = {},
 	className,
 	masonry = true,
+	variant = "guest",
 }: ImageGridProps) => {
 	const breakpointColumnsObj = {
 		default: 4,
@@ -51,6 +55,7 @@ export const ImageGrid = ({
 			isSelected={selectedIds.has(image.imageId)}
 			onToggleSelect={onToggleSelect}
 			onReaction={onReaction}
+			onDownload={onDownload}
 			reactionCount={reactions[image.imageId] || 0}
 			selectionMode={selectedIds.size > 0}
 			onClick={() => {
@@ -59,6 +64,7 @@ export const ImageGrid = ({
 			}}
 			onDelete={onDelete}
 			containerClassName={!masonry ? "aspect-square" : ""}
+			variant={variant}
 		/>
 	);
 
@@ -82,13 +88,13 @@ export const ImageGrid = ({
 	return (
 		<Masonry
 			breakpointCols={breakpointColumnsObj}
-			className={cn("flex w-auto -ml-4", className)}
-			columnClassName="pl-4 bg-clip-padding"
+			className={cn("flex w-auto -ml-0", className)}
+			columnClassName="bg-clip-padding pl-0"
 		>
-			{images?.map((image, index) => (
+			{images.map((image, index) => (
 				<div
 					key={image.imageId}
-					className="mb-4 animate-in fade-in slide-in-from-bottom-4 duration-500"
+					className="animate-in fade-in slide-in-from-bottom-4 duration-500"
 					style={{ animationDelay: `${(index % 20) * 50}ms` }}
 				>
 					{renderItem(image, index)}

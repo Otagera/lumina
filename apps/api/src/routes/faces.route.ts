@@ -31,7 +31,8 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 				if (err?.message === "Face not found.") {
 					set.status = HTTP_STATUS_CODES.NOTFOUND;
 				} else {
-					set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+					set.status =
+						err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				}
 				return {
 					status: "error",
@@ -68,7 +69,8 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -133,7 +135,8 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 				set.status = HTTP_STATUS_CODES.OK;
 				return data;
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return { status: "error", message: error?.message || "Internal error" };
 			}
 		},
@@ -157,7 +160,8 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 				set.status = HTTP_STATUS_CODES.OK;
 				return data;
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return { status: "error", message: error?.message || "Internal error" };
 			}
 		},

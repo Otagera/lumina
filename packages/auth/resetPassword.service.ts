@@ -1,5 +1,5 @@
-import joi from "joi";
 import crypto from "node:crypto";
+import joi from "joi";
 import {
 	getPasswordReset,
 	removePasswordReset,

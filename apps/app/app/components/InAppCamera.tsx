@@ -1,5 +1,5 @@
-import { cn } from "@lumina/ui/lib/utils";
 import { Button } from "@lumina/ui/components/ui/button";
+import { cn } from "@lumina/ui/lib/utils";
 import {
 	AlertTriangle,
 	Camera,
@@ -98,7 +98,9 @@ export const InAppCamera = ({
 
 				const topPixelIndex = Math.floor(height * 0.25) * width * 4;
 				const topBrightness =
-					(data[topPixelIndex] + data[topPixelIndex + 1] + data[topPixelIndex + 2]) /
+					(data[topPixelIndex] +
+						data[topPixelIndex + 1] +
+						data[topPixelIndex + 2]) /
 					3;
 				const faceCentered = Math.abs(centerBrightness - topBrightness) > 15;
 
@@ -156,7 +158,8 @@ export const InAppCamera = ({
 		: { facingMode, width: 1280, height: 720 };
 
 	const fallbackVideoConstraints = { facingMode: "user" as const };
-	const videoConstraints = cameraRetryCount > 0 ? fallbackVideoConstraints : primaryVideoConstraints;
+	const videoConstraints =
+		cameraRetryCount > 0 ? fallbackVideoConstraints : primaryVideoConstraints;
 
 	return (
 		<div
@@ -200,7 +203,9 @@ export const InAppCamera = ({
 									setIsLoaded(false);
 									if (cameraRetryCount === 0) {
 										setCameraRetryCount(1);
-										setCameraError("Retrying camera with safe compatibility settings...");
+										setCameraError(
+											"Retrying camera with safe compatibility settings...",
+										);
 									} else {
 										setCameraError("Camera unavailable. Try upload instead.");
 									}
@@ -306,23 +311,41 @@ export const InAppCamera = ({
 				{mode === "camera" && (
 					<div className="px-6 py-4 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-100 dark:border-white/5">
 						<div className="grid grid-cols-2 gap-3">
-							<div className={cn(
-								"rounded-2xl px-4 py-3 flex items-center justify-center gap-2 border transition-all duration-500",
-								readiness.faceCentered 
-									? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]" 
-									: "bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-white/5 dark:border-white/10"
-							)}>
-								<UserRound className={cn("w-4 h-4", readiness.faceCentered && "animate-pulse")} />
-								<span className="text-[11px] font-black uppercase tracking-widest">Face centered</span>
+							<div
+								className={cn(
+									"rounded-2xl px-4 py-3 flex items-center justify-center gap-2 border transition-all duration-500",
+									readiness.faceCentered
+										? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+										: "bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-white/5 dark:border-white/10",
+								)}
+							>
+								<UserRound
+									className={cn(
+										"w-4 h-4",
+										readiness.faceCentered && "animate-pulse",
+									)}
+								/>
+								<span className="text-[11px] font-black uppercase tracking-widest">
+									Face centered
+								</span>
 							</div>
-							<div className={cn(
-								"rounded-2xl px-4 py-3 flex items-center justify-center gap-2 border transition-all duration-500",
-								readiness.lightingGood 
-									? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]" 
-									: "bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-white/5 dark:border-white/10"
-							)}>
-								<Sun className={cn("w-4 h-4", readiness.lightingGood && "animate-pulse")} />
-								<span className="text-[11px] font-black uppercase tracking-widest">Lighting good</span>
+							<div
+								className={cn(
+									"rounded-2xl px-4 py-3 flex items-center justify-center gap-2 border transition-all duration-500",
+									readiness.lightingGood
+										? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+										: "bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-white/5 dark:border-white/10",
+								)}
+							>
+								<Sun
+									className={cn(
+										"w-4 h-4",
+										readiness.lightingGood && "animate-pulse",
+									)}
+								/>
+								<span className="text-[11px] font-black uppercase tracking-widest">
+									Lighting good
+								</span>
 							</div>
 						</div>
 					</div>

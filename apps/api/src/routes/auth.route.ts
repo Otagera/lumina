@@ -75,7 +75,8 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 							},
 						};
 					} catch (error) {
-						set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+						set.status =
+							error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 						return {
 							status: "error",
 							message: error?.message || "Internal server error",
@@ -172,7 +173,8 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 							message: "Password reset successfully",
 						};
 					} catch (error: any) {
-						set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+						set.status =
+							error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 						return {
 							status: "error",
 							message: error?.message || "Failed to reset password",

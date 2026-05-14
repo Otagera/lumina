@@ -52,7 +52,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -82,7 +83,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -112,7 +114,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -150,7 +153,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -185,7 +189,9 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 				let payload: any = {};
 				if (body && typeof body === "object") {
 					if (typeof (body as any).get === "function") {
-						payload.imageIds = (body as any).getAll?.("imageIds") || (body as any).get("imageIds");
+						payload.imageIds =
+							(body as any).getAll?.("imageIds") ||
+							(body as any).get("imageIds");
 					} else {
 						payload = body;
 					}
@@ -204,7 +210,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -239,7 +246,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -274,7 +282,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -307,7 +316,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -341,7 +351,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -378,7 +389,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -414,7 +426,8 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",

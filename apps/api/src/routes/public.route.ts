@@ -55,7 +55,8 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -90,7 +91,8 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -121,7 +123,8 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -152,7 +155,8 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -183,7 +187,8 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 							data,
 						};
 					} catch (error: any) {
-						set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+						set.status =
+							error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 						return {
 							status: "error",
 							message: error?.message || "Internal server error",
@@ -217,7 +222,8 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 						};
 					} catch (error: any) {
 						console.error("[SELFIE SEARCH] Error:", error.message);
-						set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+						set.status =
+							error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 						return {
 							status: "error",
 							message: error?.message || "Internal server error",
@@ -246,7 +252,8 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 							data,
 						};
 					} catch (error: any) {
-						set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+						set.status =
+							error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 						return {
 							status: "error",
 							message: error?.message || "Internal server error",
@@ -277,7 +284,9 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 							if (typeof (body as any).get === "function") {
 								// It's a FormData-like object
 								payload.key = (body as any).get("key");
-								payload.uploadedImages = (body as any).getAll?.("uploadedImages") || (body as any).get("uploadedImages");
+								payload.uploadedImages =
+									(body as any).getAll?.("uploadedImages") ||
+									(body as any).get("uploadedImages");
 							} else {
 								// It's a plain object
 								payload = body;
@@ -285,13 +294,20 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 						}
 
 						// 2. Fallback: If body is missing, try manual parsing
-						if (!payload.uploadedImages && !payload.key && request.headers.get("content-type")?.includes("multipart")) {
+						if (
+							!payload.uploadedImages &&
+							!payload.key &&
+							request.headers.get("content-type")?.includes("multipart")
+						) {
 							try {
 								const formData = await request.formData();
 								payload.key = formData.get("key");
 								payload.uploadedImages = formData.getAll("uploadedImages");
 							} catch (e: any) {
-								console.error("[PUBLIC UPLOAD] Manual fallback failed:", e.message);
+								console.error(
+									"[PUBLIC UPLOAD] Manual fallback failed:",
+									e.message,
+								);
 							}
 						}
 
@@ -329,7 +345,8 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 							data,
 						};
 					} catch (error: any) {
-						set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+						set.status =
+							error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 						return {
 							status: "error",
 							message: error?.message || "Internal server error",
@@ -359,7 +376,8 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",

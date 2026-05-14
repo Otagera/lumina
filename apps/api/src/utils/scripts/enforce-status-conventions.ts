@@ -14,15 +14,23 @@ const walk = (dir: string) => {
 			continue;
 		}
 
-		if (!fullPath.endsWith(".ts") || fullPath.endsWith("enforce-status-conventions.ts")) continue;
+		if (
+			!fullPath.endsWith(".ts") ||
+			fullPath.endsWith("enforce-status-conventions.ts")
+		)
+			continue;
 		const content = readFileSync(fullPath, "utf8");
 
 		if (content.includes("HTTP_STATUS_CODES.INTERNAL_ERROR")) {
-			errors.push(`${fullPath}: use HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR only.`);
+			errors.push(
+				`${fullPath}: use HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR only.`,
+			);
 		}
 
 		if (content.includes("statusCode?: number;")) {
-			errors.push(`${fullPath}: avoid optional statusCode declarations; provide a safe default.`);
+			errors.push(
+				`${fullPath}: avoid optional statusCode declarations; provide a safe default.`,
+			);
 		}
 	}
 };

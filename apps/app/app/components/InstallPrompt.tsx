@@ -8,12 +8,17 @@ type InstallPromptEvent = Event & {
 };
 
 export function InstallPrompt() {
-	const [deferredPrompt, setDeferredPrompt] = useState<InstallPromptEvent | null>(null);
+	const [deferredPrompt, setDeferredPrompt] =
+		useState<InstallPromptEvent | null>(null);
 	const [isInstalled, setIsInstalled] = useState(false);
 
 	useEffect(() => {
-		const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
-		setIsInstalled(isStandalone || (window.navigator as any).standalone === true);
+		const isStandalone = window.matchMedia(
+			"(display-mode: standalone)",
+		).matches;
+		setIsInstalled(
+			isStandalone || (window.navigator as any).standalone === true,
+		);
 
 		const handleBeforeInstallPrompt = (event: Event) => {
 			event.preventDefault();
@@ -24,7 +29,10 @@ export function InstallPrompt() {
 		window.addEventListener("appinstalled", () => setIsInstalled(true));
 
 		return () => {
-			window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+			window.removeEventListener(
+				"beforeinstallprompt",
+				handleBeforeInstallPrompt,
+			);
 		};
 	}, []);
 
@@ -38,7 +46,9 @@ export function InstallPrompt() {
 	if (deferredPrompt) {
 		return (
 			<div className="fixed bottom-4 left-1/2 z-[300] w-[calc(100%-1rem)] max-w-md -translate-x-1/2 rounded-2xl border border-zinc-200 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/95">
-				<p className="text-sm font-semibold">Install Lumina for faster loading offline.</p>
+				<p className="text-sm font-semibold">
+					Install Lumina for faster loading offline.
+				</p>
 				<Button
 					className="mt-3 w-full"
 					onClick={async () => {
@@ -56,9 +66,12 @@ export function InstallPrompt() {
 	if (isIOS) {
 		return (
 			<div className="fixed bottom-4 left-1/2 z-[300] w-[calc(100%-1rem)] max-w-md -translate-x-1/2 rounded-2xl border border-zinc-200 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/95">
-				<p className="text-sm font-semibold">Add to Home Screen on iPhone/iPad.</p>
+				<p className="text-sm font-semibold">
+					Add to Home Screen on iPhone/iPad.
+				</p>
 				<p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
-					Tap <Share className="mx-1 inline h-3.5 w-3.5" /> then choose <b>Add to Home Screen</b>.
+					Tap <Share className="mx-1 inline h-3.5 w-3.5" /> then choose{" "}
+					<b>Add to Home Screen</b>.
 				</p>
 			</div>
 		);

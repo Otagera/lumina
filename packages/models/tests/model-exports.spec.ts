@@ -27,7 +27,9 @@ describe("model export contracts", () => {
 	for (const modulePath of modelModules) {
 		it(`${modulePath} exports callable model functions`, async () => {
 			const loaded = await import(modulePath);
-			const entries = Object.entries(loaded).filter(([name]) => name !== "default");
+			const entries = Object.entries(loaded).filter(
+				([name]) => name !== "default",
+			);
 			expect(entries.length).toBeGreaterThan(0);
 			for (const [, exportedValue] of entries) {
 				expect(typeof exportedValue).toBe("function");

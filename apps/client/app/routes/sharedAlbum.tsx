@@ -320,6 +320,7 @@ const SharedAlbumPage = () => {
 								shared={true}
 								className="cursor-pointer rounded-xl transition-transform duration-300 hover:scale-[1.02] shadow-sm w-full object-cover"
 								onClick={() => !image.isPending && setSelectedImage(image)}
+								variant="admin"
 							/>
 							{image.isPending && (
 								<div className="absolute top-2 left-2 z-10 px-2 py-1 bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-lg flex items-center gap-1.5">

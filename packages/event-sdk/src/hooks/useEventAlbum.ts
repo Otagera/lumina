@@ -4,7 +4,8 @@ import type { PublicEventClient } from "../api/public.client";
 export const eventAlbumKeys = {
 	all: ["event-album"] as const,
 	detail: (token: string) => [...eventAlbumKeys.all, token] as const,
-	highlights: (token: string) => [...eventAlbumKeys.detail(token), "highlights"] as const,
+	highlights: (token: string) =>
+		[...eventAlbumKeys.detail(token), "highlights"] as const,
 };
 
 export const useEventAlbum = ({

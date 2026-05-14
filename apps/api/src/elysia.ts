@@ -1,12 +1,18 @@
-import { Elysia } from "elysia";
 import path from "node:path";
-import { swagger } from "@elysiajs/swagger";
-import { cors } from "@elysiajs/cors";
 import { logger as elysiaLogger } from "@bogeychan/elysia-logger";
-import { createServiceLogger } from "../../../packages/utils/src/logger.util.ts";
+import { createBullBoard } from "@bull-board/api";
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
+import { ElysiaAdapter } from "@bull-board/elysia";
+import { cors } from "@elysiajs/cors";
+import { swagger } from "@elysiajs/swagger";
+import { Elysia } from "elysia";
 import config from "../../../packages/config/src/index.config.ts";
-import { EVENTS, eventEmitter } from "../../../packages/utils/src/events.util.ts";
-
+import {
+	EVENTS,
+	eventEmitter,
+} from "../../../packages/utils/src/events.util.ts";
+import { createServiceLogger } from "../../../packages/utils/src/logger.util.ts";
+import { queueServices } from "../../worker/src/queue/queue.service.ts";
 import albumsRoutes from "./routes/albums.route";
 import authRoutes from "./routes/auth.route";
 import billingWebhookRoutes from "./routes/billing-webhook.route";
@@ -21,11 +27,6 @@ import settingsRoutes from "./routes/settings.route";
 import { thumbnailRoutes } from "./routes/thumbnail.route";
 import trashRoutes from "./routes/trash.route";
 import usageRoutes from "./routes/usage.route";
-
-import { createBullBoard } from "@bull-board/api";
-import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
-import { ElysiaAdapter } from "@bull-board/elysia";
-import { queueServices } from "../../worker/src/queue/queue.service.ts";
 
 const logger = createServiceLogger("api");
 
@@ -51,7 +52,12 @@ export const createElysiaApp = async () => {
 						return config[config.env || "development"]?.cors_origin === origin;
 					},
 					credentials: true,
-					allowedHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],
+					allowedHeaders: [
+						"Content-Type",
+						"Authorization",
+						"Cookie",
+						"X-Requested-With",
+					],
 					methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 				}),
 			)
@@ -78,61 +84,65 @@ export const createElysiaApp = async () => {
 				}
 			})
 			.get("/api/health", () => ({ status: "ok" }))
-			.get("/api/v1/events", ({ set }) => {
-				set.headers["Content-Type"] = "text/event-stream";
-				set.headers["Cache-Control"] = "no-cache";
-				set.headers["Connection"] = "keep-alive";
+			.get(
+				"/api/v1/events",
+				({ set }) => {
+					set.headers["Content-Type"] = "text/event-stream";
+					set.headers["Cache-Control"] = "no-cache";
+					set.headers["Connection"] = "keep-alive";
 
-				return new ReadableStream({
-					start(controller) {
-						const handler = (payload: any) => {
-							try {
-								const data = `data: ${JSON.stringify(payload)}\n\n`;
-								controller.enqueue(data);
-							} catch (e) {
-								cleanup();
-							}
-						};
+					return new ReadableStream({
+						start(controller) {
+							const handler = (payload: any) => {
+								try {
+									const data = `data: ${JSON.stringify(payload)}\n\n`;
+									controller.enqueue(data);
+								} catch (e) {
+									cleanup();
+								}
+							};
 
-						// Heartbeat to keep connection alive
-						const heartbeat = setInterval(() => {
-							try {
-								controller.enqueue(": heartbeat\n\n");
-							} catch (e) {
-								cleanup();
-							}
-						}, 30000);
+							// Heartbeat to keep connection alive
+							const heartbeat = setInterval(() => {
+								try {
+									controller.enqueue(": heartbeat\n\n");
+								} catch (e) {
+									cleanup();
+								}
+							}, 30000);
 
-						eventEmitter.on(EVENTS.IMAGE_PROCESSED, handler);
-						eventEmitter.on(EVENTS.FACE_DETECTED, handler);
-						eventEmitter.on(EVENTS.FACE_CLUSTERED, handler);
-						eventEmitter.on(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
-						eventEmitter.on(EVENTS.REACTION_ADDED, handler);
+							eventEmitter.on(EVENTS.IMAGE_PROCESSED, handler);
+							eventEmitter.on(EVENTS.FACE_DETECTED, handler);
+							eventEmitter.on(EVENTS.FACE_CLUSTERED, handler);
+							eventEmitter.on(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
+							eventEmitter.on(EVENTS.REACTION_ADDED, handler);
 
-						const cleanup = () => {
-							clearInterval(heartbeat);
-							eventEmitter.off(EVENTS.IMAGE_PROCESSED, handler);
-							eventEmitter.off(EVENTS.FACE_DETECTED, handler);
-							eventEmitter.off(EVENTS.FACE_CLUSTERED, handler);
-							eventEmitter.off(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
-							eventEmitter.off(EVENTS.REACTION_ADDED, handler);
-							try {
-								controller.close();
-							} catch (_e) { }
-						};
+							const cleanup = () => {
+								clearInterval(heartbeat);
+								eventEmitter.off(EVENTS.IMAGE_PROCESSED, handler);
+								eventEmitter.off(EVENTS.FACE_DETECTED, handler);
+								eventEmitter.off(EVENTS.FACE_CLUSTERED, handler);
+								eventEmitter.off(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
+								eventEmitter.off(EVENTS.REACTION_ADDED, handler);
+								try {
+									controller.close();
+								} catch (_e) {}
+							};
 
-						// Note: Bun's ReadableStream cancel() is triggered when client closes
-					},
-					cancel() {
-						console.log("SSE connection cancelled by client.");
-					}
-				});
-			}, {
-				detail: {
-					summary: "SSE Events Stream",
-					description: "Server-Sent Events stream for real-time updates",
+							// Note: Bun's ReadableStream cancel() is triggered when client closes
+						},
+						cancel() {
+							console.log("SSE connection cancelled by client.");
+						},
+					});
 				},
-			})
+				{
+					detail: {
+						summary: "SSE Events Stream",
+						description: "Server-Sent Events stream for real-time updates",
+					},
+				},
+			)
 			.group("/api/v1", (app) =>
 				app
 					.use(authRoutes)

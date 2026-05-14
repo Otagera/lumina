@@ -151,7 +151,10 @@ describe("Public Access Routes (Native)", () => {
 			for (let i = 0; i < 20; i++) {
 				const fileName = `guest-session-${i}.jpg`;
 				createdFiles.push(fileName);
-				await fs.copyFile(path.resolve(__dirname, "fixtures/test.jpg"), path.join(uploadsDir, fileName));
+				await fs.copyFile(
+					path.resolve(__dirname, "fixtures/test.jpg"),
+					path.join(uploadsDir, fileName),
+				);
 				const okRes = await app.handle(
 					req.post(`/api/v1/public/albums/${testShareToken}/upload`, {
 						key: fileName,
@@ -163,7 +166,10 @@ describe("Public Access Routes (Native)", () => {
 
 			const blockedFile = "guest-session-threshold.jpg";
 			createdFiles.push(blockedFile);
-			await fs.copyFile(path.resolve(__dirname, "fixtures/test.jpg"), path.join(uploadsDir, blockedFile));
+			await fs.copyFile(
+				path.resolve(__dirname, "fixtures/test.jpg"),
+				path.join(uploadsDir, blockedFile),
+			);
 			const blockedRes = await app.handle(
 				req.post(`/api/v1/public/albums/${testShareToken}/upload`, {
 					key: blockedFile,
@@ -172,7 +178,9 @@ describe("Public Access Routes (Native)", () => {
 			);
 			const blockedBody = await parseRes(blockedRes);
 			expect(blockedRes.status).toBe(HTTP_STATUS_CODES.BADREQUEST);
-			expect(String(blockedBody.message || "")).toContain("session limit exceeded");
+			expect(String(blockedBody.message || "")).toContain(
+				"session limit exceeded",
+			);
 
 			for (const fileName of createdFiles) {
 				await fs.unlink(path.join(uploadsDir, fileName)).catch(() => undefined);

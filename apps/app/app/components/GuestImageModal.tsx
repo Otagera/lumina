@@ -1,5 +1,12 @@
 import { cn } from "@lumina/ui/lib/utils";
-import { Download, Heart, Share2, X, ChevronUp, ChevronDown } from "lucide-react";
+import {
+	ChevronDown,
+	ChevronUp,
+	Download,
+	Heart,
+	Share2,
+	X,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface GuestImageModalProps {
@@ -68,13 +75,23 @@ export const GuestImageModal = ({
 		setTimeout(() => setActiveReactingId(null), 1000);
 	};
 
-	const handleDownload = (image: any) => {
-		const link = document.createElement("a");
-		link.href = image.imagePath;
-		link.download = `lumina-${image.imageId}.jpg`;
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
+	const handleDownload = async (image: any) => {
+		try {
+			const response = await fetch(image.imagePath);
+			const blob = await response.blob();
+			const blobUrl = window.URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = blobUrl;
+			link.download = `lumina-${image.imageId}.jpg`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(blobUrl);
+		} catch (error) {
+			console.error("Download failed:", error);
+			// Fallback to direct link if fetch fails
+			window.open(image.imagePath, "_blank");
+		}
 	};
 
 	const handleShare = () => {

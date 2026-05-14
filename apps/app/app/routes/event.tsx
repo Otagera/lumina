@@ -14,10 +14,10 @@ import {
 	Heart,
 	Image as ImageIcon,
 	Scan,
+	Search,
 	Sparkles,
 	Trophy,
 	WifiOff,
-	Search,
 	X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -195,11 +195,16 @@ export default function EventPage() {
 		const params = new URLSearchParams(window.location.search);
 		params.delete("imageId");
 		const newSearch = params.toString();
-		window.history.pushState({}, "", newSearch ? `?${newSearch}` : window.location.pathname);
+		window.history.pushState(
+			{},
+			"",
+			newSearch ? `?${newSearch}` : window.location.pathname,
+		);
 		setSelectedImage(null);
 	};
 
-	const isNoMatchesState = !!searchMutation.data && !isSearching && images.length === 0;
+	const isNoMatchesState =
+		!!searchMutation.data && !isSearching && images.length === 0;
 	const albumQueryError = !isAlbumLoading && !albumData;
 	const highlightsQueryError = !isHighlightsLoading && !highlightsData;
 	const showOfflineFallback =
@@ -482,8 +487,12 @@ export default function EventPage() {
 								{isSearching ? (
 									<>
 										<ImageIcon className="w-12 h-12 mx-auto text-zinc-300" />
-										<p className="text-zinc-700 dark:text-zinc-200 font-bold">No results for your search.</p>
-										<Button variant="outline" onClick={clearSearch}>Clear Search</Button>
+										<p className="text-zinc-700 dark:text-zinc-200 font-bold">
+											No results for your search.
+										</p>
+										<Button variant="outline" onClick={clearSearch}>
+											Clear Search
+										</Button>
 									</>
 								) : (
 									<>

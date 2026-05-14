@@ -47,11 +47,7 @@ const normalizeImagePath = (image_path, storage_provider?, storage_key?) => {
 		const strucImagePath = image_path
 			? `${baseUrl}/api/uploads/${encodeURIComponent(filename)}`
 			: image_path;
-		
-		if (image_path.startsWith("/")) {
-			console.log(`[NORMALIZE] Dev/Test normalized ${image_path} -> ${strucImagePath}`);
-		}
-		
+
 		return strucImagePath;
 	} else {
 		// Production: determine URL based on storage provider

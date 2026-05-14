@@ -7,7 +7,7 @@ const envConfig = config[config.env || "development"];
 const resend = new Resend(envConfig.resend_api_key);
 const prisma = new PrismaClient();
 
-const FROM_EMAIL = "Lumina <noreply@lumina.io>";
+const FROM_EMAIL = "Lumina <noreply@lumina.otagera.xyz>";
 const FRONTEND_URL = envConfig.frontend_url;
 
 const getUnsubscribeLink = (email: string, type: string) => {
@@ -228,7 +228,7 @@ export const sendNewPhotosEmail = async (
 		return;
 	}
 
-	const albumLink = `${FRONTEND_URL}/albums/${token}`;
+	const albumLink = `${FRONTEND_URL}/album/${token}`;
 
 	try {
 		await resend.emails.send({

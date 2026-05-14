@@ -47,7 +47,9 @@ describe("deleteAlbumsByUserId", () => {
 
 	it("is atomic: when tx.images.deleteMany fails, album deletion and side effects are not executed", async () => {
 		prismaMock.albums.findMany.mockResolvedValue([{ album_id: "album-1" }]);
-		prismaMock.album_images.findMany.mockResolvedValue([{ album_id: "album-1", image_id: "img-1" }]);
+		prismaMock.album_images.findMany.mockResolvedValue([
+			{ album_id: "album-1", image_id: "img-1" },
+		]);
 		prismaMock.images.findMany.mockResolvedValue([{ image_id: "img-1" }]);
 		prismaMock.albums.findMany
 			.mockResolvedValueOnce([{ album_id: "album-1" }])

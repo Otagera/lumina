@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import crypto from "node:crypto";
+import { Users } from "../../../../packages/models/src/index.model.ts";
 import {
 	createPasswordReset,
 	getPasswordReset,
 	removePasswordReset,
 } from "../../../../packages/models/src/passwordResets.lib.ts";
-import { Users } from "../../../../packages/models/src/index.model.ts";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
 import { getApp, parseRes, req } from "./test-utils";
 

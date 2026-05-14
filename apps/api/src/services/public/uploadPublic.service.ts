@@ -78,7 +78,7 @@ const enforceGuestUploadQuota = async ({
 							upload_date: { gte: windowStart },
 						},
 					},
-			  })
+				})
 			: Promise.resolve(0),
 	]);
 

@@ -1,8 +1,3 @@
-import { useCallback, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
-import { ConfirmModal } from "~/components/ConfirmModal";
-import { downloadImage, editAlbum, reprocessImage } from "../utils/api";
 import {
 	ChevronLeft,
 	ChevronRight,
@@ -14,7 +9,12 @@ import {
 	Trash2,
 	X,
 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { ConfirmModal } from "~/components/ConfirmModal";
+import { downloadImage, editAlbum, reprocessImage } from "../utils/api";
 
 interface ImageModalProps {
 	image: any;
@@ -54,8 +54,7 @@ const ImageModal = ({
 
 	// Carousel Logic
 	const currentIndex = images.findIndex(
-		(img) =>
-			(img.imageId || img.id) === (image?.imageId || image?.id),
+		(img) => (img.imageId || img.id) === (image?.imageId || image?.id),
 	);
 	const hasPrevious = currentIndex > 0;
 	const hasNext = currentIndex < images.length - 1 && currentIndex !== -1;

@@ -15,8 +15,8 @@ import fetchPicturesService from "../services/pictures/fetchPictures.service.ts"
 import { getPresignedUrlService } from "../services/pictures/getPresignedUrl.service.ts";
 import { moderatePicturesService } from "../services/pictures/moderatePictures.service.ts";
 import { reprocessPictureService } from "../services/pictures/reprocessPicture.service.ts";
-import { uploadPicturesService } from "../services/pictures/uploadPictures.service.ts";
 import { uploadDirectLocalService } from "../services/pictures/uploadDirectLocal.service.ts";
+import { uploadPicturesService } from "../services/pictures/uploadPictures.service.ts";
 import { verifyShareTokenService } from "../services/pictures/verifyShareToken.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 import { guestPlugin } from "./middleware/guest.plugin.ts";
@@ -131,7 +131,7 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 		async ({ body, set, userId, guestSessionId, request }) => {
 			try {
 				let payload: any = {};
-				
+
 				// 1. Extract data from body (handle both plain object and FormData)
 				if (body && typeof body === "object") {
 					if (typeof (body as any).get === "function") {
@@ -139,7 +139,9 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 						payload.albumId = (body as any).get("albumId");
 						payload.key = (body as any).get("key");
 						payload.status = (body as any).get("status");
-						payload.uploadedImages = (body as any).getAll?.("uploadedImages") || (body as any).get("uploadedImages");
+						payload.uploadedImages =
+							(body as any).getAll?.("uploadedImages") ||
+							(body as any).get("uploadedImages");
 					} else {
 						// It's a plain object
 						payload = body;
@@ -147,7 +149,10 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				}
 
 				// 2. Fallback: If still missing albumId, try manual parsing
-				if (!payload.albumId && request.headers.get("content-type")?.includes("multipart")) {
+				if (
+					!payload.albumId &&
+					request.headers.get("content-type")?.includes("multipart")
+				) {
 					try {
 						const formData = await request.formData();
 						payload.albumId = formData.get("albumId");
@@ -224,7 +229,8 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -261,7 +267,8 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -299,7 +306,8 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -373,7 +381,8 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				if (err?.message === "Image not found.") {
 					set.status = HTTP_STATUS_CODES.NOTFOUND;
 				} else {
-					set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+					set.status =
+						err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				}
 				return {
 					status: "error",
@@ -409,7 +418,8 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				if (err?.message === "Image not found.") {
 					set.status = HTTP_STATUS_CODES.NOTFOUND;
 				} else {
-					set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+					set.status =
+						err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				}
 				return {
 					status: "error",
@@ -445,7 +455,8 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				if (err?.message === "Image not found.") {
 					set.status = HTTP_STATUS_CODES.NOTFOUND;
 				} else {
-					set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+					set.status =
+						err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				}
 				return {
 					status: "error",
@@ -481,7 +492,8 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 				if (err?.message === "Image not found.") {
 					set.status = HTTP_STATUS_CODES.NOTFOUND;
 				} else {
-					set.status = err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+					set.status =
+						err?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				}
 				return {
 					status: "error",
@@ -512,7 +524,8 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Failed to generate download URL.",
@@ -542,7 +555,8 @@ const picturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -578,7 +592,8 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -612,7 +627,8 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
@@ -652,7 +668,8 @@ const publicPicturesRoutes = new Elysia({ prefix: "/images" })
 					data,
 				};
 			} catch (error: any) {
-				set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+				set.status =
+					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 				return {
 					status: "error",
 					message: error?.message || "Internal server error",
