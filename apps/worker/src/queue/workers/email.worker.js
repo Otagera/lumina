@@ -38,7 +38,7 @@ const run = async (jobData) => {
 				data.email,
 				data.albumName,
 				data.photoCount,
-				data.token,
+				data.albumId,
 			);
 			break;
 		default:

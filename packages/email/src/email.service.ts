@@ -218,7 +218,7 @@ export const sendNewPhotosEmail = async (
 	email: string,
 	albumName: string,
 	photoCount: number,
-	token: string,
+	albumId: string,
 ) => {
 	const allowed = await checkEmailPreference(email, "newPhotos");
 	if (!allowed) return;
@@ -228,7 +228,7 @@ export const sendNewPhotosEmail = async (
 		return;
 	}
 
-	const albumLink = `${FRONTEND_URL}/album/${token}`;
+	const albumLink = `${FRONTEND_URL}/album/${albumId}`;
 
 	try {
 		await resend.emails.send({

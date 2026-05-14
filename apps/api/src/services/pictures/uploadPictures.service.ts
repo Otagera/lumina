@@ -20,6 +20,7 @@ import {
 } from "../../../../../packages/utils/src/specValidator.util.ts";
 import { storage } from "../../../../../packages/utils/src/storage.util.ts";
 import { queueServices } from "../../../../worker/src/queue/queue.service.ts";
+import { incrementPendingUpload } from "../../../../../packages/email/src/newPhotosDebounce.ts";
 import { createImage, getImagesByIds } from "./pictures.lib";
 
 const fileSchema = Joi.object({
@@ -353,19 +354,15 @@ const service = async (data) => {
 			});
 
 			if (album?.users?.email) {
-				await queueServices.emailQueueLib.addJob("email", {
-					worker: "email",
-					type: "new_photos",
-					data: {
-						email: album.users.email,
-						albumName: album.album_name || "your album",
-						photoCount: images.length,
-						token: album.share_token,
-					},
-				});
+				await incrementPendingUpload(
+					params.album_id,
+					album.users.email,
+					album.album_name || "your album",
+					images.length,
+				);
 			}
 		} catch (error) {
-			console.error("Failed to enqueue new photos notification:", error);
+			console.error("Failed to track new photos notification:", error);
 		}
 	}
 
