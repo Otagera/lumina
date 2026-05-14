@@ -6,7 +6,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import type { HTMLAttributes } from "react";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export interface ImageGridItemProps extends HTMLAttributes<HTMLImageElement> {
@@ -112,7 +112,9 @@ const ImageGridItem = ({
 	};
 
 	const hasDimensions = image.width > 0 && image.height > 0;
-	const aspectRatio = hasDimensions ? `${image.width} / ${image.height}` : "3 / 4";
+	const aspectRatio = hasDimensions
+		? `${image.width} / ${image.height}`
+		: "3 / 4";
 
 	return (
 		<div
@@ -123,7 +125,7 @@ const ImageGridItem = ({
 				isSelected &&
 					"ring-4 ring-sage ring-offset-4 dark:ring-offset-zinc-950 scale-[0.98]",
 			)}
-			style={isGuest ? { aspectRatio } : undefined}
+			style={{ aspectRatio }}
 			onClick={handleContainerClick}
 			onDoubleClick={handleDoubleClick}
 			onMouseEnter={() => setIsHovered(true)}
@@ -145,11 +147,11 @@ const ImageGridItem = ({
 			/>
 
 			{/* Pinterest-style Hover Overlay */}
-			<div 
+			<div
 				className="absolute inset-0 bg-black/10 dark:bg-black/20 transition-opacity duration-300 pointer-events-none z-20"
-				style={{ 
+				style={{
 					opacity: isHovered ? 1 : 0,
-					visibility: isHovered ? 'visible' : 'hidden'
+					visibility: isHovered ? "visible" : "hidden",
 				}}
 			/>
 
@@ -167,10 +169,14 @@ const ImageGridItem = ({
 					{/* Selection Toggle */}
 					<div
 						className="transition-all duration-300 transform"
-						style={{ 
-							opacity: (selectionMode || isSelected || isHovered) ? 1 : 0,
-							visibility: (selectionMode || isSelected || isHovered) ? 'visible' : 'hidden',
-							transform: (selectionMode || isSelected || isHovered) ? 'scale(1)' : 'scale(0.5)'
+						style={{
+							opacity: selectionMode || isSelected || isHovered ? 1 : 0,
+							visibility:
+								selectionMode || isSelected || isHovered ? "visible" : "hidden",
+							transform:
+								selectionMode || isSelected || isHovered
+									? "scale(1)"
+									: "scale(0.5)",
 						}}
 					>
 						<button
@@ -203,11 +209,11 @@ const ImageGridItem = ({
 
 					{/* More Menu */}
 					{!shared && !selectionMode && (
-						<div 
+						<div
 							className="relative transition-all duration-300"
-							style={{ 
+							style={{
 								opacity: isHovered ? 1 : 0,
-								visibility: isHovered ? 'visible' : 'hidden'
+								visibility: isHovered ? "visible" : "hidden",
 							}}
 						>
 							<button
@@ -271,13 +277,13 @@ const ImageGridItem = ({
 
 			{/* Guest Controls (Bottom) */}
 			{isGuest && (
-				<div 
+				<div
 					className="absolute bottom-3 left-3 right-3 flex justify-between items-end z-40 transition-all duration-300"
-					style={{ 
+					style={{
 						opacity: isHovered ? 1 : 0,
-						visibility: isHovered ? 'visible' : 'hidden',
-						pointerEvents: isHovered ? 'auto' : 'none',
-						transform: isHovered ? 'translateY(0)' : 'translateY(8px)'
+						visibility: isHovered ? "visible" : "hidden",
+						pointerEvents: isHovered ? "auto" : "none",
+						transform: isHovered ? "translateY(0)" : "translateY(8px)",
 					}}
 				>
 					{onReaction ? (

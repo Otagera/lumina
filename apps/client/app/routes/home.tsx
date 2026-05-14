@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { HardDrive, QrCode, Search, Sparkles, Users, Zap } from "lucide-react";
+import { HardDrive, QrCode, Search, Sparkles, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import AlbumCard from "~/components/AlbumCard";
@@ -91,21 +91,49 @@ const Home = () => {
 	}, []);
 
 	return (
-		<MainContainer className="space-y-20 pb-20">
+		<MainContainer className="space-y-24 pb-24">
+			{/* Hero Section */}
+			<section className="pt-10 md:pt-16 space-y-8 animate-in fade-in slide-in-from-top-4 duration-1000">
+				<div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+					<div className="space-y-4">
+						<div className="inline-flex items-center px-4 py-1.5 bg-sage/10 text-sage rounded-full text-[10px] font-black uppercase tracking-[0.2em]">
+							Dashboard
+						</div>
+						<Heading
+							level={1}
+							className="text-5xl md:text-7xl font-black tracking-tight leading-[0.9]"
+						>
+							Welcome back<span className="text-sage">.</span>
+						</Heading>
+						<p className="text-zinc-500 dark:text-zinc-400 text-lg md:text-xl font-medium max-w-xl text-pretty">
+							Your photo library is up to date. Organize your memories, manage
+							events, and find faces instantly.
+						</p>
+					</div>
+					<div className="flex items-center gap-3">
+						<Button
+							size="lg"
+							className="rounded-2xl px-8 h-14 text-sm font-bold shadow-xl shadow-sage/20 active:scale-95 transition-transform"
+							onClick={() => setIsCreateModalOpen(true)}
+						>
+							+ New Album
+						</Button>
+					</div>
+				</div>
+			</section>
+
 			{/* Albums Section */}
-			<section>
-				<div className="flex justify-between items-end mb-6">
+			<section className="relative">
+				<div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-sage/50 to-transparent rounded-full hidden md:block" />
+				<div className="flex justify-between items-end mb-10">
 					<div>
-						<Heading level={1} className="text-4xl font-black">
+						<Heading level={2} className="text-3xl font-black tracking-tight">
 							Albums
 						</Heading>
 						<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium">
-							Organize your photos and collaborative events
+							Manage your collections and collaborative event galleries
 						</p>
 					</div>
-					<Button onClick={() => setIsCreateModalOpen(true)}>
-						Create New Album
-					</Button>
 				</div>
 
 				{isAlbumsLoading ? (
@@ -113,7 +141,7 @@ const Home = () => {
 						<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage" />
 					</div>
 				) : (
-					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 sm:gap-10">
 						{albumsData?.data?.albums?.map((album: Album) => (
 							<AlbumCard
 								key={album.id}
@@ -133,15 +161,8 @@ const Home = () => {
 			</section>
 
 			{/* Recent Photos Section */}
-			<section>
-				<div className="mb-10">
-					<Heading level={2} className="text-2xl font-bold">
-						Recent Photos
-					</Heading>
-					<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium">
-						Your latest memories across all albums
-					</p>
-				</div>
+			<section className="relative pt-10 border-t border-zinc-100 dark:border-zinc-800/50">
+				<div className="absolute -left-4 top-10 bottom-0 w-1 bg-gradient-to-b from-sage/50 to-transparent rounded-full hidden md:block" />
 				<ImageGallery />
 			</section>
 

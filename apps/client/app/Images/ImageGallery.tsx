@@ -1,17 +1,21 @@
-import { ImageGrid } from "@lumina/ui/components/domain/ImageGrid";
+import { SkeletonImageGrid } from "@lumina/ui/components/domain/Skeleton";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useInView } from "react-intersection-observer";
 import { useSearchParams } from "react-router-dom";
+import { Sparkles } from "lucide-react";
 import { AddToAlbumModal } from "~/components/AddToAlbumModal";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { CompactListView } from "~/components/CompactListView";
 import { EmptyState } from "~/components/standard/EmptyState";
+import ImageGridItem from "~/Images/ImageGridItem";
 import type { ImageFromDB } from "~/types";
 import { deleteImage, fetchImages } from "~/utils/api";
 import axiosAPI from "~/utils/axios";
+import { getBentoSpanClass } from "~/utils/bento";
+import { groupImagesByDate } from "~/utils/dateGrouping";
 import ImageModal from "./ImageModal";
 
 const ImageGallery: FC = () => {
@@ -20,6 +24,10 @@ const ImageGallery: FC = () => {
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [isAddToAlbumOpen, setIsAddToAlbumOpen] = useState(false);
 	const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+
+	const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+		new Set(),
+	);
 
 	const queryClient = useQueryClient();
 
@@ -39,8 +47,29 @@ const ImageGallery: FC = () => {
 	});
 
 	const images = useMemo(() => {
-		return data?.pages.flatMap((page) => page?.data?.images || []) || [];
+		const allImages =
+			data?.pages.flatMap((page) => page?.data?.images || []) || [];
+		// De-duplicate by imageId to prevent duplicate key errors during infinite scroll
+		const uniqueMap = new Map();
+		for (const img of allImages) {
+			uniqueMap.set(img.imageId, img);
+		}
+		return Array.from(uniqueMap.values());
 	}, [data]);
+
+	const dateSections = useMemo(
+		() => groupImagesByDate(images as any[]),
+		[images],
+	);
+
+	const toggleSection = (key: string) => {
+		setCollapsedSections((prev) => {
+			const next = new Set(prev);
+			if (next.has(key)) next.delete(key);
+			else next.add(key);
+			return next;
+		});
+	};
 
 	const { ref, inView } = useInView({
 		rootMargin: "200px",
@@ -255,7 +284,10 @@ const ImageGallery: FC = () => {
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
+						role="img"
+						aria-label="No photos"
 					>
+						<title>No photos</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -270,25 +302,30 @@ const ImageGallery: FC = () => {
 
 	return (
 		<div className="space-y-12">
-			<div className="flex justify-between items-center px-1">
+			<div className="flex justify-between items-end px-1">
 				<div className="flex flex-col">
-					<span className="text-xs font-black uppercase tracking-widest text-sage mb-1">
-						Library
-					</span>
-					<h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
-						Your Collection
+					<div className="inline-flex items-center gap-2 text-sage mb-2">
+						<Sparkles size={16} />
+						<span className="text-[10px] font-black uppercase tracking-widest">
+							Everything
+						</span>
+					</div>
+					<h2 className="text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
+						Recent Photos
 					</h2>
+					<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2 font-medium">
+						The latest memories from all your albums and events
+					</p>
 				</div>
 
 				<div className="bg-zinc-100 dark:bg-zinc-900 p-1 rounded-full flex items-center gap-1">
 					<button
 						type="button"
 						onClick={() => setViewMode("grid")}
-						className={`p-2 rounded-xl transition-all ${
-							viewMode === "grid"
+						className={`p-2 rounded-xl transition-all ${viewMode === "grid"
 								? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
 								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-						}`}
+							}`}
 						title="Bento Grid"
 					>
 						<svg
@@ -306,11 +343,10 @@ const ImageGallery: FC = () => {
 					<button
 						type="button"
 						onClick={() => setViewMode("list")}
-						className={`p-2 rounded-xl transition-all ${
-							viewMode === "list"
+						className={`p-2 rounded-xl transition-all ${viewMode === "list"
 								? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
 								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-						}`}
+							}`}
 						title="List View"
 					>
 						<svg
@@ -332,25 +368,90 @@ const ImageGallery: FC = () => {
 				</div>
 			</div>
 
-			{viewMode === "grid" ? (
-				<ImageGrid
-					images={images}
+			{isLoading ? (
+				<SkeletonImageGrid count={12} />
+			) : viewMode === "grid" ? (
+				<div className="space-y-12">
+					{dateSections.map((section) => {
+						const isCollapsed = collapsedSections.has(section.key);
+						return (
+							<div key={section.key} className="space-y-4">
+								<button
+									type="button"
+									onClick={() => toggleSection(section.key)}
+									className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors group"
+								>
+									<span
+										className={`text-zinc-400 group-hover:text-sage transition-transform duration-200 ${isCollapsed ? "" : "rotate-90"
+											}`}
+									>
+										›
+									</span>
+									<span className="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">
+										{section.label}
+									</span>
+									<span className="text-xs font-bold text-zinc-500">
+										{section.images.length}
+									</span>
+								</button>
+								<div
+									className={`overflow-hidden transition-all duration-300 ease-out ${isCollapsed
+											? "max-h-0 opacity-0"
+											: "max-h-[10000px] opacity-100"
+										}`}
+								>
+									<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1 sm:gap-1.5 auto-rows-[150px] sm:auto-rows-[200px]">
+										{section.images.map((image: any, index: number) => {
+											const width = image.originalSize?.width || 0;
+											const height = image.originalSize?.height || 0;
+											const area = width * height;
+											const isFeatured = area > 2000000;
+											const spanClass = getBentoSpanClass(
+												width,
+												height,
+												index,
+												isFeatured,
+											);
+
+											return (
+												<div
+													key={image.imageId}
+													className={`relative ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500`}
+													style={{ animationDelay: `${(index % 20) * 50}ms` }}
+												>
+													<ImageGridItem
+														image={{
+															id: image.imageId,
+															width,
+															height,
+															url: image.imagePath,
+															alt: image.imagePath,
+															status: image.status,
+														}}
+														onClick={() => handleImageClick(image)}
+														isSelected={selectedIds.has(image.imageId)}
+														onToggleSelect={toggleSelect}
+														onDelete={handleDeleteImage}
+														selectionMode={selectedIds.size > 0}
+														variant="admin"
+													/>
+												</div>
+											);
+										})}
+									</div>
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			) : (
+				<CompactListView
+					images={images || []}
 					selectedIds={selectedIds}
 					onToggleSelect={toggleSelect}
 					onImageClick={handleImageClick}
 					onDelete={handleDeleteImage}
-					variant="admin"
 				/>
-			) : (
-				<div>
-					<CompactListView
-						images={images || []}
-						selectedIds={selectedIds}
-						onToggleSelect={toggleSelect}
-						onImageClick={handleImageClick}
-						onDelete={handleDeleteImage}
-					/>
-				</div>
 			)}
 
 			<div ref={ref} className="w-full flex justify-center py-12">
