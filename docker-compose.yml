@@ -162,7 +162,7 @@ services:
       - BETTER_STACK_SOURCE_TOKEN=${BETTER_STACK_SOURCE_TOKEN}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./monitoring/vector.yaml:/etc/vector/vector.yaml:ro
+      - ./monitoring:/etc/vector/:ro
     restart: always
 
 volumes:
