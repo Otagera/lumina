@@ -1,0 +1,49 @@
+# Ignore massive local folders
+node_modules
+**/node_modules
+venv
+**/.venv
+.venv
+__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache
+
+# Ignore user uploads (these should live in volumes)
+apps/api/src/uploads
+src/uploads
+uploads
+
+# Ignore build artifacts
+dist
+**/dist
+.next
+.react-router
+
+# Ignore large version control and IDE data
+.git
+.gitignore
+.vscode
+.idea
+.idx
+.opencode
+
+# Ignore local environment files
+.env
+.env.local
+.env.*.local
+*.local
+
+# Ignore logs
+log.txt
+logQueue.json
+logs
+*.log
+
+# Ignore documentation and markdown
+README.md
+GEMINI.md
+AGENTS.md
+.tickets
+docs

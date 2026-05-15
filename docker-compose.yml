@@ -95,6 +95,7 @@ services:
   worker:
     build:
       context: .
+      dockerfile: Dockerfile
       target: worker
     deploy:
       resources:
@@ -158,6 +159,7 @@ services:
   logtail:
     image: timberio/vector:latest-debian
     container_name: vector
+    command: ["--config-dir", "/etc/vector/"]
     environment:
       - BETTER_STACK_SOURCE_TOKEN=${BETTER_STACK_SOURCE_TOKEN}
     volumes:

@@ -2,11 +2,13 @@ FROM oven/bun:1.2 AS base
 
 WORKDIR /app
 
-# Copy root package files
+# 1. Install system dependencies first (rarely change)
+RUN apt-get update && apt-get install -y openssl ca-certificates curl && rm -rf /var/lib/apt/lists/*
+
+# 2. Copy root package files
 COPY package.json bun.lock ./
 
-# Copy all workspace member package.json files for dependency resolution
-# (This is necessary for Bun/NPM/Yarn workspaces to work in Docker)
+# 3. Copy all workspace member package.json files for dependency resolution
 COPY apps/api/package.json apps/api/
 COPY apps/client/package.json apps/client/
 COPY apps/app/package.json apps/app/
@@ -21,16 +23,13 @@ COPY packages/models/package.json packages/models/
 COPY packages/ui/package.json packages/ui/
 COPY packages/utils/package.json packages/utils/
 
-# Install dependencies (ignoring scripts to avoid running prepare scripts for UI if not needed)
+# 4. Install dependencies (cached unless package.json files change)
 RUN bun install --ignore-scripts
 
-# Copy the rest of the monorepo code
+# 5. Copy the rest of the monorepo code
 COPY . .
 
-# Install system dependencies for Prisma and Health Checks
-RUN apt-get update && apt-get install -y openssl ca-certificates curl && rm -rf /var/lib/apt/lists/*
-
-# Generate Prisma Client (Bypass SSL for binary download if needed)
+# 6. Generate Prisma Client (Bypass SSL for binary download if needed)
 RUN cd apps/api && NODE_TLS_REJECT_UNAUTHORIZED=0 bunx prisma generate
 
 # Stage: API
