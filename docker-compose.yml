@@ -151,7 +151,7 @@ services:
         condition: service_started
 
   logtail:
-    image: logtail/logtail:latest
+    image: betterstack/logtail-docker:latest
     container_name: logtail
     environment:
       - SOURCE_TOKEN=${BETTER_STACK_SOURCE_TOKEN}
