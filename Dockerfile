@@ -2,17 +2,24 @@ FROM oven/bun:1.2 AS base
 
 WORKDIR /app
 
-# Copy package files for dependency installation
+# Copy root package files
 COPY package.json bun.lock ./
+
+# Copy all workspace member package.json files for dependency resolution
+# (This is necessary for Bun/NPM/Yarn workspaces to work in Docker)
 COPY apps/api/package.json apps/api/
 COPY apps/client/package.json apps/client/
 COPY apps/app/package.json apps/app/
 COPY apps/worker/package.json apps/worker/
+
 COPY packages/auth/package.json packages/auth/
 COPY packages/config/package.json packages/config/
-COPY packages/models/package.json packages/models/
-COPY packages/utils/package.json packages/utils/
+COPY packages/config/tailwind/package.json packages/config/tailwind/
+COPY packages/email/package.json packages/email/
 COPY packages/event-sdk/package.json packages/event-sdk/
+COPY packages/models/package.json packages/models/
+COPY packages/ui/package.json packages/ui/
+COPY packages/utils/package.json packages/utils/
 
 # Install dependencies (ignoring scripts to avoid running prepare scripts for UI if not needed)
 RUN bun install --ignore-scripts
