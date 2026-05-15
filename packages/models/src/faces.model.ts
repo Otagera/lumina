@@ -379,6 +379,145 @@ const updateFacePerson = async (
 	});
 };
 
+const findFaceSuggestions = async (userId: string, limit = 10) => {
+	// 1. Get all people belonging to the user
+	const people = await prisma.people.findMany({
+		where: { user_id: userId },
+		select: { person_id: true, name: true },
+	});
+
+	if (people.length === 0) return [];
+
+	const personIds = people.map((p) => p.person_id);
+
+	// 2. For each person, find the best matching untagged face
+	// We use a complex query to find faces that are highly similar to any face already tagged with that personId
+	// but are NOT tagged yet, and NOT ignored.
+	const query = `
+    WITH potential_matches AS (
+      SELECT 
+        f.face_id,
+        f.image_id,
+        p.person_id,
+        p.name as "personName",
+        (
+          SELECT MIN(1.0 - (
+            SELECT (SUM(u1.val * u2.val) / (SQRT(SUM(u1.val * u1.val)) * SQRT(SUM(u2.val * u2.val))))
+            FROM unnest(f.embedding) WITH ORDINALITY AS u1(val, idx)
+            JOIN unnest(p_faces.embedding) WITH ORDINALITY AS u2(val, idx) ON u1.idx = u2.idx
+          ))
+          FROM faces p_faces
+          WHERE p_faces.person_id = p.person_id
+        ) as distance
+      FROM 
+        faces f
+      CROSS JOIN 
+        (SELECT person_id, name FROM people WHERE user_id = $1::uuid) p
+      LEFT JOIN 
+        ignored_faces ig ON ig.face_id = f.face_id AND ig.person_id = p.person_id
+      WHERE 
+        f.person_id IS NULL
+        AND ig.id IS NULL
+    )
+    SELECT 
+      m.face_id as "faceId",
+      m.image_id as "imageId",
+      m.person_id as "personId",
+      m."personName",
+      m.distance,
+      i.image_path as "imagePath",
+      i.storage_provider as "storageProvider",
+      i.storage_key as "storageKey",
+      f.bounding_box as "boundingBox"
+    FROM 
+      potential_matches m
+    JOIN 
+      images i ON i.image_id = m.image_id
+    JOIN 
+      faces f ON f.face_id = m.face_id
+    WHERE 
+      m.distance < 0.15 -- High confidence (similarity > 0.85)
+    ORDER BY 
+      m.distance ASC
+    LIMIT $2;
+  `;
+
+	return (await prisma.$queryRawUnsafe(query, userId, limit)) as any[];
+};
+
+const findMatchesForEmbedding = async ({
+	embedding,
+	albumId,
+	shareToken,
+	limit = 10,
+	threshold = 0.2, // Default similarity threshold for suggestions
+}: {
+	embedding: number[];
+	albumId?: string;
+	shareToken?: string;
+	limit?: number;
+	threshold?: number;
+}) => {
+	const params: any[] = [embedding, threshold, limit];
+	let albumFilter = "";
+
+	if (shareToken) {
+		const album = await prisma.albums.findUnique({
+			where: { share_token: shareToken },
+			select: { album_id: true },
+		});
+		if (album) {
+			params.push(album.album_id);
+			albumFilter = `AND i.image_id IN (SELECT image_id FROM album_images WHERE album_id = $${params.length}::uuid)`;
+		}
+	} else if (albumId) {
+		params.push(albumId);
+		albumFilter = `AND i.image_id IN (SELECT image_id FROM album_images WHERE album_id = $${params.length}::uuid)`;
+	}
+
+	const query = `
+    WITH potential_matches AS (
+      SELECT 
+        f.face_id,
+        f.image_id,
+        (1.0 - (
+          SELECT (SUM(u1.val * u2.val) / (SQRT(SUM(u1.val * u1.val)) * SQRT(SUM(u2.val * u2.val))))
+          FROM unnest(f.embedding) WITH ORDINALITY AS u1(val, idx)
+          JOIN unnest($1::real[]) WITH ORDINALITY AS u2(val, idx) ON u1.idx = u2.idx
+        )) as distance
+      FROM 
+        faces f
+      JOIN 
+        images i ON f.image_id = i.image_id
+      WHERE 
+        f.person_id IS NULL
+        AND i.deleted_at IS NULL
+        ${albumFilter}
+    )
+    SELECT 
+      m.face_id as "faceId",
+      m.image_id as "imageId",
+      m.distance,
+      i.image_path as "imagePath",
+      i.storage_provider as "storageProvider",
+      i.storage_key as "storageKey",
+      f.bounding_box as "boundingBox"
+    FROM 
+      potential_matches m
+    JOIN 
+      images i ON i.image_id = m.image_id
+    JOIN 
+      faces f ON f.face_id = m.face_id
+    WHERE 
+      m.distance < $2
+    ORDER BY 
+      m.distance ASC
+    LIMIT $3;
+  `;
+
+	return (await prisma.$queryRawUnsafe(query, ...params)) as any[];
+};
+
 export {
 	fetchFaceById,
 	searchFaces,
@@ -388,4 +527,6 @@ export {
 	updateFacePerson,
 	ignoreFace,
 	unignoreFace,
+	findFaceSuggestions,
+	findMatchesForEmbedding,
 };

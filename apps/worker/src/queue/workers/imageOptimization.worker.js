@@ -100,7 +100,9 @@ const run = async (jobData) => {
 		});
 
 		if (!image) {
-			console.warn(`[IMAGE-OPT] Image ${imageId} not found, skipping optimization`);
+			console.warn(
+				`[IMAGE-OPT] Image ${imageId} not found, skipping optimization`,
+			);
 			return { status: "skipped", reason: "image_not_found", imageId, albumId };
 		}
 
@@ -167,7 +169,10 @@ const run = async (jobData) => {
 			try {
 				await logUsage(image.uploaded_by, "storage", "optimize", optimizedSize);
 			} catch (logError) {
-				console.warn(`[IMAGE-OPT] Failed to log usage for image ${imageId}:`, logError);
+				console.warn(
+					`[IMAGE-OPT] Failed to log usage for image ${imageId}:`,
+					logError,
+				);
 			}
 		} else {
 			// Upload to external storage (R2/BYOS)
@@ -184,7 +189,10 @@ const run = async (jobData) => {
 			try {
 				await logUsage(image.uploaded_by, "storage", "optimize", optimizedSize);
 			} catch (logError) {
-				console.warn(`[IMAGE-OPT] Failed to log usage for image ${imageId}:`, logError);
+				console.warn(
+					`[IMAGE-OPT] Failed to log usage for image ${imageId}:`,
+					logError,
+				);
 			}
 		}
 

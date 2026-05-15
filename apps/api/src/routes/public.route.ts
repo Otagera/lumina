@@ -3,6 +3,7 @@ import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util
 import { getInviteDetailsService } from "../services/albums/getInviteDetails.service.ts";
 import { getHighlightsService } from "../services/pictures/getHighlights.service.ts";
 import { getPresignedUrlService } from "../services/pictures/getPresignedUrl.service.ts";
+import { fetchGuestSuggestionsService } from "../services/public/fetchGuestSuggestions.service.ts";
 import { getPlansService } from "../services/public/getPlans.service.ts";
 import { getSharedAlbumService } from "../services/public/getSharedAlbum.service.ts";
 import { getSharedImageService } from "../services/public/getSharedImage.service.ts";
@@ -234,6 +235,39 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 				{
 					params: t.Object({ token: t.String() }),
 					body: t.Object({ selfie: t.File() }),
+				},
+			)
+			.post(
+				"/albums/:token/suggestions",
+				async ({ params, body, set }) => {
+					try {
+						const data = await fetchGuestSuggestionsService({
+							...body,
+							shareToken: params.token,
+						});
+
+						set.status = HTTP_STATUS_CODES.OK;
+						return {
+							status: "completed",
+							message: "Suggestions retrieved successfully.",
+							data,
+						};
+					} catch (error: any) {
+						set.status =
+							error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+						return {
+							status: "error",
+							message: error?.message || "Internal server error",
+							data: null,
+						};
+					}
+				},
+				{
+					params: t.Object({ token: t.String() }),
+					body: t.Object({
+						embedding: t.Array(t.Number()),
+						limit: t.Optional(t.Number()),
+					}),
 				},
 			)
 			.post(

@@ -370,6 +370,17 @@ export const deletePerson = async (personId: string) => {
 	}
 };
 
+export const fetchSuggestions = async () => {
+	try {
+		const { data, error } = await api.faces.suggestions.get();
+		if (error) throw new Error(error.value?.message || "Request failed");
+		return data;
+	} catch (error) {
+		console.error("Error fetching suggestions:", error);
+		throw error;
+	}
+};
+
 export const updateFace = async (
 	faceId: number,
 	data: { personId: string | null },

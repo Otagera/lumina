@@ -21,7 +21,9 @@ const getSystemUserId = async (): Promise<string | null> => {
 	return systemUser?.user_id || null;
 };
 
-const resolveUserId = async (userId: string | null | undefined): Promise<string | null> => {
+const resolveUserId = async (
+	userId: string | null | undefined,
+): Promise<string | null> => {
 	if (!userId) {
 		return getSystemUserId();
 	}

@@ -5,6 +5,7 @@ import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ElysiaAdapter } from "@bull-board/elysia";
 import { cors } from "@elysiajs/cors";
 import { swagger } from "@elysiajs/swagger";
+import * as Sentry from "@sentry/bun";
 import { Elysia } from "elysia";
 import config from "../../../packages/config/src/index.config.ts";
 import {
@@ -28,6 +29,15 @@ import { thumbnailRoutes } from "./routes/thumbnail.route";
 import trashRoutes from "./routes/trash.route";
 import usageRoutes from "./routes/usage.route";
 
+const env = config.env || "development";
+
+// Initialize Sentry for Backend Error Tracking
+Sentry.init({
+	dsn: process.env.SENTRY_DSN,
+	environment: env,
+	tracesSampleRate: env === "production" ? 1.0 : 0.0,
+});
+
 const logger = createServiceLogger("api");
 
 export const createElysiaApp = async () => {
@@ -35,7 +45,33 @@ export const createElysiaApp = async () => {
 		const app = new Elysia()
 			.use(
 				elysiaLogger({
-					level: "info",
+					level: env === "development" ? "error" : "info",
+					autoLogging: {
+						ignore(request) {
+							const url = new URL(request.url);
+							// Always ignore noisy static uploads
+							if (url.pathname.startsWith("/api/uploads/")) return true;
+							// Always ignore the SSE heartbeat endpoint
+							if (url.pathname.startsWith("/api/v1/events")) return true;
+							// In development, ignore successful GET requests to keep console clean
+							if (env === "development" && request.method === "GET")
+								return true;
+
+							return false;
+						},
+					},
+					transport:
+						env === "development"
+							? {
+									target: "pino-pretty",
+									options: {
+										colorize: true,
+										singleLine: true,
+										ignore: "pid,hostname",
+										translateTime: "HH:MM:ss.l",
+									},
+								}
+							: undefined,
 				}),
 			)
 			.use(

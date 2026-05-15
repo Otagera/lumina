@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"start": "bun src/elysia.ts",
-		"dev": "bun --watch src/elysia.ts | bun run pino-pretty -c",
+		"dev": "bun --watch src/elysia.ts",
 		"create-model": "bun src/utils/scripts/index.script.ts model",
 		"create-handler": "bun src/utils/scripts/index.script.ts handler",
 		"create-middleware": "bun src/utils/scripts/index.script.ts middleware",

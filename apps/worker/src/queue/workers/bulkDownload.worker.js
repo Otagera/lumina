@@ -94,7 +94,10 @@ const run = async (jobData) => {
 						},
 					});
 				} catch (notifError) {
-					console.warn(`[BULK-DOWNLOAD] Failed to create notification:`, notifError);
+					console.warn(
+						`[BULK-DOWNLOAD] Failed to create notification:`,
+						notifError,
+					);
 				}
 			}
 
@@ -221,7 +224,10 @@ const run = async (jobData) => {
 					},
 				});
 			} catch (notifError) {
-				console.warn(`[BULK-DOWNLOAD] Failed to create notification:`, notifError);
+				console.warn(
+					`[BULK-DOWNLOAD] Failed to create notification:`,
+					notifError,
+				);
 			}
 
 			try {

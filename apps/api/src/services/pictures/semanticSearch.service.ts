@@ -60,31 +60,37 @@ const service = async (params: any) => {
 		);
 	}
 
-	// 3. Map to camelCase and normalize paths
-	const mappedImages = rawImages.map((img: any) => {
-		const normalizedPath = normalizeImagePath(
-			img.image_path,
-			img.storage_provider,
-			img.storage_key,
-		);
-
-		if (normalizedPath && !normalizedPath.startsWith("http")) {
-			console.warn(
-				`[SEARCH] Potential normalization failure: ${img.image_path} -> ${normalizedPath}`,
+	// 3. Map to camelCase, normalize paths, and filter by threshold
+	const mappedImages = rawImages
+		.map((img: any) => {
+			const normalizedPath = normalizeImagePath(
+				img.image_path,
+				img.storage_provider,
+				img.storage_key,
 			);
-		}
 
-		return {
-			imageId: img.image_id,
-			imagePath: normalizedPath,
-			status: img.status,
-			uploadDate: img.upload_date,
-			originalSize: {
-				width: img.original_width,
-				height: img.original_height,
-			},
-		};
-	});
+			// Calculate similarity from cosine distance
+			// Cosine distance = 1 - cosine similarity
+			// So similarity = 1 - distance
+			const similarity = 1 - (img.distance || 0);
+
+			return {
+				imageId: img.image_id,
+				imagePath: normalizedPath,
+				status: img.status,
+				uploadDate: img.upload_date,
+				originalSize: {
+					width: img.original_width,
+					height: img.original_height,
+				},
+				similarity,
+			};
+		})
+		.filter((img) => img.similarity >= 0.5); // Only return results with at least 50% similarity
+
+	console.log(
+		`[SEARCH] Filtered ${rawImages.length} -> ${mappedImages.length} results (Threshold: 0.5)`,
+	);
 
 	return aliaserSpec(aliasSpec.response, {
 		images: mappedImages,

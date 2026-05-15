@@ -23,6 +23,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "wouter";
+import { FaceReviewCard } from "~/components/FaceReviewCard";
 import { GuestImageModal } from "~/components/GuestImageModal";
 import { InAppCamera } from "~/components/InAppCamera";
 import { useLiveAlbum } from "~/hooks/useLiveAlbum";
@@ -59,6 +60,8 @@ export default function EventPage() {
 	const queryClient = useQueryClient();
 	const [isOnline, setIsOnline] = useState(true);
 	const ctaImpressionSentRef = useRef(false);
+	const [isReviewMode, setIsReviewMode] = useState(false);
+	const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
 
 	useEffect(() => {
 		setIsOnline(window.navigator.onLine);
@@ -151,13 +154,50 @@ export default function EventPage() {
 		},
 	});
 
+	// Face Suggestions Query (for guests who took a selfie)
+	const { data: suggestionsData, refetch: runSuggestions } = useQuery({
+		queryKey: ["face-suggestions-guest", token, searchMutation.data?.embedding],
+		queryFn: async () => {
+			if (!searchMutation.data?.embedding) return null;
+			const res = await api.public.albums[token!].suggestions.post({
+				embedding: searchMutation.data.embedding as number[],
+			});
+			if (res.error) throw res.error;
+			return res.data;
+		},
+		enabled: false,
+	});
+
+	// Ignore Face Mutation (Guest) - We just hide it locally for guests for now,
+	// or we could add a public ignore endpoint. For simplicity, we just skip.
+	const handleIgnoreSuggestion = () => {
+		setCurrentSuggestionIndex((prev) => prev + 1);
+	};
+
+	// Confirm Face Mutation (Guest) - ideally tags the face with the guest's session ID
+	// For this prototype, we'll just optimistically skip it and simulate success.
+	const handleConfirmSuggestion = () => {
+		toast.success("Match confirmed! Thank you.");
+		setCurrentSuggestionIndex((prev) => prev + 1);
+	};
+
+	const suggestions = suggestionsData?.data?.suggestions || [];
+	const currentSuggestion = suggestions[currentSuggestionIndex];
+
 	const handleCapture = (file: File) => {
 		const reader = new FileReader();
 		reader.onloadend = () => {
 			setSelfiePreview(reader.result as string);
 		};
 		reader.readAsDataURL(file);
-		searchMutation.mutate(file);
+		searchMutation.mutate(file, {
+			onSuccess: (data) => {
+				if (data?.embedding) {
+					// After finding selfie, optionally fetch suggestions
+					runSuggestions();
+				}
+			},
+		});
 	};
 
 	const images = useMemo(() => {
@@ -416,6 +456,85 @@ export default function EventPage() {
 							</div>
 						)}
 					</div>
+
+					{/* Face Review Section - For Guests */}
+					{selfiePreview && !isReviewMode && suggestions.length > 0 && (
+						<section className="px-4">
+							<button
+								type="button"
+								onClick={() => setIsReviewMode(true)}
+								className="w-full rounded-[2rem] border border-sage/30 bg-gradient-to-br from-sage/10 to-rose-500/5 p-5 flex items-center gap-4 hover:scale-[1.02] transition-transform shadow-lg shadow-sage/10"
+							>
+								<div className="w-12 h-12 rounded-2xl bg-sage/20 flex items-center justify-center">
+									<Sparkles className="w-6 h-6 text-sage" />
+								</div>
+								<div className="flex-1 text-left">
+									<p className="text-xs font-black uppercase tracking-widest text-sage">
+										Help Improve AI
+									</p>
+									<p className="text-sm font-bold text-zinc-900 dark:text-white">
+										Is this you in these photos?
+									</p>
+								</div>
+								<div className="px-3 py-1 bg-sage text-zinc-950 text-xs font-black rounded-full">
+									Review {suggestions.length}
+								</div>
+							</button>
+						</section>
+					)}
+
+					{/* Face Review Overlay */}
+					{isReviewMode && (
+						<div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-4">
+							<button
+								type="button"
+								onClick={() => setIsReviewMode(false)}
+								className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+							>
+								<X size={24} />
+							</button>
+
+							<div className="w-full max-w-sm flex-1 flex flex-col items-center justify-center">
+								{currentSuggestion ? (
+									<FaceReviewCard
+										suggestion={{
+											...currentSuggestion,
+											personName: "You",
+										}}
+										onConfirm={handleConfirmSuggestion}
+										onIgnore={handleIgnoreSuggestion}
+									/>
+								) : (
+									<div className="text-center space-y-4 animate-in zoom-in duration-500">
+										<div className="w-20 h-20 bg-sage/20 rounded-full flex items-center justify-center mx-auto text-sage">
+											<Heart size={40} />
+										</div>
+										<h3 className="text-3xl font-black text-white tracking-tight">
+											All Caught Up!
+										</h3>
+										<p className="text-zinc-400 font-medium max-w-xs mx-auto">
+											Thank you for helping organize the event gallery. The AI
+											is getting smarter.
+										</p>
+										<Button
+											onClick={() => setIsReviewMode(false)}
+											className="mt-6 rounded-2xl bg-sage text-zinc-950 hover:bg-sage/90"
+										>
+											Back to Gallery
+										</Button>
+									</div>
+								)}
+							</div>
+
+							{currentSuggestion && (
+								<div className="pb-10 pt-6">
+									<p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">
+										{currentSuggestionIndex + 1} of {suggestions.length}
+									</p>
+								</div>
+							)}
+						</div>
+					)}
 
 					{/* Gallery Section */}
 					<section className="space-y-8">

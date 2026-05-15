@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util.ts";
+import { fetchSuggestionsService } from "../services/faces/fetchSuggestions.service.ts";
 import { ignoreFaceService } from "../services/faces/ignoreFace.service.ts";
 import { unignoreFaceService } from "../services/faces/unignoreFace.service.ts";
 import fetchFaceService from "../services/pictures/fetchFace.service.ts";
@@ -169,6 +170,30 @@ const facesRoutes = new Elysia({ prefix: "/faces" })
 			params: t.Object({ faceId: t.Numeric() }),
 			body: t.Object({ personId: t.String() }),
 		},
-	);
+	)
+	.get("/suggestions", async ({ set, userId }) => {
+		try {
+			if (!userId) {
+				set.status = HTTP_STATUS_CODES.UNAUTHORIZED;
+				return { status: "error", message: "Unauthorized" };
+			}
+
+			const data = await fetchSuggestionsService({ userId });
+
+			set.status = HTTP_STATUS_CODES.OK;
+			return {
+				status: "completed",
+				message: "Suggestions retrieved successfully.",
+				data,
+			};
+		} catch (error: any) {
+			set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+			return {
+				status: "error",
+				message: error?.message || "Internal server error",
+				data: null,
+			};
+		}
+	});
 
 export default facesRoutes;

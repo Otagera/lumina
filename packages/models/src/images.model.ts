@@ -598,7 +598,8 @@ const searchImagesByEmbedding = async ({
 			SELECT 
 				i.image_id, i.image_path, i.optimized_path, i.storage_provider, 
 				i.storage_key, i.status, i.upload_date, i.original_width, i.original_height,
-				i.embedding::text as embedding
+				i.embedding::text as embedding,
+				(i.embedding <=> ${embedding}::vector) AS distance
 			FROM images i
 			JOIN album_images ai ON i.image_id = ai.image_id
 			WHERE ai.album_id = ${album.album_id}::uuid
@@ -614,7 +615,8 @@ const searchImagesByEmbedding = async ({
 			SELECT 
 				i.image_id, i.image_path, i.optimized_path, i.storage_provider, 
 				i.storage_key, i.status, i.upload_date, i.original_width, i.original_height,
-				i.embedding::text as embedding
+				i.embedding::text as embedding,
+				(i.embedding <=> ${embedding}::vector) AS distance
 			FROM images i
 			JOIN album_images ai ON i.image_id = ai.image_id
 			WHERE ai.album_id = ${albumId}::uuid
@@ -628,7 +630,8 @@ const searchImagesByEmbedding = async ({
 		SELECT 
 			image_id, image_path, optimized_path, storage_provider, 
 			storage_key, status, upload_date, original_width, original_height,
-			embedding::text as embedding
+			embedding::text as embedding,
+			(embedding <=> ${embedding}::vector) AS distance
 		FROM images
 		WHERE deleted_at IS NULL
 		ORDER BY embedding <=> ${embedding}::vector
