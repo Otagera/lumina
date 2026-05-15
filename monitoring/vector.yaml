@@ -1,0 +1,19 @@
+# Vector configuration for Better Stack
+# See https://vector.dev/docs/reference/configuration/
+
+sources:
+  docker_logs:
+    type: docker_logs
+
+sinks:
+  better_stack:
+    type: http
+    inputs:
+      - docker_logs
+    uri: https://in.logs.betterstack.com
+    method: post
+    auth:
+      strategy: bearer
+      token: "${BETTER_STACK_SOURCE_TOKEN}"
+    encoding:
+      codec: json

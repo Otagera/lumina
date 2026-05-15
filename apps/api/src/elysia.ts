@@ -85,7 +85,12 @@ export const createElysiaApp = async () => {
 							return true;
 						}
 
-						return config[config.env || "development"]?.cors_origin === origin;
+						const allowedOrigins = (config[env]?.cors_origin || "").split(",");
+						if (allowedOrigins.includes(origin)) {
+							return true;
+						}
+
+						return false;
 					},
 					credentials: true,
 					allowedHeaders: [

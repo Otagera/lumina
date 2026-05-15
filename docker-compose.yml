@@ -8,7 +8,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-anoda} -d ${POSTGRES_DB:-anoda_facematch}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-anoda} -d ${POSTGRES_DB:-anoda_facematch}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -69,6 +73,7 @@ services:
       - R2_ENDPOINT=${R2_ENDPOINT}
       - R2_REGION=${R2_REGION:-auto}
       - SENTRY_DSN=${SENTRY_DSN}
+      - CORS_ORIGIN=${CORS_ORIGIN:-https://lumina.otagera.xyz,https://lumina-events.otagera.xyz}
     depends_on:
       db:
         condition: service_healthy
@@ -151,13 +156,13 @@ services:
         condition: service_started
 
   logtail:
-    image: betterstack/logtail-docker:latest
-    container_name: logtail
+    image: timberio/vector:latest-debian
+    container_name: vector
     environment:
-      - SOURCE_TOKEN=${BETTER_STACK_SOURCE_TOKEN}
+      - BETTER_STACK_SOURCE_TOKEN=${BETTER_STACK_SOURCE_TOKEN}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./monitoring/vector.yaml:/etc/vector/vector.yaml:ro
     restart: always
 
 volumes:
