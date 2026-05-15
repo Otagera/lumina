@@ -159,12 +159,13 @@ services:
   logtail:
     image: timberio/vector:latest-debian
     container_name: vector
-    command: ["--config-dir", "/etc/vector/"]
+    command: ["--config", "/etc/vector/vector.yaml"]
     environment:
       - BETTER_STACK_SOURCE_TOKEN=${BETTER_STACK_SOURCE_TOKEN}
+      - VECTOR_LOG=debug
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./monitoring:/etc/vector/:ro
+      - ./monitoring/vector.yaml:/etc/vector/vector.yaml:ro
     restart: always
 
 volumes:
