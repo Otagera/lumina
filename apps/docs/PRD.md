@@ -364,26 +364,22 @@ The project has transitioned to a monorepo structure utilizing Bun workspaces to
     * 14.6 Usage & Quotas: Implement "Compute Unit" tracking and host-based billing logic. Done.
 * Status: Done.
 
-### Monitoring & Observability (LGTM Stack)
+### Monitoring & Observability
 
-The application implements the LGTM stack (Loki, Grafana, Tempo, Mimir/Prometheus) for comprehensive system visibility:
-*   **Centralized Logging (Loki):** Consolidates logs from API, Worker, and AI services into a single searchable interface.
-*   **Infrastructure Metrics (Prometheus + cAdvisor):** Real-time monitoring of CPU, Memory, and Network usage across all Docker containers, specifically tracking the load of the AI service.
+Lumina uses a cloud-offloaded observability stack to maintain high performance on lightweight servers:
+*   **Structured Logging (Better Stack + Vector):** High-performance log collection using Rust-based **Vector**. It automatically gathers structured JSON logs from all Docker containers and streams them to Better Stack for indexing and querying.
+*   **Error Tracking (Sentry):** Full-stack exception monitoring for both the ElysiaJS backend and React frontend. Provides real-time crash reporting, breadcrumbs, and session replays to resolve production issues instantly.
+*   **Infrastructure Health:** Basic container metrics and disk usage tracking are managed via Docker's native tools and Coolify's built-in monitoring.
 
-### Structured Logging Implementation
+**Milestone 15: Observability & Search Refinement**
 
-**Current State:** All services use plain text `console.log` which gets captured by Docker's json-file logging driver and forwarded to Loki via Promtail.
-
-**Phase 1 - JSON Logging (Implemented):**
-*   Replace plain text logs with structured JSON format across all services
-*   JSON format: `{ "timestamp": "...", "level": "info", "service": "api", "message": "...", "metadata": {...} }`
-*   Benefits: Advanced filtering, field extraction, dashboarding in Grafana
-
-**Phase 2 - Advanced Observability (Future):**
-*   **Direct Loki Push:** Replace Docker logging with direct HTTP push to Loki from each service (bypasses Docker logs)
-*   **Distributed Tracing (Tempo):** Add trace IDs to correlate requests across API -> Worker -> AI service boundaries
-*   **Application Metrics:** Track business metrics (queue lengths, face match accuracy, user activity)
-*   **Infrastructure Exporters:** Add dedicated exporters for PostgreSQL and Redis
+* Tasks:
+    * 15.1 Structured Logging: Refactor Elysia logger to support JSON output and smart filtering (ignoring static assets). Done.
+    * 15.2 Log Shipping: Integrate Vector as a sidecar for Better Stack log ingestion. Done.
+    * 15.3 Error Tracking: Full-stack Sentry integration (Bun + React). Done.
+    * 15.4 Search Accuracy: Implement cosine similarity thresholding (similarity > 0.5) to eliminate irrelevant results. Done.
+    * 15.5 Face Review (Tinder-style): Implement mobile-first gamified UI for guest face confirmation. Done.
+* Status: Done.
 
 ### Expected Deliverables
 
