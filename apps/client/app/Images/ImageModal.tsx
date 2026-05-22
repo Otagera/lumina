@@ -192,7 +192,10 @@ const ImageModal = ({
 
 	return (
 		<div
-			className="fixed inset-0 w-full h-full bg-black/95 backdrop-blur-xl flex justify-center items-center z-[100] p-4 sm:p-8 transition-opacity duration-300 animate-in fade-in"
+			role="dialog"
+			aria-modal="true"
+			aria-label="Photo viewer"
+			className="fixed inset-0 w-full h-full bg-black/95 backdrop-blur-xl flex justify-center items-center z-100 p-4 sm:p-8 transition-opacity duration-300 animate-in fade-in"
 			onClick={onClose}
 		>
 			<div
@@ -205,12 +208,14 @@ const ImageModal = ({
 						type="button"
 						onClick={() => setShowFaces(!showFaces)}
 						className={cn(
-							"p-3 rounded-2xl transition-all backdrop-blur-md shadow-lg border",
+							"p-3 rounded-control transition-all backdrop-blur-md shadow-lg border",
 							showFaces
 								? "bg-sage/20 text-sage border-sage/30"
 								: "bg-white/10 text-white hover:bg-white/20 border-white/10",
 						)}
 						title={showFaces ? "Hide Faces" : "Show Faces"}
+						aria-label={showFaces ? "Hide Faces" : "Show Faces"}
+						aria-pressed={showFaces}
 					>
 						{showFaces ? <EyeOff size={20} /> : <Eye size={20} />}
 					</button>
@@ -220,8 +225,9 @@ const ImageModal = ({
 							type="button"
 							onClick={handleSetAsCover}
 							disabled={isSettingCover}
-							className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all backdrop-blur-md border border-white/10 shadow-lg"
+							className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-control transition-all backdrop-blur-md border border-white/10 shadow-lg"
 							title="Set as Album Cover"
+							aria-label="Set as album cover"
 						>
 							<ImageIcon size={20} />
 						</button>
@@ -230,8 +236,9 @@ const ImageModal = ({
 					<button
 						type="button"
 						onClick={handleDownload}
-						className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all backdrop-blur-md border border-white/10 shadow-lg"
+						className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-control transition-all backdrop-blur-md border border-white/10 shadow-lg"
 						title="Download Original"
+						aria-label="Download original photo"
 					>
 						<Download size={20} />
 					</button>
@@ -240,8 +247,9 @@ const ImageModal = ({
 						<button
 							type="button"
 							onClick={() => setIsDeleteModalOpen(true)}
-							className="p-3 bg-red-500/10 text-red-400 hover:text-white hover:bg-red-500 rounded-2xl transition-all border border-red-500/20 shadow-lg"
+							className="p-3 bg-red-500/10 text-red-400 hover:text-white hover:bg-red-500 rounded-control transition-all border border-red-500/20 shadow-lg"
 							title="Delete Photo"
+							aria-label="Delete photo"
 						>
 							<Trash2 size={20} />
 						</button>
@@ -250,8 +258,9 @@ const ImageModal = ({
 					<button
 						type="button"
 						onClick={onClose}
-						className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all backdrop-blur-md border border-white/10 shadow-lg"
+						className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-control transition-all backdrop-blur-md border border-white/10 shadow-lg"
 						title="Close (Esc)"
+						aria-label="Close (Esc)"
 					>
 						<X size={20} />
 					</button>
@@ -263,7 +272,9 @@ const ImageModal = ({
 						<button
 							type="button"
 							onClick={handlePrevious}
-							className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-3xl backdrop-blur-md border border-white/10 transition-all active:scale-90 shadow-2xl"
+							aria-label="Previous photo"
+							title="Previous (←)"
+							className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-pill backdrop-blur-md border border-white/10 transition-all active:scale-90 shadow-2xl"
 						>
 							<ChevronLeft size={32} />
 						</button>
@@ -276,7 +287,9 @@ const ImageModal = ({
 						<button
 							type="button"
 							onClick={handleNext}
-							className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-3xl backdrop-blur-md border border-white/10 transition-all active:scale-90 shadow-2xl"
+							aria-label="Next photo"
+							title="Next (→)"
+							className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-pill backdrop-blur-md border border-white/10 transition-all active:scale-90 shadow-2xl"
 						>
 							<ChevronRight size={32} />
 						</button>
@@ -289,24 +302,42 @@ const ImageModal = ({
 						<img
 							src={image.imagePath || image.url}
 							alt="Full screen view"
-							className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/5"
+							className="max-w-full max-h-[85vh] object-contain rounded-tile shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/5"
 						/>
 
 						{/* Face Detection Overlays */}
 						{showFaces &&
 							image.faces?.map((face: any) => {
-								const { top, left, right, bottom } = face.bounding_box;
-								// Note: Face detection UI requires scaling logic if not pre-rendered
+								const bbox = face.bounding_box || face.boundingBox;
+								if (!bbox) return null;
+								const { top, left, right, bottom } = bbox;
+								const ow =
+									image.originalSize?.width ||
+									image.original_width ||
+									image.width ||
+									0;
+								const oh =
+									image.originalSize?.height ||
+									image.original_height ||
+									image.height ||
+									0;
+								if (!ow || !oh) return null;
+								const topPct = (top / oh) * 100;
+								const leftPct = (left / ow) * 100;
+								const widthPct = ((right - left) / ow) * 100;
+								const heightPct = ((bottom - top) / oh) * 100;
 								return (
 									<button
 										type="button"
 										key={face.face_id}
-										className="absolute border-2 border-sage hover:border-white rounded-xl shadow-lg cursor-pointer transition-all hover:scale-105 z-20"
+										aria-label="View photos of this person"
+										title="View photos of this person"
+										className="absolute border-2 border-sage hover:border-white rounded-card shadow-lg cursor-pointer transition-colors z-20"
 										style={{
-											top: `${top}%`,
-											left: `${left}%`,
-											width: `${right - left}%`,
-											height: `${bottom - top}%`,
+											top: `${topPct}%`,
+											left: `${leftPct}%`,
+											width: `${widthPct}%`,
+											height: `${heightPct}%`,
 										}}
 										onClick={() => handleFaceClick(face.face_id)}
 									/>
@@ -320,7 +351,10 @@ const ImageModal = ({
 					<button
 						type="button"
 						onClick={() => setIsDetailsOpen(true)}
-						className="flex items-center gap-2 px-6 py-3 bg-white text-zinc-950 font-black rounded-2xl shadow-2xl hover:scale-105 transition-all active:scale-95"
+						aria-label="View photo details"
+						aria-expanded={isDetailsOpen}
+						aria-controls="image-details-panel"
+						className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-control transition-all backdrop-blur-md border border-white/10 shadow-lg font-bold active:scale-95"
 					>
 						<Info size={20} />
 						View Details
@@ -329,8 +363,12 @@ const ImageModal = ({
 
 				{/* Slide-out Details Panel */}
 				<div
+					id="image-details-panel"
+					role="region"
+					aria-label="Photo details"
+					aria-hidden={!isDetailsOpen}
 					className={cn(
-						"fixed top-4 right-4 bottom-4 w-full max-w-[350px] bg-zinc-900/95 backdrop-blur-2xl rounded-3xl border border-zinc-800 shadow-2xl p-6 transition-all duration-500 transform z-[60], overflow-y-auto",
+						"fixed top-4 right-4 bottom-4 w-full max-w-[350px] bg-zinc-900/95 backdrop-blur-2xl rounded-modal border border-zinc-800 shadow-2xl p-6 transition-all duration-500 transform z-70 overflow-y-auto",
 						isDetailsOpen
 							? "translate-x-0 opacity-100"
 							: "translate-x-[120%] opacity-0 pointer-events-none",
@@ -344,6 +382,7 @@ const ImageModal = ({
 						<button
 							type="button"
 							onClick={() => setIsDetailsOpen(false)}
+							aria-label="Close details panel"
 							className="p-2 text-zinc-400 hover:text-white bg-zinc-800 rounded-full transition-colors"
 						>
 							<X size={20} />
@@ -361,7 +400,7 @@ const ImageModal = ({
 						</div>
 
 						<div className="grid grid-cols-2 gap-4">
-							<div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800">
+							<div className="bg-zinc-950 p-4 rounded-card border border-zinc-800">
 								<span className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 block mb-1">
 									Width
 								</span>
@@ -369,7 +408,7 @@ const ImageModal = ({
 									{image.originalSize?.width || image.originalWidth}px
 								</span>
 							</div>
-							<div className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800">
+							<div className="bg-zinc-950 p-4 rounded-card border border-zinc-800">
 								<span className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 block mb-1">
 									Height
 								</span>
@@ -379,7 +418,7 @@ const ImageModal = ({
 							</div>
 						</div>
 
-						<div className="bg-gradient-to-br from-sage/10 to-transparent p-6 rounded-3xl border border-sage/20 relative overflow-hidden mt-8">
+						<div className="bg-gradient-to-br from-sage/10 to-transparent p-6 rounded-card border border-sage/20 relative overflow-hidden mt-8">
 							<div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-sage/20 rounded-full blur-2xl" />
 							<span className="text-[10px] uppercase tracking-widest font-bold text-sage block mb-2">
 								AI Insights
@@ -400,7 +439,7 @@ const ImageModal = ({
 									type="button"
 									onClick={handleReprocess}
 									disabled={isReprocessing}
-									className="relative z-10 w-full py-3 bg-sage text-zinc-950 rounded-xl text-sm font-bold hover:bg-sage/90 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-2"
+									className="relative z-10 w-full py-3 bg-sage text-zinc-950 rounded-control text-sm font-bold hover:bg-sage/90 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-2"
 								>
 									{isReprocessing && (
 										<div className="animate-spin h-4 w-4 border-2 border-zinc-950 border-t-transparent rounded-full" />

@@ -77,7 +77,7 @@ export const ImageGrid = ({
 				)}
 			>
 				{images?.map((image, index) => (
-					<div key={image.imageId} className="relative">
+					<div key={image.imageId} className="relative cv-tile">
 						{renderItem(image, index)}
 					</div>
 				))}
@@ -94,8 +94,8 @@ export const ImageGrid = ({
 			{images.map((image, index) => (
 				<div
 					key={image.imageId}
-					className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-					style={{ animationDelay: `${(index % 20) * 50}ms` }}
+					className="cv-tile animate-in fade-in slide-in-from-bottom-4 duration-500"
+					style={{ animationDelay: `${(index % 12) * 50}ms` }}
 				>
 					{renderItem(image, index)}
 				</div>

@@ -128,6 +128,7 @@ const config: IConfig = {
 		cors_origin: process.env.CORS_ORIGIN,
 		log_level: process.env.LOG_LEVEL || "info",
 		is_api: process.env.IS_API === "true",
+		metrics_token: process.env.METRICS_TOKEN,
 
 		// Plan limits
 		plans: {
@@ -195,6 +196,7 @@ const config: IConfig = {
 		cors_origin: process.env.CORS_ORIGIN,
 		log_level: process.env.LOG_LEVEL || "info",
 		is_api: process.env.IS_API === "true",
+		metrics_token: process.env.METRICS_TOKEN || "test-metrics-token",
 	},
 	production: {
 		// System user for orphan records
@@ -257,6 +259,7 @@ const config: IConfig = {
 		cors_origin: process.env.CORS_ORIGIN,
 		log_level: process.env.LOG_LEVEL || "info",
 		is_api: process.env.IS_API === "true",
+		metrics_token: process.env.METRICS_TOKEN,
 
 		// Plan limits
 		plans: {

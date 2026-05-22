@@ -46,7 +46,7 @@ export function InstallPrompt() {
 
 	if (deferredPrompt) {
 		return (
-			<div className="fixed bottom-4 left-1/2 z-[300] w-[calc(100%-1rem)] max-w-md -translate-x-1/2 rounded-2xl border border-zinc-200 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/95">
+			<div className="fixed bottom-4 left-1/2 z-300 w-[calc(100%-1rem)] max-w-md -translate-x-1/2 rounded-card border border-zinc-200 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/95">
 				<p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
 					Install Lumina for faster loading offline.
 				</p>
@@ -75,7 +75,7 @@ export function InstallPrompt() {
 
 	if (isIOS) {
 		return (
-			<div className="fixed bottom-4 left-1/2 z-[300] w-[calc(100%-1rem)] max-w-md -translate-x-1/2 rounded-2xl border border-zinc-200 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/95">
+			<div className="fixed bottom-4 left-1/2 z-300 w-[calc(100%-1rem)] max-w-md -translate-x-1/2 rounded-card border border-zinc-200 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/95">
 				<div className="flex justify-between items-start">
 					<p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
 						Add to Home Screen on iPhone/iPad.

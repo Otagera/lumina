@@ -13,7 +13,7 @@ export default function NotFound() {
 						404
 					</div>
 					<div className="absolute inset-0 flex items-center justify-center">
-						<div className="w-24 h-24 bg-gradient-to-br from-sage to-terracotta rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-sage/20">
+						<div className="w-24 h-24 bg-gradient-to-br from-sage to-terracotta rounded-tile flex items-center justify-center shadow-2xl shadow-sage/20">
 							<Search className="w-10 h-10 text-white" />
 						</div>
 					</div>

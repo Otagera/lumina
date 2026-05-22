@@ -23,6 +23,7 @@ import { DuplicateReview } from "~/components/DuplicateReview";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
+import { Modal } from "~/components/standard/Modal";
 import { useAlbumImages } from "~/hooks/album/useAlbumImages";
 import { useBatchActions } from "~/hooks/album/useBatchActions";
 import { useInfiniteScroll } from "~/hooks/album/useInfiniteScroll";
@@ -173,9 +174,9 @@ const AlbumPage = () => {
 		setIsSearching(false);
 	};
 
-	const displayImages = useMemo(() => {
+	const displayImages = useMemo<AlbumImage[]>(() => {
 		if (isSearching && searchResults?.data?.images) {
-			return searchResults.data.images;
+			return searchResults.data.images as AlbumImage[];
 		}
 		return view === "gallery" ? approvedImages : pendingImages;
 	}, [view, approvedImages, pendingImages, isSearching, searchResults]);
@@ -276,7 +277,7 @@ const AlbumPage = () => {
 	useKeyboardShortcuts({
 		view,
 		selectedIds,
-		displayImages,
+		images: displayImages,
 		onModerate: handleModerateWithIds,
 		onNavigateNext: (img) => {
 			setSelectedImage(img);
@@ -298,8 +299,8 @@ const AlbumPage = () => {
 	};
 
 	const toggleSelectAll = () => {
-		const allImageIds = displayImages.map((img) => img.imageId);
-		const allSelected = allImageIds.every((id) => selectedIds.has(id));
+		const allImageIds = displayImages.map((img: AlbumImage) => img.imageId);
+		const allSelected = allImageIds.every((id: string) => selectedIds.has(id));
 		setSelectedIds(allSelected ? new Set() : new Set(allImageIds));
 	};
 
@@ -412,33 +413,34 @@ const AlbumPage = () => {
 				{albumData?.data?.settings?.semantic_search_enabled && (
 					<form
 						onSubmit={handleSearch}
-						className="relative max-w-2xl mx-auto w-full group"
+						className="relative max-w-2xl mx-auto w-full"
 					>
-						<div className="absolute inset-0 bg-sage/5 rounded-[2rem] blur-xl group-focus-within:bg-sage/10 transition-all" />
-						<div className="relative flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-1.5 shadow-xl shadow-zinc-200/20 dark:shadow-none transition-all focus-within:ring-2 focus-within:ring-sage/50">
-							<div className="pl-4 pr-2 text-zinc-400">
-								<Search size={20} />
-							</div>
+						<label className="block text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400 mb-1.5">
+							Search Photos
+						</label>
+						<div className="group relative flex items-center gap-2 border-b-2 border-zinc-200 dark:border-zinc-800 focus-within:border-sage transition-colors">
+							<Search size={18} className="text-zinc-400 shrink-0" />
 							<input
 								type="text"
-								placeholder="Search for something specific... (e.g. 'sunset at the beach')"
+								placeholder="e.g. 'sunset at the beach'"
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
-								className="flex-1 bg-transparent border-none outline-none py-3 text-sm font-bold text-zinc-900 dark:text-white placeholder:text-zinc-500 placeholder:font-medium"
+								className="flex-1 bg-transparent border-0 outline-none focus:ring-0 py-2 text-base font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
 							/>
 							{searchQuery && (
 								<button
 									type="button"
 									onClick={clearSearch}
-									className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors mr-1"
+									className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400 shrink-0"
 								>
 									<X size={16} />
 								</button>
 							)}
 							<Button
 								type="submit"
+								size="sm"
 								disabled={isSearchLoading || !searchQuery.trim()}
-								className="rounded-[1.5rem] px-6 py-2.5 h-auto bg-sage text-zinc-950 font-black tracking-tighter"
+								className="bg-sage text-zinc-950 font-black tracking-tight shrink-0 mb-1 px-5"
 							>
 								{isSearchLoading ? "..." : "Search"}
 							</Button>
@@ -517,8 +519,8 @@ const AlbumPage = () => {
 						) : displayMode === "grid" ? (
 							<div className="space-y-6 w-full min-w-0">
 								{!isSearching &&
-								view === "gallery" &&
-								dateSections.length > 0 ? (
+									view === "gallery" &&
+									dateSections.length > 0 ? (
 									dateSections.map((section) => {
 										const isCollapsed = collapsedSections.has(section.key);
 										return (
@@ -532,9 +534,8 @@ const AlbumPage = () => {
 													className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
 												>
 													<span
-														className={`text-zinc-400 transition-transform duration-200 ${
-															isCollapsed ? "" : "rotate-90"
-														}`}
+														className={`text-zinc-400 transition-transform duration-200 ${isCollapsed ? "" : "rotate-90"
+															}`}
 													>
 														›
 													</span>
@@ -546,11 +547,10 @@ const AlbumPage = () => {
 													</span>
 												</button>
 												<div
-													className={`overflow-hidden transition-all duration-300 ease-out w-full ${
-														isCollapsed
-															? "max-h-0 opacity-0"
-															: "max-h-[5000px] opacity-100"
-													}`}
+													className={`overflow-hidden transition-all duration-300 ease-out w-full ${isCollapsed
+														? "max-h-0 opacity-0"
+														: "max-h-[5000px] opacity-100"
+														}`}
 												>
 													<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5 sm:gap-1 auto-rows-[150px] sm:auto-rows-[200px] w-full min-w-0">
 														{section.images.map((image, idx) => {
@@ -567,8 +567,8 @@ const AlbumPage = () => {
 															return (
 																<div
 																	key={image.imageId}
-																	className={`relative ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500`}
-																	style={{ animationDelay: `${idx * 30}ms` }}
+																	className={`relative cv-tile ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500`}
+																	style={{ animationDelay: `${(idx % 12) * 30}ms` }}
 																>
 																	<ImageGridItem
 																		image={{
@@ -580,10 +580,6 @@ const AlbumPage = () => {
 																			status: image.status,
 																		}}
 																		onClick={() => setSelectedImage(image)}
-																		onReaction={(id) =>
-																			reactMutation.mutate(id)
-																		}
-																		reactionCount={image.reactionCount}
 																		isSelected={selectedIds.has(image.imageId)}
 																		onToggleSelect={() =>
 																			handleToggleSelect(image.imageId)
@@ -623,8 +619,8 @@ const AlbumPage = () => {
 											return (
 												<div
 													key={image.imageId}
-													className={`relative ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500 w-full h-full min-w-0`}
-													style={{ animationDelay: `${index * 50}ms` }}
+													className={`relative cv-tile ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500 w-full h-full min-w-0`}
+													style={{ animationDelay: `${(index % 12) * 50}ms` }}
 												>
 													{view === "moderation" ? (
 														<ModerationGridItem
@@ -633,6 +629,8 @@ const AlbumPage = () => {
 																id: image.imageId,
 																url: image.imagePath,
 																alt: image.imagePath,
+																width,
+																height,
 															}}
 															onClick={() => setSelectedImage(image)}
 															isSelected={selectedIds.has(image.imageId)}
@@ -651,8 +649,6 @@ const AlbumPage = () => {
 																status: image.status,
 															}}
 															onClick={() => setSelectedImage(image)}
-															onReaction={(id) => reactMutation.mutate(id)}
-															reactionCount={image.reactionCount}
 															isSelected={selectedIds.has(image.imageId)}
 															onToggleSelect={() =>
 																handleToggleSelect(image.imageId)
@@ -682,7 +678,9 @@ const AlbumPage = () => {
 								onSelectAll={toggleSelectAll}
 								onDelete={handleDeleteImage}
 								onSetCover={handleSetCoverImage}
-								coverImageId={getCoverImageId(albumData?.data?.coverImage)}
+								coverImageId={
+									getCoverImageId(albumData?.data?.coverImage) ?? undefined
+								}
 							/>
 						)}
 					</>
@@ -770,59 +768,54 @@ const AlbumPage = () => {
 				/>
 			)}
 
-			{isUploadModalOpen && (
-				<div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-					<div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-2xl max-w-md w-full border border-zinc-200 dark:border-zinc-800">
-						<Heading level={2} className="mb-2">
-							Upload Photos
-						</Heading>
-						<p className="text-zinc-500 dark:text-zinc-400 text-sm mb-8 font-medium">
-							Add new memories to your collection.
-						</p>
-
-						<div className="space-y-6">
-							<div className="relative group">
-								<input
-									type="file"
-									multiple
-									onChange={handleFileChange}
-									className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-								/>
-								<div className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 group-hover:border-sage rounded-3xl p-12 transition-all flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950/50 group-hover:bg-sage/5">
-									<div className="w-16 h-16 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-										<Upload className="text-sage" size={24} />
-									</div>
-									<p className="text-sm font-bold text-zinc-900 dark:text-white">
-										{files
-											? `${files.length} files selected`
-											: "Drop photos or click to browse"}
-									</p>
-									<p className="text-xs text-zinc-500 mt-2 font-medium">
-										JPG, PNG, HEIC up to 50MB
-									</p>
-								</div>
+			<Modal
+				isOpen={isUploadModalOpen}
+				onClose={() => setIsUploadModalOpen(false)}
+				size="md"
+				title="Upload Photos"
+				description="Add new memories to your collection."
+			>
+				<div className="space-y-6 mt-4">
+					<div className="relative group">
+						<input
+							type="file"
+							multiple
+							onChange={handleFileChange}
+							className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+						/>
+						<div className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 group-hover:border-sage rounded-3xl p-12 transition-all flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950/50 group-hover:bg-sage/5">
+							<div className="w-16 h-16 bg-white dark:bg-zinc-900 rounded-card shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-center mb-4">
+								<Upload className="text-sage" size={24} />
 							</div>
-
-							<div className="flex gap-3">
-								<Button
-									className="flex-1 rounded-2xl py-6 font-bold"
-									onClick={handleUpload}
-									disabled={!files}
-								>
-									Start Upload
-								</Button>
-								<Button
-									variant="ghost"
-									className="rounded-2xl px-6 font-bold"
-									onClick={() => setIsUploadModalOpen(false)}
-								>
-									Cancel
-								</Button>
-							</div>
+							<p className="text-sm font-bold text-zinc-900 dark:text-white">
+								{files
+									? `${files.length} files selected`
+									: "Drop photos or click to browse"}
+							</p>
+							<p className="text-xs text-zinc-500 mt-2 font-medium">
+								JPG, PNG, HEIC up to 50MB
+							</p>
 						</div>
 					</div>
+
+					<div className="flex gap-3">
+						<Button
+							className="flex-1 rounded-control py-6 font-bold"
+							onClick={handleUpload}
+							disabled={!files}
+						>
+							Start Upload
+						</Button>
+						<Button
+							variant="ghost"
+							className="rounded-control px-6 font-bold"
+							onClick={() => setIsUploadModalOpen(false)}
+						>
+							Cancel
+						</Button>
+					</div>
 				</div>
-			)}
+			</Modal>
 
 			{isAlbumSettingsModalOpen && (
 				<AlbumSettingsModal
@@ -862,16 +855,16 @@ const AlbumPage = () => {
 				/>
 			)}
 
-			{isShareModalOpen && (
+			{isShareModalOpen && albumData?.data && (
 				<ShareModal
 					isOpen={isShareModalOpen}
 					onClose={() => setIsShareModalOpen(false)}
-					album={albumData?.data}
+					album={albumData.data}
 					albumId={albumId!}
-					shareToken={albumData?.data?.shareToken ?? null}
-					qrColor={albumData?.data?.qrColor ?? null}
-					qrLogoUrl={albumData?.data?.qrLogoUrl ?? null}
-					creationDate={albumData?.data?.createdAt ?? null}
+					shareToken={albumData.data.shareToken ?? null}
+					qrColor={albumData.data.qrColor ?? null}
+					qrLogoUrl={albumData.data.qrLogoUrl ?? null}
+					creationDate={albumData.data.createdAt ?? null}
 				/>
 			)}
 		</MainContainer>

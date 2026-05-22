@@ -145,11 +145,10 @@ export default function UsageDashboard() {
 				<div className="flex items-center gap-3">
 					<span className="text-sm font-medium text-zinc-500">Plan:</span>
 					<span
-						className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-							usage.plan === "pro"
+						className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${usage.plan === "pro"
 								? "bg-sage/20 text-sage"
 								: "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-						}`}
+							}`}
 					>
 						{usage.plan}
 					</span>
@@ -201,23 +200,21 @@ export default function UsageDashboard() {
 						<div className="text-sm text-zinc-500 mb-4">
 							{isUnlimitedStorage
 								? "Unlimited storage plan"
-								: `of ${
-										storageLimitMB >= 1024
-											? `${(storageLimitMB / 1024).toFixed(0)} GB`
-											: `${storageLimitMB} MB`
-									} limit`}
+								: `of ${storageLimitMB >= 1024
+									? `${(storageLimitMB / 1024).toFixed(0)} GB`
+									: `${storageLimitMB} MB`
+								} limit`}
 						</div>
 						<div className="w-full h-3 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
 							<div
-								className={`h-full transition-all ${
-									isUnlimitedStorage
+								className={`h-full transition-all ${isUnlimitedStorage
 										? "bg-sage opacity-30"
 										: isStorageCritical
 											? "bg-red-500"
 											: isStorageWarning
 												? "bg-amber-500"
 												: "bg-sage"
-								}`}
+									}`}
 								style={{
 									width: isUnlimitedStorage
 										? "100%"
@@ -236,8 +233,8 @@ export default function UsageDashboard() {
 					<Card className="p-6">
 						<div className="flex items-start justify-between mb-4">
 							<div className="flex items-center gap-3">
-								<div className="p-2 bg-plum/10 rounded-lg">
-									<Zap className="w-5 h-5 text-plum" />
+								<div className="p-2 bg-plum/10 dark:bg-rose-500/15 rounded-lg">
+									<Zap className="w-5 h-5 text-plum dark:text-rose-300" />
 								</div>
 								<div>
 									<h3 className="font-semibold text-zinc-900 dark:text-white">
@@ -275,15 +272,14 @@ export default function UsageDashboard() {
 						</div>
 						<div className="w-full h-3 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
 							<div
-								className={`h-full transition-all ${
-									isUnlimitedCompute
+								className={`h-full transition-all ${isUnlimitedCompute
 										? "bg-plum opacity-30"
 										: isComputeCritical
 											? "bg-red-500"
 											: isComputeWarning
 												? "bg-amber-500"
 												: "bg-plum"
-								}`}
+									}`}
 								style={{
 									width: isUnlimitedCompute
 										? "100%"
@@ -349,7 +345,7 @@ export default function UsageDashboard() {
 					{/* Compute by Operation */}
 					<Card className="p-6">
 						<div className="flex items-center gap-2 mb-4">
-							<Zap size={18} className="text-plum" />
+							<Zap size={18} className="text-plum dark:text-rose-300" />
 							<h3 className="font-semibold text-zinc-900 dark:text-white">
 								Compute by Operation
 							</h3>
@@ -438,9 +434,8 @@ export default function UsageDashboard() {
 								>
 									<div className="flex items-center gap-3">
 										<div
-											className={`w-2 h-2 rounded-full ${
-												log.resource === "storage" ? "bg-sage" : "bg-plum"
-											}`}
+											className={`w-2 h-2 rounded-full ${log.resource === "storage" ? "bg-sage" : "bg-plum"
+												}`}
 										/>
 										<div>
 											<p className="text-sm font-medium text-zinc-900 dark:text-white">

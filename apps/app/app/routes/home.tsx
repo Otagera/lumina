@@ -1,41 +1,34 @@
 import { Button } from "@lumina/ui/components/ui/button";
+import { Input } from "@lumina/ui/components/ui/input";
 import { Camera, Link as LinkIcon, QrCode, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useLocation } from "wouter";
+import QrScanButton from "../components/QrScanButton";
+import { parseEventToken } from "../utils/eventToken";
 
 export default function Home() {
 	const [, setLocation] = useLocation();
 	const [eventLink, setEventLink] = useState("");
 
+	const goToEvent = useCallback(
+		(token: string) => setLocation(`/e/${token}`),
+		[setLocation],
+	);
+
 	const handleContinue = () => {
-		const value = eventLink.trim();
-		if (!value) return;
-
-		try {
-			const normalized = value.startsWith("http")
-				? value
-				: `https://${value.replace(/^\/+/, "")}`;
-			const url = new URL(normalized);
-			const pathToken = url.pathname.match(/\/e\/([^/?#]+)/)?.[1];
-			const token = pathToken || value.replace(/^\/?e\//, "");
-
-			if (token) {
-				setLocation(`/e/${token.trim()}`);
-			}
-		} catch {
-			// No-op: keep user on page with current input
-		}
+		const token = parseEventToken(eventLink);
+		if (token) goToEvent(token);
 	};
 
 	return (
 		<div className="min-h-dvh bg-zinc-50 dark:bg-zinc-950 px-4 py-6 sm:py-8 md:py-14">
 			<div className="max-w-4xl mx-auto space-y-8 sm:space-y-10 md:space-y-14">
 				<header className="text-center space-y-4 md:space-y-6">
-					<div className="inline-flex items-center px-3 py-1  font-black uppercase tracking-widest">
+					<div className="inline-flex items-center px-3 py-1 font-black uppercase tracking-widest">
 						Friendly Event Experience
 					</div>
 					<h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter text-zinc-900 dark:text-white text-balance">
-						Find Your Event Photos in Seconds
+						Find your event photos in seconds
 					</h1>
 					<p className="text-zinc-500 dark:text-zinc-400 text-sm md:text-lg max-w-xl mx-auto text-pretty">
 						Open your event link, take a selfie, and instantly discover every
@@ -43,40 +36,36 @@ export default function Home() {
 					</p>
 				</header>
 
-				<section className="rounded-[2rem] md:rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/70 backdrop-blur-xl p-5 md:p-8 space-y-4 shadow-xl">
-					<label
-						htmlFor="event-link"
-						className="text-sm font-bold text-zinc-700 dark:text-zinc-300"
+				<section className="rounded-tile md:rounded-modal border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/70 backdrop-blur-xl p-5 md:p-8 space-y-5 shadow-xl">
+					<Input
+						id="event-link"
+						type="text"
+						label="Paste event link"
+						value={eventLink}
+						onChange={(e) => setEventLink(e.target.value)}
+						placeholder="https://.../e/your-event-token"
+						inputMode="url"
+						autoCapitalize="none"
+						autoCorrect="off"
+						icon={<LinkIcon className="w-4 h-4" />}
+					/>
+					<Button
+						type="button"
+						size="lg"
+						className="w-full h-12 rounded-control bg-sage text-zinc-950 hover:bg-sage/90 font-black uppercase tracking-wider"
+						onClick={handleContinue}
+						disabled={!eventLink.trim()}
 					>
-						Paste event link
-					</label>
-					<div className="flex flex-col sm:flex-row gap-3">
-						<div className="relative flex-1">
-							<LinkIcon className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
-							<input
-								id="event-link"
-								type="text"
-								value={eventLink}
-								onChange={(e) => setEventLink(e.target.value)}
-								placeholder="https://.../e/your-event-token"
-								inputMode="url"
-								autoCapitalize="none"
-								autoCorrect="off"
-								className="w-full h-14 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 pl-11 pr-4 text-sm text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-sage/50"
-							/>
-						</div>
-						<Button
-							size="lg"
-							className="h-14 w-full sm:w-auto rounded-2xl px-8 bg-sage text-zinc-950 hover:bg-sage/90"
-							onClick={handleContinue}
-							disabled={!eventLink.trim()}
-						>
-							Open Event
-						</Button>
+						Open event
+					</Button>
+					<div className="flex items-center gap-3">
+						<div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
+						<span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+							or
+						</span>
+						<div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
 					</div>
-					<p className="text-xs text-zinc-500 dark:text-zinc-400">
-						Tip: You can also scan the event QR code to open this page directly.
-					</p>
+					<QrScanButton onScanned={goToEvent} />
 				</section>
 
 				<section className="grid gap-4 sm:grid-cols-3 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
@@ -99,9 +88,9 @@ export default function Home() {
 					].map((item) => (
 						<article
 							key={item.title}
-							className="rounded-[1.75rem] border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3"
+							className="rounded-card border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3"
 						>
-							<div className="w-10 h-10 rounded-xl bg-sage/10 flex items-center justify-center">
+							<div className="w-10 h-10 rounded-control bg-sage/10 flex items-center justify-center">
 								{item.icon}
 							</div>
 							<h2 className="font-bold text-zinc-900 dark:text-white">

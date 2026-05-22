@@ -82,18 +82,17 @@ export function EventGallery({
 			)}
 
 			{isSelfieSearchPending || isSearchLoading ? (
-				<div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-2">
-					{Array.from({ length: 8 }).map((_, idx) => (
+				<div className="columns-2 sm:columns-3 lg:columns-4 gap-0 px-2 *:mb-0">
+					{[
+						"h-44", "h-64", "h-52", "h-72",
+						"h-56", "h-48", "h-68", "h-60",
+						"h-52", "h-64", "h-44", "h-56",
+					].map((h, idx) => (
 						<div
 							key={`result-slot-${idx}`}
-							className="aspect-[3/4] rounded-tile bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 overflow-hidden"
-						>
-							<div className="h-3/4 bg-gradient-to-br from-zinc-200 dark:from-zinc-800 to-zinc-100 dark:to-zinc-900 animate-pulse" />
-							<div className="p-3 space-y-2">
-								<div className="h-3 w-3/4 rounded-full bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-								<div className="h-3 w-1/2 rounded-full bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-							</div>
-						</div>
+							className={`break-inside-avoid bg-zinc-200 dark:bg-zinc-800 animate-pulse ${h}`}
+							style={{ animationDelay: `${(idx % 6) * 80}ms` }}
+						/>
 					))}
 				</div>
 			) : images.length > 0 ? (

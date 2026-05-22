@@ -63,7 +63,7 @@ const VARIANTS: { id: Variant; label: string; tagline: string }[] = [
 ];
 
 const SAMPLE_IMG =
-	"https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80";
+	"https://images.pexels.com/photos/31464056/pexels-photo-31464056.jpeg?auto=compress&cs=tinysrgb&w=600";
 
 export default function StylePreview() {
 	const [visible, setVisible] = useState<Record<Variant, boolean>>({
@@ -351,9 +351,9 @@ function AlertSample({ variant }: { variant: Variant }) {
 function ImageGridSample({ variant }: { variant: Variant }) {
 	const t = tokens[variant];
 	const photos = [
-		"https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400&q=70",
-		"https://images.unsplash.com/photo-1521577352947-9bb58764b69a?w=400&q=70",
-		"https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400&q=70",
+		"https://images.pexels.com/photos/31851041/pexels-photo-31851041.jpeg?auto=compress&cs=tinysrgb&w=400",
+		"https://images.pexels.com/photos/31464056/pexels-photo-31464056.jpeg?auto=compress&cs=tinysrgb&w=400",
+		"https://images.pexels.com/photos/29168547/pexels-photo-29168547.jpeg?auto=compress&cs=tinysrgb&w=400",
 	];
 	return (
 		<div className="grid grid-cols-3 gap-2">

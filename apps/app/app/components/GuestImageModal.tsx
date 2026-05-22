@@ -149,9 +149,9 @@ export const GuestImageModal = ({
 	if (!initialImage) return null;
 
 	return (
-		<div className="fixed inset-0 w-full h-[100dvh] bg-black z-[500] animate-in fade-in duration-300 overflow-hidden">
+		<div className="fixed inset-0 w-full h-[100dvh] bg-black z-500 animate-in fade-in duration-300 overflow-hidden">
 			{/* Close Button - Top Right */}
-			<div className="absolute top-6 right-6 z-[520]">
+			<div className="absolute top-6 right-6 z-520">
 				<button
 					type="button"
 					onClick={onClose}
@@ -163,7 +163,7 @@ export const GuestImageModal = ({
 			</div>
 
 			{/* Desktop Navigation Buttons (Moved to Left) */}
-			<div className="hidden md:flex fixed left-6 top-1/2 -translate-y-1/2 z-[520] flex-col gap-4">
+			<div className="hidden md:flex fixed left-6 top-1/2 -translate-y-1/2 z-520 flex-col gap-4">
 				<button
 					type="button"
 					onClick={scrollToPrev}
@@ -205,14 +205,14 @@ export const GuestImageModal = ({
 							/>
 
 							{/* TikTok style actions overlay (Right side) */}
-							<div className="absolute right-4 bottom-24 z-[510] flex flex-col items-center gap-6">
+							<div className="absolute right-4 bottom-24 z-510 flex flex-col items-center gap-6">
 								<div className="flex flex-col items-center gap-1.5">
 									<button
 										type="button"
 										className={cn(
 											"w-12 h-12 rounded-full flex items-center justify-center bg-zinc-900/60 backdrop-blur-xl border border-white/10 transition-all active:scale-90",
 											(isReacting || reactionCount > 0) &&
-												"text-rose-500 border-rose-500/40",
+											"text-rose-500 border-rose-500/40",
 											!isReacting && reactionCount === 0 && "text-white",
 										)}
 										onClick={() => handleReaction(img)}

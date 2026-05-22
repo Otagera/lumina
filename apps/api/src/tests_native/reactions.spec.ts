@@ -10,6 +10,7 @@ describe("Reactions Routes (Native)", () => {
 	let app: any;
 	let user: any;
 	let testImageId: string;
+	let testAlbumId: string;
 	const testImageKey = `test-reaction-${crypto.randomUUID()}.jpg`;
 
 	beforeAll(async () => {
@@ -23,10 +24,23 @@ describe("Reactions Routes (Native)", () => {
 			contentType: "image/jpeg",
 		});
 
+		const albumRes = await app.handle(
+			req.post(
+				"/api/v1/albums",
+				{ albumName: "Reactions Test Album" },
+				{ Cookie: user.cookie },
+			),
+		);
+		const albumBody = await parseRes(albumRes);
+		testAlbumId = albumBody.data.id;
+
 		const uploadRes = await app.handle(
 			req.post(
 				"/api/v1/images",
-				{ uploadedImages: [{ existingKey: testImageKey }] },
+				{
+					uploadedImages: [{ existingKey: testImageKey }],
+					albumId: testAlbumId,
+				},
 				{ Cookie: user.cookie },
 			),
 		);

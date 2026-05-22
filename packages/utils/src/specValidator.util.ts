@@ -1,4 +1,5 @@
 import type { ObjectSchema, ValidationOptions } from "joi";
+import { BadRequestError } from "./error.util";
 
 export const validateSpec = (
 	spec: ObjectSchema,
@@ -17,7 +18,7 @@ export const validateSpec = (
 	});
 
 	if (error) {
-		throw new Error(error.message);
+		throw new BadRequestError(error.message);
 	}
 	return value;
 };

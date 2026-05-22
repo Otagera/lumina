@@ -30,14 +30,20 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
 
 	return (
 		<>
-			<div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[70] animate-in fade-in slide-in-from-bottom-8 duration-500 w-[calc(100%-2rem)] sm:w-max max-w-[95vw]">
-				<div className="bg-zinc-950/90 backdrop-blur-2xl border border-zinc-800/50 px-4 sm:px-8 py-3 sm:py-4 rounded-3xl sm:rounded-[2.5rem] shadow-2xl flex items-center space-x-4 sm:space-x-8 overflow-x-auto no-scrollbar">
+			<div
+				role="region"
+				aria-label={`Bulk actions (${selectedCount} selected)`}
+				className="fixed bottom-10 left-1/2 -translate-x-1/2 z-70 animate-in fade-in slide-in-from-bottom-8 duration-500 w-[calc(100%-2rem)] sm:w-max max-w-[95vw]"
+			>
+				<div className="bg-zinc-950/90 backdrop-blur-2xl border border-zinc-800/50 px-4 sm:px-8 py-3 sm:py-4 rounded-tile sm:rounded-modal shadow-2xl flex items-center space-x-4 sm:space-x-8 overflow-x-auto no-scrollbar">
 					<div className="flex items-center space-x-4 pr-6 sm:pr-8 border-r border-zinc-800/50">
 						<button
 							type="button"
 							onClick={onSelectAll}
-							className="p-2 hover:bg-zinc-800 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-90"
+							className="p-2 hover:bg-zinc-800 rounded-control text-zinc-400 hover:text-white transition-all active:scale-90"
 							title={isAllSelected ? "Unselect all" : "Select all"}
+							aria-label={isAllSelected ? "Unselect all" : "Select all"}
+							aria-pressed={!!isAllSelected}
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -57,8 +63,9 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
 						<button
 							type="button"
 							onClick={onClear}
-							className="p-2 hover:bg-zinc-800 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-90"
+							className="p-2 hover:bg-zinc-800 rounded-control text-zinc-400 hover:text-white transition-all active:scale-90"
 							title="Clear selection"
+							aria-label="Clear selection"
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"

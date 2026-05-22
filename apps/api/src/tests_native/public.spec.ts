@@ -77,7 +77,7 @@ describe("Public Access Routes (Native)", () => {
 			await fs.unlink(
 				path.resolve(process.cwd(), "src/uploads/public-test-image.jpg"),
 			);
-		} catch (e) {}
+		} catch (e) { }
 	});
 
 	describe("GET /api/v1/public/albums/:token", () => {
@@ -140,44 +140,53 @@ describe("Public Access Routes (Native)", () => {
 			// Cleanup
 			try {
 				await fs.unlink(path.join(uploadsDir, "guest-upload.jpg"));
-			} catch (e) {}
+			} catch (e) { }
 		});
 
 		it("should block guest uploads when per-session threshold is exceeded", async () => {
 			const uploadsDir = path.resolve(process.cwd(), "src/uploads");
 			const guestSessionId = crypto.randomUUID();
+			const guestCookie = `guestSessionId=${guestSessionId}`;
 			const createdFiles: string[] = [];
+
+			const baseBuffer = await fs.readFile(
+				path.resolve(__dirname, "fixtures/test.jpg"),
+			);
+
+			const writeUnique = async (fileName: string, salt: number) => {
+				const unique = Buffer.concat([
+					baseBuffer,
+					Buffer.from(`__unique_${salt}_${crypto.randomUUID()}`),
+				]);
+				await fs.writeFile(path.join(uploadsDir, fileName), unique);
+			};
 
 			for (let i = 0; i < 20; i++) {
 				const fileName = `guest-session-${i}.jpg`;
 				createdFiles.push(fileName);
-				await fs.copyFile(
-					path.resolve(__dirname, "fixtures/test.jpg"),
-					path.join(uploadsDir, fileName),
-				);
+				await writeUnique(fileName, i);
 				const okRes = await app.handle(
-					req.post(`/api/v1/public/albums/${testShareToken}/upload`, {
-						key: fileName,
-						guestSessionId,
-					}),
+					req.post(
+						`/api/v1/public/albums/${testShareToken}/upload`,
+						{ key: fileName },
+						{ Cookie: guestCookie },
+					),
 				);
 				expect(okRes.status).toBe(HTTP_STATUS_CODES.CREATED);
 			}
 
 			const blockedFile = "guest-session-threshold.jpg";
 			createdFiles.push(blockedFile);
-			await fs.copyFile(
-				path.resolve(__dirname, "fixtures/test.jpg"),
-				path.join(uploadsDir, blockedFile),
-			);
+			await writeUnique(blockedFile, 999);
 			const blockedRes = await app.handle(
-				req.post(`/api/v1/public/albums/${testShareToken}/upload`, {
-					key: blockedFile,
-					guestSessionId,
-				}),
+				req.post(
+					`/api/v1/public/albums/${testShareToken}/upload`,
+					{ key: blockedFile },
+					{ Cookie: guestCookie },
+				),
 			);
 			const blockedBody = await parseRes(blockedRes);
-			expect(blockedRes.status).toBe(HTTP_STATUS_CODES.BADREQUEST);
+			expect(blockedRes.status).toBe(HTTP_STATUS_CODES.BAD_REQUEST);
 			expect(String(blockedBody.message || "")).toContain(
 				"session limit exceeded",
 			);

@@ -1,5 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
-import type { PublicEventClient } from "../api/public.client";
+import type {
+	PublicEventClient,
+	SelfieSearchResult,
+} from "../api/public.client";
 
 export const selfieSearchKeys = {
 	all: ["selfie-search"] as const,
@@ -14,7 +17,7 @@ export const useSelfieSearch = ({
 }: {
 	token?: string;
 	client: PublicEventClient;
-	onSuccess?: (result: { faces: any[] }) => void;
+	onSuccess?: (result: SelfieSearchResult) => void;
 	onError?: (error: unknown) => void;
 }) => {
 	return useMutation({

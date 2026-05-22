@@ -1,18 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { HardDrive, QrCode, Search, Sparkles, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import AlbumCard from "~/components/AlbumCard";
 import { ConfirmModal } from "~/components/ConfirmModal";
+import EmptyAlbumsState from "~/components/home/EmptyAlbumsState";
 import { MainContainer } from "~/components/MainContainer";
+import CoachMark from "~/components/onboarding/CoachMark";
+import WelcomeTourModal from "~/components/onboarding/WelcomeTourModal";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
+import { Input } from "~/components/standard/Input";
+import { Modal } from "~/components/standard/Modal";
+import { useOnboarding } from "~/hooks/useOnboarding";
 import ImageGallery from "~/Images/ImageGallery";
 import type { Album } from "~/types";
 import { createAlbum, deleteAlbum, editAlbum, fetchAlbums } from "../utils/api";
 
 const Home = () => {
 	const queryClient = useQueryClient();
+	const onboarding = useOnboarding();
 	const { data: albumsData, isLoading: isAlbumsLoading } = useQuery({
 		queryKey: ["albums"],
 		queryFn: fetchAlbums,
@@ -21,7 +27,6 @@ const Home = () => {
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [albumName, setAlbumName] = useState("");
 	const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
-	const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
 
 	// Confirmation Modal States
 	const [confirmDeleteAlbumId, setConfirmDeleteAlbumId] = useState<
@@ -35,6 +40,9 @@ const Home = () => {
 			setIsCreateModalOpen(false);
 			setAlbumName("");
 			toast.success("Album created successfully");
+			if (onboarding.isStep("create-album")) {
+				onboarding.advance("share-qr");
+			}
 		},
 		onError: (error: any) => {
 			toast.error(error.message || "Failed to create album");
@@ -81,14 +89,7 @@ const Home = () => {
 		setConfirmDeleteAlbumId(null);
 	};
 
-	useEffect(() => {
-		const shouldShowGuide =
-			localStorage.getItem("lumina:first-signup-guide") === "show";
-		if (shouldShowGuide) {
-			setShowFirstTimeGuide(true);
-			localStorage.removeItem("lumina:first-signup-guide");
-		}
-	}, []);
+	const albums: Album[] = albumsData?.data?.albums ?? [];
 
 	return (
 		<MainContainer className="space-y-24 pb-24">
@@ -110,14 +111,27 @@ const Home = () => {
 							events, and find faces instantly.
 						</p>
 					</div>
-					<div className="flex items-center gap-3">
+					<div className="relative flex items-center gap-3">
 						<Button
-							size="lg"
-							className="rounded-2xl px-8 h-14 text-sm font-bold shadow-xl shadow-sage/20 active:scale-95 transition-transform"
+							size="md"
+							className="font-bold shadow-lg shadow-sage/20 active:scale-95 transition-transform"
 							onClick={() => setIsCreateModalOpen(true)}
 						>
 							+ New Album
 						</Button>
+						<CoachMark
+							open={onboarding.isStep("create-album")}
+							stepNumber={2}
+							totalSteps={3}
+							title="Create your first album"
+							body="Albums are where your photos live. Make one to start collecting and matching faces."
+							advanceLabel="Open create"
+							onAdvance={() => {
+								setIsCreateModalOpen(true);
+							}}
+							onDismiss={onboarding.dismiss}
+							placement="bottom"
+						/>
 					</div>
 				</div>
 			</section>
@@ -140,21 +154,40 @@ const Home = () => {
 					<div className="flex justify-center py-20">
 						<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage" />
 					</div>
+				) : albums.length === 0 ? (
+					<EmptyAlbumsState onCreateAlbum={() => setIsCreateModalOpen(true)} />
 				) : (
 					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 sm:gap-10">
-						{albumsData?.data?.albums?.map((album: Album) => (
-							<AlbumCard
+						{albums.map((album: Album, idx: number) => (
+							<div
 								key={album.id}
-								album={album}
-								onEdit={(albumToEdit) => {
-									setSelectedAlbum(albumToEdit);
-									setAlbumName(albumToEdit.albumName || "");
-									setIsEditModalOpen(true);
-								}}
-								onDelete={(albumId) => {
-									setConfirmDeleteAlbumId(albumId);
-								}}
-							/>
+								className={idx === 0 ? "relative" : undefined}
+							>
+								<AlbumCard
+									album={album}
+									onEdit={(albumToEdit) => {
+										setSelectedAlbum(albumToEdit);
+										setAlbumName(albumToEdit.albumName || "");
+										setIsEditModalOpen(true);
+									}}
+									onDelete={(albumId) => {
+										setConfirmDeleteAlbumId(albumId);
+									}}
+								/>
+								{idx === 0 && (
+									<CoachMark
+										open={onboarding.isStep("share-qr")}
+										stepNumber={3}
+										totalSteps={3}
+										title="Share with your guests"
+										body="Open this album, flip it to an event, and share the QR code so guests can upload and find themselves."
+										advanceLabel="Finish tour"
+										onAdvance={() => onboarding.advance("complete")}
+										onDismiss={onboarding.dismiss}
+										placement="bottom"
+									/>
+								)}
+							</div>
 						))}
 					</div>
 				)}
@@ -180,129 +213,70 @@ const Home = () => {
 				isLoading={deleteAlbumMutation.isPending}
 			/>
 
-			{(isCreateModalOpen || isEditModalOpen) && (
-				<div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-					<div className="bg-white dark:bg-zinc-900 p-8 rounded-[2rem] shadow-2xl max-w-md w-full border border-zinc-200 dark:border-zinc-800 animate-in fade-in zoom-in duration-300">
-						<Heading level={2} className="mb-2">
-							{isCreateModalOpen ? "Create Album" : "Edit Album"}
-						</Heading>
-						<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8 font-medium">
-							{isCreateModalOpen
-								? "Give your new album a name to start organizing."
-								: "Update the name of your album."}
-						</p>
-						<input
-							type="text"
-							className="w-full px-6 py-4 rounded-2xl border bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage focus:border-transparent outline-none transition-all placeholder:text-zinc-400 font-medium"
-							placeholder="e.g. Summer Vacation 2025"
-							value={albumName}
-							onChange={(e) => setAlbumName(e.target.value)}
-							autoFocus
-						/>
-						<div className="flex items-center space-x-3 mt-10">
-							<Button
-								className="flex-1 font-bold"
-								onClick={
-									isCreateModalOpen ? handleCreateAlbum : handleEditAlbum
-								}
-								disabled={
-									(isCreateModalOpen
-										? createAlbumMutation.isPending
-										: editAlbumMutation.isPending) || !albumName.trim()
-								}
-							>
-								{isCreateModalOpen
-									? createAlbumMutation.isPending
-										? "Creating..."
-										: "Create Album"
-									: editAlbumMutation.isPending
-										? "Saving..."
-										: "Save Changes"}
-							</Button>
-							<Button
-								variant="ghost"
-								className="rounded-xl font-bold"
-								onClick={() => {
-									setIsCreateModalOpen(false);
-									setIsEditModalOpen(false);
-									setAlbumName("");
-									setSelectedAlbum(null);
-								}}
-							>
-								Cancel
-							</Button>
-						</div>
-					</div>
+			<Modal
+				isOpen={isCreateModalOpen || isEditModalOpen}
+				onClose={() => {
+					setIsCreateModalOpen(false);
+					setIsEditModalOpen(false);
+					setAlbumName("");
+					setSelectedAlbum(null);
+				}}
+				size="md"
+				title={isCreateModalOpen ? "Create Album" : "Edit Album"}
+				description={
+					isCreateModalOpen
+						? "Give your new album a name to start organizing."
+						: "Update the name of your album."
+				}
+			>
+				<div className="mt-4">
+					<Input
+						type="text"
+						label="Album Name"
+						placeholder="e.g. Summer Vacation 2025"
+						value={albumName}
+						onChange={(e) => setAlbumName(e.target.value)}
+						autoFocus
+					/>
 				</div>
-			)}
-
-			{showFirstTimeGuide && (
-				<div className="fixed inset-0 z-[110] flex items-center justify-center bg-zinc-950/70 p-4 backdrop-blur-md">
-					<div className="w-full max-w-2xl rounded-[3rem] border border-zinc-200 bg-white p-10 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:p-12">
-						<div className="mb-10 text-center">
-							<div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sage/10 text-sage mb-4">
-								<Sparkles size={24} />
-							</div>
-							<Heading level={2} className="text-3xl font-black mb-2">
-								Welcome to the Intelligence Layer
-							</Heading>
-							<p className="text-zinc-500 dark:text-zinc-400 font-medium">
-								Lumina is ready. Here's how to get the most value.
-							</p>
-						</div>
-
-						<div className="grid gap-4 sm:grid-cols-2">
-							{[
-								{
-									icon: <Users className="h-5 w-5 text-sage" />,
-									title: "Create Events",
-									description:
-										"Turn any album into a collaborative event in settings.",
-								},
-								{
-									icon: <QrCode className="h-5 w-5 text-sage" />,
-									title: "Share QR Codes",
-									description:
-										"Let guests upload photos directly without an account.",
-								},
-								{
-									icon: <HardDrive className="h-5 w-5 text-plum" />,
-									title: "Own Your Storage",
-									description: "Add your own S3/R2 bucket anytime in Settings.",
-								},
-								{
-									icon: <Search className="h-5 w-5 text-terracotta" />,
-									title: "AI Face Search",
-									description:
-										"Instantly find matching faces across guest uploads.",
-								},
-							].map((item) => (
-								<div
-									key={item.title}
-									className="rounded-[2rem] border border-zinc-100 bg-zinc-50/50 p-6 dark:border-zinc-800 dark:bg-zinc-950/50 transition-all hover:border-sage/30 group"
-								>
-									<div className="mb-3">{item.icon}</div>
-									<p className="font-bold text-zinc-900 dark:text-white group-hover:text-sage transition-colors">
-										{item.title}
-									</p>
-									<p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium">
-										{item.description}
-									</p>
-								</div>
-							))}
-						</div>
-
-						<div className="mt-10 flex justify-center">
-							<Button
-								onClick={() => setShowFirstTimeGuide(false)}
-								className="rounded-2xl px-12 py-6 font-black uppercase tracking-widest text-xs shadow-xl shadow-sage/20"
-							>
-								Start Organizing
-							</Button>
-						</div>
-					</div>
+				<div className="flex items-center space-x-3 mt-10">
+					<Button
+						className="flex-1 font-bold"
+						onClick={isCreateModalOpen ? handleCreateAlbum : handleEditAlbum}
+						disabled={
+							(isCreateModalOpen
+								? createAlbumMutation.isPending
+								: editAlbumMutation.isPending) || !albumName.trim()
+						}
+					>
+						{isCreateModalOpen
+							? createAlbumMutation.isPending
+								? "Creating..."
+								: "Create Album"
+							: editAlbumMutation.isPending
+								? "Saving..."
+								: "Save Changes"}
+					</Button>
+					<Button
+						variant="ghost"
+						className="rounded-control font-bold"
+						onClick={() => {
+							setIsCreateModalOpen(false);
+							setIsEditModalOpen(false);
+							setAlbumName("");
+							setSelectedAlbum(null);
+						}}
+					>
+						Cancel
+					</Button>
 				</div>
-			)}
+			</Modal>
+
+			<WelcomeTourModal
+				open={onboarding.isStep("welcome")}
+				onStart={() => onboarding.advance("create-album")}
+				onDismiss={onboarding.dismiss}
+			/>
 		</MainContainer>
 	);
 };

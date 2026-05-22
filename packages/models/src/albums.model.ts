@@ -2,11 +2,81 @@ import crypto from "node:crypto";
 import { queueServices } from "../../../apps/worker/src/queue/queue.service.ts";
 import prisma from "../../config/src/db.config.ts";
 import config from "../../config/src/index.config.ts";
+import {
+	cacheDel,
+	cacheDelPattern,
+	cacheKeys,
+} from "../../utils/src/cache.util.ts";
 import { deleteFile } from "../../utils/src/file.util.ts";
 import {
 	cleanupImageSideEffects,
 	deleteImagesWithLogging,
 } from "./images.model.ts";
+
+const invalidateAlbumCache = async (
+	albumId?: string | null,
+	shareToken?: string | null,
+	ownerId?: string | null,
+) => {
+	const tasks: Promise<unknown>[] = [];
+	if (albumId) tasks.push(cacheDelPattern(cacheKeys.albumPattern(albumId)));
+	if (shareToken)
+		tasks.push(cacheDelPattern(cacheKeys.publicAlbumPattern(shareToken)));
+	if (ownerId) tasks.push(cacheDel(cacheKeys.userAlbums(ownerId)));
+	if (tasks.length > 0) await Promise.all(tasks);
+};
+
+// Cross-table invalidation entry point used by image mutations. Looks up the
+// owning album(s) for a set of image ids and invalidates each album's caches.
+// Membership-list invalidation is best-effort: it clears the album owner plus
+// any album_members so collaborators don't see stale list responses.
+const invalidateAlbumCachesByImageIds = async (imageIds: string[]) => {
+	if (!imageIds || imageIds.length === 0) return;
+	const links = await prisma.album_images.findMany({
+		where: { image_id: { in: imageIds } },
+		select: {
+			albums: {
+				select: {
+					album_id: true,
+					share_token: true,
+					created_by: true,
+					album_members: { select: { user_id: true } },
+				},
+			},
+		},
+	});
+	const byAlbum = new Map<
+		string,
+		{
+			album_id: string;
+			share_token: string | null;
+			created_by: string | null;
+			member_ids: string[];
+		}
+	>();
+	for (const link of links) {
+		const a = link.albums;
+		if (!a) continue;
+		if (byAlbum.has(a.album_id)) continue;
+		byAlbum.set(a.album_id, {
+			album_id: a.album_id,
+			share_token: a.share_token,
+			created_by: a.created_by,
+			member_ids: a.album_members?.map((m) => m.user_id) ?? [],
+		});
+	}
+	await Promise.all(
+		Array.from(byAlbum.values()).flatMap((a) => {
+			const tasks: Promise<unknown>[] = [
+				invalidateAlbumCache(a.album_id, a.share_token, a.created_by),
+			];
+			for (const mid of a.member_ids) {
+				tasks.push(cacheDel(cacheKeys.userAlbums(mid)));
+			}
+			return tasks;
+		}),
+	);
+};
 
 const createNewAlbum = async (data) => {
 	const shareToken = crypto.randomBytes(16).toString("hex");
@@ -14,7 +84,7 @@ const createNewAlbum = async (data) => {
 	const baseUrl = config[env].base_api_url;
 	const sharedLink = `${baseUrl}/public/albums/${shareToken}`;
 
-	return await prisma.albums.create({
+	const created = await prisma.albums.create({
 		data: {
 			...data,
 			share_token: shareToken,
@@ -28,11 +98,13 @@ const createNewAlbum = async (data) => {
 			storage_config: true,
 		},
 	});
+	await invalidateAlbumCache(null, null, created.created_by);
+	return created;
 };
 
 const updateExistingAlbum = async (album_id, created_by, userData) => {
 	const { settings, ...albumData } = userData;
-	return await prisma.albums.update({
+	const updated = await prisma.albums.update({
 		where: {
 			album_id,
 			created_by,
@@ -41,11 +113,11 @@ const updateExistingAlbum = async (album_id, created_by, userData) => {
 			...albumData,
 			settings: settings
 				? {
-						upsert: {
-							create: settings,
-							update: settings,
-						},
-					}
+					upsert: {
+						create: settings,
+						update: settings,
+					},
+				}
 				: undefined,
 		},
 		include: {
@@ -54,6 +126,12 @@ const updateExistingAlbum = async (album_id, created_by, userData) => {
 			cover_image: true,
 		},
 	});
+	await invalidateAlbumCache(
+		updated.album_id,
+		updated.share_token,
+		updated.created_by,
+	);
+	return updated;
 };
 
 const fetchAlbum = async (where) => {
@@ -192,7 +270,7 @@ const fetchAlbumHighlights = async (token: string, limit: number) => {
 };
 
 const softDeleteAlbumById = async (albumId: string, userId: string) => {
-	return await prisma.albums.update({
+	const updated = await prisma.albums.update({
 		where: {
 			album_id: albumId,
 			created_by: userId,
@@ -201,10 +279,16 @@ const softDeleteAlbumById = async (albumId: string, userId: string) => {
 			deleted_at: new Date(),
 		},
 	});
+	await invalidateAlbumCache(
+		updated.album_id,
+		updated.share_token,
+		updated.created_by,
+	);
+	return updated;
 };
 
 const restoreAlbumById = async (albumId: string, userId: string) => {
-	return await prisma.albums.update({
+	const updated = await prisma.albums.update({
 		where: {
 			album_id: albumId,
 			created_by: userId,
@@ -213,6 +297,12 @@ const restoreAlbumById = async (albumId: string, userId: string) => {
 			deleted_at: null,
 		},
 	});
+	await invalidateAlbumCache(
+		updated.album_id,
+		updated.share_token,
+		updated.created_by,
+	);
+	return updated;
 };
 
 const deleteAlbumById = async (albumId, userId) => {
@@ -292,9 +382,22 @@ const deleteAlbumById = async (albumId, userId) => {
 		);
 	}
 
+	if (transaction) {
+		await invalidateAlbumCache(
+			(transaction as any).album_id,
+			(transaction as any).share_token,
+			(transaction as any).created_by,
+		);
+	}
+
 	return transaction;
 };
 const deleteAlbumsByIds = async (albumIds) => {
+	const albums = await prisma.albums.findMany({
+		where: { album_id: { in: albumIds } },
+		select: { album_id: true, share_token: true, created_by: true },
+	});
+
 	const transaction = await prisma.$transaction(async (prisma) => {
 		await prisma.albums.deleteMany({
 			where: {
@@ -304,6 +407,12 @@ const deleteAlbumsByIds = async (albumIds) => {
 			},
 		});
 	});
+
+	await Promise.all(
+		albums.map((a) =>
+			invalidateAlbumCache(a.album_id, a.share_token, a.created_by),
+		),
+	);
 
 	return transaction;
 };
@@ -420,6 +529,12 @@ const deleteAlbumsByUserId = async (userId) => {
 		}
 	}
 
+	await Promise.all(
+		albumsToDelete.map((a) =>
+			invalidateAlbumCache(a.album_id, a.share_token, a.created_by),
+		),
+	);
+
 	return transaction;
 };
 
@@ -445,4 +560,6 @@ export {
 	deleteAlbumsByUserId,
 	deleteAllAlbums,
 	fetchAlbumHighlights,
+	invalidateAlbumCache,
+	invalidateAlbumCachesByImageIds,
 };

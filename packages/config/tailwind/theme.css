@@ -1,21 +1,60 @@
+@import "tw-animate-css";
+
 @theme {
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  
-  /* New OKLCH Palette */
+
+  /* Brand palette (OKLCH) */
   --color-sage: oklch(58% 0.031 107.3);
   --color-terracotta: oklch(54.7% 0.021 43.1);
   --color-plum: oklch(36.4% 0.029 323.89);
   --color-slate-blue: oklch(44.6% 0.043 257.281);
-  
-  /* Standardizing brand colors to use the new palette */
+
+  /* Lifted variants for cases where the base color fails contrast */
+  --color-sage-readable: oklch(48% 0.05 107.3);
+  --color-danger-on-dark: oklch(78% 0.12 10);
+
+  /* Brand aliases */
   --color-brand-primary: var(--color-sage);
   --color-brand-secondary: var(--color-terracotta);
   --color-brand-accent: var(--color-plum);
   --color-brand-info: var(--color-slate-blue);
+
+  /* Radius scale — Flat-inspired (tighter than current) */
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-tile: 1rem;
+  --radius-modal: 1.25rem;
+  --radius-pill: 9999px;
+
+  /* Shadow scale */
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06);
+  --shadow-card-hover: 0 4px 8px -2px rgb(0 0 0 / 0.06), 0 2px 4px -1px rgb(0 0 0 / 0.05);
+  --shadow-elevated: 0 10px 30px -5px rgb(0 0 0 / 0.12), 0 4px 10px -2px rgb(0 0 0 / 0.06);
+  --shadow-focus-ring: 0 0 0 3px oklch(58% 0.031 107.3 / 0.35);
+
+  /* Blur scale */
+  --blur-glass: 24px;
+  --blur-glass-strong: 40px;
+
+  /* Z-index scale — semantic stacking levels for overlays, modals, and fullscreen views.
+     Defaults 0-50 are reserved for in-flow content (z-50 is the nav). */
+  --z-index-60: 60;
+  --z-index-70: 70;
+  --z-index-100: 100;
+  --z-index-110: 110;
+  --z-index-140: 140;
+  --z-index-200: 200;
+  --z-index-300: 300;
+  --z-index-500: 500;
+  --z-index-510: 510;
+  --z-index-520: 520;
 }
 
 @layer base {
-  *, ::after, ::before {
+
+  *,
+  ::after,
+  ::before {
     @apply border-zinc-200 dark:border-zinc-800 transition-colors duration-200;
   }
 
@@ -26,8 +65,100 @@
   body {
     @apply bg-zinc-50 text-zinc-900 min-h-screen transition-colors duration-200;
   }
-  
+
   .dark body {
     @apply bg-zinc-950 text-zinc-100;
+  }
+
+  /* Dark-mode swap: brand-accent (danger) lifts to readable variant */
+  .dark {
+    --color-brand-accent: var(--color-danger-on-dark);
+    --shadow-focus-ring: 0 0 0 3px oklch(58% 0.031 107.3 / 0.45);
+  }
+
+  /* Tailwind v4 dropped cursor:pointer from button preflight — restore it */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+
+  /* Glass surfaces — translucent base, Flat radius, Glass shadow */
+  .glass-panel {
+    @apply bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl border border-zinc-200/50 dark:border-zinc-800/60 shadow-xl rounded-card;
+  }
+
+  .glass-panel-raised {
+    @apply bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl border border-zinc-200/60 dark:border-zinc-800/70 rounded-card;
+    box-shadow: var(--shadow-elevated);
+  }
+
+  /* Inputs — Editorial structure, softened (single 1px functional border, no hard underline) */
+  .input-soft {
+    @apply w-full px-4 py-3 bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 rounded-control focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/30 transition-colors dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400;
+  }
+
+  /* Primary action — Glass shadow halo, Flat radius */
+  .btn-primary {
+    @apply bg-sage hover:bg-sage/90 text-zinc-950 font-semibold rounded-control shadow-md shadow-sage/20 hover:shadow-lg hover:shadow-sage/30 transition-all active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100;
+  }
+
+  /* Ghost / secondary — translucent neutral */
+  .btn-ghost {
+    @apply bg-white/60 dark:bg-zinc-800/60 hover:bg-white dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 backdrop-blur-xl border border-zinc-200/50 dark:border-zinc-700/50 rounded-control font-medium transition-all;
+  }
+
+  /* Alerts — Material elevation + Glass translucent color */
+  .alert-warning {
+    @apply bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 dark:border-amber-400/30 text-amber-900 dark:text-amber-200 backdrop-blur-md rounded-card px-5 py-4;
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .alert-danger {
+    @apply bg-plum/5 dark:bg-rose-500/10 border border-plum/20 dark:border-rose-400/30 text-plum dark:text-rose-300 backdrop-blur-md rounded-card px-5 py-4;
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .alert-info {
+    @apply bg-slate-blue/10 dark:bg-slate-blue/20 border border-slate-blue/30 dark:border-slate-blue/40 text-slate-blue dark:text-sky-200 backdrop-blur-md rounded-card px-5 py-4;
+    box-shadow: var(--shadow-elevated);
+  }
+
+  /* Centralized focus ring — apply to any focusable element */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950;
+  }
+
+  /* Offscreen render skip for bento grid tiles — pairs with auto-rows-[150px] / sm:auto-rows-[200px] */
+  .cv-tile {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 200px;
+  }
+
+  /* Skip-to-content link — hidden until focused */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100 focus:px-4 focus:py-2 focus:bg-sage focus:text-white focus:font-bold focus:rounded-control focus:shadow-lg;
+  }
+}
+
+/* Honor system reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

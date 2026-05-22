@@ -9,7 +9,13 @@ async def test_health_check():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         response = await ac.get("/health")
     assert response.status_code == 200
-    assert response.json()["status"] == "healthy"
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["semantic"] == {
+        "model": "clip-vit-b-32",
+        "backend": "torch",
+        "dimension": 512,
+    }
 
 @pytest.mark.asyncio
 async def test_process_invalid_uuid():

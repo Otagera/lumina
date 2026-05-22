@@ -14,7 +14,7 @@ export default function NotFound() {
 						404
 					</div>
 					<div className="absolute inset-0 flex items-center justify-center">
-						<div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-sage to-sage/80 rounded-[3rem] flex items-center justify-center shadow-[0_20px_50px_rgba(151,165,145,0.4)] rotate-12 transition-transform hover:rotate-0 duration-500">
+						<div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-sage to-sage/80 rounded-tile flex items-center justify-center shadow-[0_20px_50px_rgba(151,165,145,0.4)] rotate-12 transition-transform hover:rotate-0 duration-500">
 							<Search className="w-10 h-10 md:w-12 md:h-12 text-zinc-950" />
 						</div>
 					</div>

@@ -38,7 +38,7 @@ export const UploadManager: React.FC = () => {
 
 	return (
 		<div
-			className={`fixed bottom-6 right-6 z-[60] w-80 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shadow-2xl rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 transition-all duration-500 overflow-hidden ${isManagerOpen ? "max-h-[32rem]" : "max-h-14"}`}
+			className={`fixed bottom-6 right-6 z-60 w-80 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shadow-2xl rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 transition-all duration-500 overflow-hidden ${isManagerOpen ? "max-h-[32rem]" : "max-h-14"}`}
 		>
 			{/* Header */}
 			<div

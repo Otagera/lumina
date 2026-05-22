@@ -29,10 +29,7 @@ const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 			<img
 				src={coverImageUrl}
 				alt={album.albumName}
-				className={cn(
-					"w-full h-full object-cover transition-transform duration-500 group-hover:scale-105",
-					className,
-				)}
+				className={cn("w-full h-full object-cover", className)}
 			/>
 		);
 	}
@@ -50,7 +47,7 @@ const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 						key={src}
 						src={src}
 						alt={`${album.albumName} cover ${i + 1}`}
-						className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+						className="w-full h-full object-cover"
 					/>
 				))}
 			</div>
@@ -63,10 +60,7 @@ const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 			<img
 				src={coverImages[0]}
 				alt={album.albumName}
-				className={cn(
-					"w-full h-full object-cover transition-transform duration-500 group-hover:scale-105",
-					className,
-				)}
+				className={cn("w-full h-full object-cover", className)}
 			/>
 		);
 	}
@@ -89,7 +83,7 @@ const AlbumCover = ({ album, className }: AlbumCoverProps) => {
 	return (
 		<div
 			className={cn(
-				"w-full h-full flex items-center justify-center bg-gradient-to-br text-white font-black text-6xl transition-transform duration-500 group-hover:scale-105",
+				"w-full h-full flex items-center justify-center bg-gradient-to-br text-white font-black text-6xl",
 				gradient,
 				className,
 			)}

@@ -44,10 +44,12 @@ const service = async (params: any) => {
 	});
 
 	const queryEmbedding = response.data.embedding;
+	const embeddingModel = response.data.model || "clip-vit-b-32";
 
 	// 2. Perform vector search using the model
 	const rawImages = await searchImagesByEmbedding({
 		embedding: queryEmbedding,
+		embeddingModel,
 		albumId,
 		shareToken,
 		limit,

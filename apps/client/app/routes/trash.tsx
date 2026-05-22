@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, RotateCcw, Trash2 } from "lucide-react";
+import { RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { ConfirmModal } from "~/components/ConfirmModal";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Heading } from "~/components/standard/Heading";
@@ -62,7 +63,7 @@ const Trash = () => {
 			setShowDeleteModal(false);
 			toast.success(
 				data?.message ||
-					`${selectedImages.length} image(s) permanently deleted. Quota credited.`,
+				`${selectedImages.length} image(s) permanently deleted. Quota credited.`,
 			);
 		},
 		onError: (error: any) => {
@@ -80,7 +81,7 @@ const Trash = () => {
 			setShowDeleteModal(false);
 			toast.success(
 				data?.message ||
-					`${selectedAlbums.length} album(s) permanently deleted. Quota credited.`,
+				`${selectedAlbums.length} album(s) permanently deleted. Quota credited.`,
 			);
 		},
 		onError: (error: any) => {
@@ -170,62 +171,37 @@ const Trash = () => {
 		);
 	}
 
+	const isDeleting =
+		permanentlyDeleteImagesMutation.isPending ||
+		permanentlyDeleteAlbumsMutation.isPending ||
+		emptyTrashMutation.isPending;
+
 	return (
 		<MainContainer className="space-y-12 pb-20">
-			{/* Delete Confirmation Modal */}
-			{showDeleteModal && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-					<div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
-						<div className="flex items-center gap-3 mb-4 text-plum">
-							<AlertTriangle size={24} />
-							<Heading level={2} className="text-xl font-bold">
-								Permanently Delete?
-							</Heading>
-						</div>
-						<p className="text-zinc-600 dark:text-zinc-300 mb-4">
+			<ConfirmModal
+				isOpen={showDeleteModal}
+				title="Permanently Delete?"
+				message={
+					<>
+						<p>
 							{deleteType === "all"
 								? `This will permanently delete ${totalItems} item(s). This action cannot be undone.`
 								: deleteType === "images"
 									? `This will permanently delete ${selectedImages.length} image(s). This action cannot be undone.`
 									: `This will permanently delete ${selectedAlbums.length} album(s). This action cannot be undone.`}
 						</p>
-						<p className="text-sm text-sage font-medium mb-6">
+						<p className="text-sm text-sage font-medium mt-3">
 							✓ This will free up {selectedImages.length || 0} images from your
 							quota
 						</p>
-						<div className="flex gap-3">
-							<Button
-								variant="secondary"
-								className="flex-1"
-								onClick={() => setShowDeleteModal(false)}
-								disabled={
-									permanentlyDeleteImagesMutation.isPending ||
-									permanentlyDeleteAlbumsMutation.isPending ||
-									emptyTrashMutation.isPending
-								}
-							>
-								Cancel
-							</Button>
-							<Button
-								variant="danger"
-								className="flex-1"
-								onClick={handlePermanentDelete}
-								disabled={
-									permanentlyDeleteImagesMutation.isPending ||
-									permanentlyDeleteAlbumsMutation.isPending ||
-									emptyTrashMutation.isPending
-								}
-							>
-								{permanentlyDeleteImagesMutation.isPending ||
-								permanentlyDeleteAlbumsMutation.isPending ||
-								emptyTrashMutation.isPending
-									? "Deleting..."
-									: getDeleteButtonLabel()}
-							</Button>
-						</div>
-					</div>
-				</div>
-			)}
+					</>
+				}
+				confirmText={getDeleteButtonLabel()}
+				onConfirm={handlePermanentDelete}
+				onCancel={() => setShowDeleteModal(false)}
+				isDestructive
+				isLoading={isDeleting}
+			/>
 
 			<div>
 				<Heading level={1} className="text-4xl font-black">
@@ -296,11 +272,10 @@ const Trash = () => {
 									<div
 										key={album.id}
 										onClick={() => toggleAlbum(album.id)}
-										className={`relative p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-											selectedAlbums.includes(album.id)
-												? "border-sage bg-sage/10"
-												: "border-zinc-200 dark:border-zinc-800 hover:border-sage/50"
-										}`}
+										className={`relative p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedAlbums.includes(album.id)
+											? "border-sage bg-sage/10"
+											: "border-zinc-200 dark:border-zinc-800 hover:border-sage/50"
+											}`}
 									>
 										<div className="flex items-center justify-between">
 											<div className="flex-1 min-w-0">
@@ -350,11 +325,10 @@ const Trash = () => {
 									<div
 										key={img.id}
 										onClick={() => toggleImage(img.id)}
-										className={`relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${
-											selectedImages.includes(img.id)
-												? "border-sage ring-2 ring-sage/30"
-												: "border-transparent hover:border-sage/50"
-										}`}
+										className={`relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${selectedImages.includes(img.id)
+											? "border-sage ring-2 ring-sage/30"
+											: "border-transparent hover:border-sage/50"
+											}`}
 									>
 										<img
 											src={img.path}
@@ -385,7 +359,7 @@ const Trash = () => {
 									setDeleteType("all");
 									setShowDeleteModal(true);
 								}}
-								className="text-plum hover:text-plum"
+								className="text-plum hover:text-plum dark:text-rose-300 dark:hover:text-rose-300"
 							>
 								<Trash2 size={16} className="mr-2" />
 								Empty Trash ({totalItems} items)

@@ -119,11 +119,10 @@ const ImageGridItem = ({
 	return (
 		<div
 			className={cn(
-				"relative overflow-hidden transition-all duration-500 bg-zinc-100 dark:bg-zinc-800 shadow-sm hover:shadow-xl cursor-zoom-in w-full",
-				isAdmin ? "h-full rounded-[1.5rem]" : "rounded-none",
+				"group relative overflow-hidden bg-zinc-100 dark:bg-zinc-800 shadow-sm transition-all duration-200 hover:shadow-xl w-full",
+				isAdmin ? "h-full rounded-tile cursor-zoom-in" : "rounded-none cursor-pointer",
 				containerClassName,
-				isSelected &&
-					"ring-4 ring-sage ring-offset-4 dark:ring-offset-zinc-950 scale-[0.98]",
+				isSelected && "outline-2 outline-sage -outline-offset-2",
 			)}
 			style={{ aspectRatio }}
 			onClick={handleContainerClick}
@@ -139,21 +138,14 @@ const ImageGridItem = ({
 				alt={image.alt}
 				loading="lazy"
 				className={cn(
-					"absolute inset-0 w-full h-full object-cover transition-transform duration-700 z-10 pointer-events-none",
-					isHovered && "scale-105",
+					"absolute inset-0 w-full h-full object-cover z-10 pointer-events-none",
 					className,
 					isSelected && "opacity-80",
 				)}
 			/>
 
-			{/* Pinterest-style Hover Overlay */}
-			<div
-				className="absolute inset-0 bg-black/10 dark:bg-black/20 transition-opacity duration-300 pointer-events-none z-20"
-				style={{
-					opacity: isHovered ? 1 : 0,
-					visibility: isHovered ? "visible" : "hidden",
-				}}
-			/>
+			{/* Hover overlay — gated by Tailwind hover variant (hover-capable devices only) */}
+			<div className="absolute inset-0 bg-black/10 dark:bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20" />
 
 			{/* Heart Pop Animation */}
 			{isHeartPopping && (
@@ -207,18 +199,17 @@ const ImageGridItem = ({
 						</button>
 					</div>
 
-					{/* More Menu */}
+					{/* More Menu — always tappable on touch; fades in on hover for desktop */}
 					{!shared && !selectionMode && (
 						<div
-							className="relative transition-all duration-300"
-							style={{
-								opacity: isHovered ? 1 : 0,
-								visibility: isHovered ? "visible" : "hidden",
-							}}
+							className={cn(
+								"relative transition-opacity duration-200",
+								menuOpen ? "opacity-100" : "opacity-60 group-hover:opacity-100",
+							)}
 						>
 							<button
 								type="button"
-								className="p-2.5 bg-white/90 dark:bg-black/60 text-zinc-950 dark:text-white rounded-xl transition-all duration-300 hover:bg-white dark:hover:bg-black shadow-xl backdrop-blur-md border border-white/60 dark:border-white/20 active:scale-90 cursor-pointer"
+								className="p-2.5 bg-white/90 dark:bg-black/60 text-zinc-950 dark:text-white rounded-control transition-colors duration-200 hover:bg-white dark:hover:bg-black shadow-xl backdrop-blur-md border border-white/60 dark:border-white/20 active:scale-90 cursor-pointer"
 								onClick={(e) => {
 									e.stopPropagation();
 									setMenuOpen(!menuOpen);
@@ -228,13 +219,14 @@ const ImageGridItem = ({
 							</button>
 							{menuOpen && (
 								<div
-									className="absolute right-0 top-full mt-2 w-max min-w-44 bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 py-2 z-[100] animate-in fade-in slide-in-from-top-2"
+									className="absolute right-0 top-full mt-2 w-max min-w-44 bg-white dark:bg-zinc-800 rounded-card shadow-2xl border border-zinc-200 dark:border-zinc-700 py-2 z-100 animate-in fade-in slide-in-from-top-2"
 									onClick={(e) => e.stopPropagation()}
 								>
 									{onSetCover && (
 										<button
 											type="button"
-											onClick={() => {
+											onClick={(e) => {
+												e.stopPropagation();
 												onSetCover(image.id);
 												setMenuOpen(false);
 											}}
@@ -258,7 +250,8 @@ const ImageGridItem = ({
 									{onDelete && (
 										<button
 											type="button"
-											onClick={() => {
+											onClick={(e) => {
+												e.stopPropagation();
 												onDelete(image.id);
 												setMenuOpen(false);
 											}}
@@ -275,53 +268,49 @@ const ImageGridItem = ({
 				</div>
 			)}
 
-			{/* Guest Controls (Bottom) */}
-			{isGuest && (
-				<div
-					className="absolute bottom-3 left-3 right-3 flex justify-between items-end z-40 transition-all duration-300"
-					style={{
-						opacity: isHovered ? 1 : 0,
-						visibility: isHovered ? "visible" : "hidden",
-						pointerEvents: isHovered ? "auto" : "none",
-						transform: isHovered ? "translateY(0)" : "translateY(8px)",
-					}}
-				>
-					{onReaction ? (
-						<button
-							type="button"
-							onClick={handleReactionClick}
-							className={cn(
-								"flex items-center gap-2 px-3 py-1.5 bg-white/90 dark:bg-zinc-900/90 text-zinc-900 dark:text-white rounded-full transition-all duration-300 shadow-xl border border-white/40 dark:border-white/20 active:scale-95 group/heart cursor-pointer",
-								reactionCount > 0 && "text-rose-500",
-							)}
-						>
-							<Heart
-								size={16}
-								className={cn(
-									"transition-colors duration-300",
-									reactionCount > 0
-										? "fill-rose-500 text-rose-500"
-										: "text-zinc-400 hover:text-rose-500",
-								)}
-							/>
-							{reactionCount > 0 && (
-								<span className="text-xs font-black tracking-tight">
-									{reactionCount}
-								</span>
-							)}
-						</button>
-					) : (
-						<div />
-					)}
-
+			{/* Guest Controls — Gradient footer + bottom-right heart button */}
+			{isGuest && onReaction && (
+				<>
+					<div
+						className={cn(
+							"absolute inset-x-0 bottom-0 z-30 h-20 bg-linear-to-t from-black/70 via-black/30 to-transparent pointer-events-none transition-opacity duration-200",
+							reactionCount > 0
+								? "opacity-100"
+								: "opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100",
+						)}
+					/>
 					<button
 						type="button"
-						onClick={handleDownloadClick}
-						className="p-2 bg-white/90 dark:bg-zinc-900/90 text-zinc-600 dark:text-zinc-300 rounded-full shadow-xl border border-white/40 dark:border-white/20 active:scale-90 cursor-pointer"
+						onClick={handleReactionClick}
+						aria-label={
+							reactionCount > 0
+								? `Reacted (${reactionCount})`
+								: "React to photo"
+						}
+						className={cn(
+							"absolute bottom-3 right-3 z-40 flex items-center gap-1.5 text-white active:scale-90 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/40 rounded-pill p-1",
+							reactionCount > 0
+								? "opacity-100"
+								: "opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100",
+						)}
 					>
-						<Download size={16} />
+						<Heart
+							size={22}
+							strokeWidth={2.25}
+							className={cn(
+								"drop-shadow-lg transition-all duration-200",
+								reactionCount > 0
+									? "fill-rose-500 text-rose-500"
+									: "fill-transparent text-white",
+							)}
+						/>
+						{reactionCount > 0 && (
+							<span className="text-sm font-black drop-shadow-lg tabular-nums">
+								{reactionCount}
+							</span>
+						)}
 					</button>
-				</div>
+				</>
 			)}
 
 			{/* Quota Exceeded Badge */}

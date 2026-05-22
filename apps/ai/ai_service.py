@@ -69,17 +69,119 @@ import boto3
 from botocore.config import Config
 from PIL import Image
 
-# Global for lazy-loaded CLIP model
-clip_model = None
+# Global for lazy-loaded semantic image/text model. Defaults to the current
+# clip-ViT-B-32 path unless SEMANTIC_MODEL=mobileclip-s2 is set explicitly.
+semantic_model = None
+semantic_model_key = None
+SEMANTIC_DIMENSION = 512
+DEFAULT_SEMANTIC_MODEL = "clip-vit-b-32"
+DEFAULT_SEMANTIC_BACKEND = "torch"
+
+
+def get_semantic_model_name():
+    return os.environ.get("SEMANTIC_MODEL", DEFAULT_SEMANTIC_MODEL).strip().lower()
+
+
+def get_semantic_backend():
+    return os.environ.get("SEMANTIC_BACKEND", DEFAULT_SEMANTIC_BACKEND).strip().lower()
+
+
+def get_semantic_config():
+    return {
+        "model": get_semantic_model_name(),
+        "backend": get_semantic_backend(),
+        "dimension": SEMANTIC_DIMENSION,
+    }
+
+
+def embedding_response(embedding):
+    values = embedding.tolist() if hasattr(embedding, "tolist") else list(embedding)
+    if len(values) != SEMANTIC_DIMENSION:
+        raise RuntimeError(f"Expected {SEMANTIC_DIMENSION}D embedding, got {len(values)}D")
+    return {
+        "embedding": values,
+        "model": get_semantic_model_name(),
+        "backend": get_semantic_backend(),
+        "dimension": SEMANTIC_DIMENSION,
+    }
+
+
+class SentenceTransformersClipAdapter:
+    model_name = "clip-vit-b-32"
+    backend = "torch"
+    dimension = SEMANTIC_DIMENSION
+
+    def __init__(self):
+        from sentence_transformers import SentenceTransformer
+        logger.info("Loading semantic model: clip-ViT-B-32 via sentence-transformers")
+        self.model = SentenceTransformer("clip-ViT-B-32")
+
+    def encode_text(self, text: str):
+        return self.model.encode(text)
+
+    def encode_image(self, image: Image.Image):
+        return self.model.encode(image)
+
+
+class OpenClipMobileClipAdapter:
+    model_name = "mobileclip-s2"
+    backend = "torch"
+    dimension = SEMANTIC_DIMENSION
+
+    def __init__(self):
+        import open_clip
+        import torch
+        logger.info("Loading semantic model: MobileCLIP-S2 via open_clip")
+        model, _, preprocess = open_clip.create_model_and_transforms(
+            "MobileCLIP-S2",
+            pretrained="datacompdr",
+        )
+        try:
+            from mobileclip.modules.common.mobileone import reparameterize_model
+            model = reparameterize_model(model)
+        except Exception:
+            logger.info("MobileCLIP reparameterize step unavailable; continuing")
+        model.eval()
+        self.model = model
+        self.preprocess = preprocess
+        self.tokenizer = open_clip.get_tokenizer("MobileCLIP-S2")
+        self.torch = torch
+
+    def encode_text(self, text: str):
+        with self.torch.no_grad():
+            tokens = self.tokenizer([text])
+            features = self.model.encode_text(tokens)
+            features = features / features.norm(dim=-1, keepdim=True)
+            return features.squeeze(0).cpu().numpy()
+
+    def encode_image(self, image: Image.Image):
+        with self.torch.no_grad():
+            tensor = self.preprocess(image).unsqueeze(0)
+            features = self.model.encode_image(tensor)
+            features = features / features.norm(dim=-1, keepdim=True)
+            return features.squeeze(0).cpu().numpy()
+
 
 def get_clip_model():
-    global clip_model
-    if clip_model is None:
-        from sentence_transformers import SentenceTransformer
-        logger.info("Loading CLIP model (clip-ViT-B-32)...")
-        # Load clip-ViT-B-32 as it is well supported and produces 512D embeddings
-        clip_model = SentenceTransformer('clip-ViT-B-32')
-    return clip_model
+    """Backward-compatible name for the active semantic embedding adapter."""
+    global semantic_model, semantic_model_key
+    model_name = get_semantic_model_name()
+    backend = get_semantic_backend()
+    key = (model_name, backend)
+    if semantic_model is not None and semantic_model_key == key:
+        return semantic_model
+
+    if model_name == "clip-vit-b-32":
+        semantic_model = SentenceTransformersClipAdapter()
+    elif model_name == "mobileclip-s2" and backend == "torch":
+        semantic_model = OpenClipMobileClipAdapter()
+    elif model_name == "mobileclip-s2" and backend == "onnx":
+        from semantic_onnx import MobileClipOnnxAdapter
+        semantic_model = MobileClipOnnxAdapter()
+    else:
+        raise RuntimeError(f"Unsupported semantic model/backend: {model_name}/{backend}")
+    semantic_model_key = key
+    return semantic_model
 
 # Import the new shared face extraction pipeline
 from face_utils import extract_faces
@@ -172,12 +274,11 @@ async def generate_embedding(request: EmbedRequest):
     """
     Generates a CLIP embedding for either an image or a text string.
     """
-    model = get_clip_model()
-    
     if request.text:
+        model = get_clip_model()
         logger.info(f"Generating text embedding for: {request.text[:50]}...")
-        embedding = model.encode(request.text)
-        return {"embedding": embedding.tolist()}
+        embedding = model.encode_text(request.text)
+        return embedding_response(embedding)
     
     if request.image_path or (request.storage_provider and request.storage_key):
         temp_file = None
@@ -195,10 +296,11 @@ async def generate_embedding(request: EmbedRequest):
             else:
                 img_path = os.path.abspath(request.image_path)
             
+            model = get_clip_model()
             logger.info(f"Generating image embedding for: {img_path}")
             img = Image.open(img_path)
-            embedding = model.encode(img)
-            return {"embedding": embedding.tolist()}
+            embedding = model.encode_image(img)
+            return embedding_response(embedding)
         except Exception as e:
             logger.exception(f"Embedding error: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
@@ -360,7 +462,13 @@ async def cluster_faces(request: ClusterRequest):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "model": "insightface_buffalo_l + clip-ViT-B-32", "clustering": "DBSCAN_cosine"}
+    semantic = get_semantic_config()
+    return {
+        "status": "healthy",
+        "model": f"insightface_buffalo_l + {semantic['model']}",
+        "semantic": semantic,
+        "clustering": "DBSCAN_cosine",
+    }
 
 if __name__ == "__main__":
     import uvicorn

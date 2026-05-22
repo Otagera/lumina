@@ -15,6 +15,7 @@
 		"clsx": "^2.1.1",
 		"lucide-react": "^1.6.0",
 		"react-masonry-css": "^1.0.16",
+		"react-webcam": "^7.2.0",
 		"tailwind-merge": "^3.0.1"
 	},
 	"peerDependencies": {

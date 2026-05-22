@@ -266,7 +266,7 @@ const ImageGallery: FC = () => {
 
 	if (isError) {
 		return (
-			<div className="text-center py-20 text-plum font-bold">
+			<div className="text-center py-20 text-plum dark:text-rose-300 font-bold">
 				Error loading images. Please try again.
 			</div>
 		);
@@ -322,11 +322,10 @@ const ImageGallery: FC = () => {
 					<button
 						type="button"
 						onClick={() => setViewMode("grid")}
-						className={`p-2 rounded-xl transition-all ${
-							viewMode === "grid"
-								? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
-								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-						}`}
+						className={`p-2 rounded-xl transition-all ${viewMode === "grid"
+							? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
+							: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+							}`}
 						title="Bento Grid"
 					>
 						<svg
@@ -344,11 +343,10 @@ const ImageGallery: FC = () => {
 					<button
 						type="button"
 						onClick={() => setViewMode("list")}
-						className={`p-2 rounded-xl transition-all ${
-							viewMode === "list"
-								? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
-								: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-						}`}
+						className={`p-2 rounded-xl transition-all ${viewMode === "list"
+							? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
+							: "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+							}`}
 						title="List View"
 					>
 						<svg
@@ -384,9 +382,8 @@ const ImageGallery: FC = () => {
 									className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors group"
 								>
 									<span
-										className={`text-zinc-400 group-hover:text-sage transition-transform duration-200 ${
-											isCollapsed ? "" : "rotate-90"
-										}`}
+										className={`text-zinc-400 group-hover:text-sage transition-transform duration-200 ${isCollapsed ? "" : "rotate-90"
+											}`}
 									>
 										›
 									</span>
@@ -398,11 +395,10 @@ const ImageGallery: FC = () => {
 									</span>
 								</button>
 								<div
-									className={`overflow-hidden transition-all duration-300 ease-out ${
-										isCollapsed
-											? "max-h-0 opacity-0"
-											: "max-h-[10000px] opacity-100"
-									}`}
+									className={`overflow-hidden transition-all duration-300 ease-out ${isCollapsed
+										? "max-h-0 opacity-0"
+										: "max-h-[10000px] opacity-100"
+										}`}
 								>
 									<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1 sm:gap-1.5 auto-rows-[150px] sm:auto-rows-[200px]">
 										{section.images.map((image: any, index: number) => {
@@ -420,8 +416,8 @@ const ImageGallery: FC = () => {
 											return (
 												<div
 													key={image.imageId}
-													className={`relative ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500`}
-													style={{ animationDelay: `${(index % 20) * 50}ms` }}
+													className={`relative cv-tile ${spanClass} animate-in fade-in slide-in-from-bottom-4 duration-500`}
+													style={{ animationDelay: `${(index % 12) * 50}ms` }}
 												>
 													<ImageGridItem
 														image={{

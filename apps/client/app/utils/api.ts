@@ -1,4 +1,5 @@
 import { publicEventClient } from "~/hooks/usePublicEventClient";
+import type { SharedAlbum } from "~/types";
 import axiosAPI from "./axios";
 import { api } from "./eden";
 
@@ -311,9 +312,15 @@ export const searchFaces = async ({
 	}
 };
 
-export const fetchSharedAlbum = async (token: string) => {
+export const fetchSharedAlbum = async (
+	token: string,
+): Promise<{ data: SharedAlbum | undefined } | undefined> => {
 	try {
-		return { data: await publicEventClient.getPublicAlbum(token) };
+		return {
+			data: (await publicEventClient.getPublicAlbum(token)) as
+				| SharedAlbum
+				| undefined,
+		};
 	} catch (error) {
 		console.error("Error fetching shared album:", error);
 	}
@@ -500,6 +507,10 @@ export const getPresignedUrl = async (data: {
 	fileName: string;
 	contentType: string;
 	albumId?: string;
+	isMultipart?: boolean;
+	uploadId?: string;
+	partNumber?: number;
+	key?: string;
 }) => {
 	try {
 		const { data: responseData, error } =

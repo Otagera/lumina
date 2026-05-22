@@ -53,7 +53,7 @@ export const FaceReviewCard = ({
 	return (
 		<div
 			className={cn(
-				"relative w-full max-w-sm aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 transform-gpu",
+				"relative w-full max-w-sm aspect-[3/4] rounded-modal overflow-hidden shadow-2xl transition-all duration-300 transform-gpu",
 				swipeDir === "right" && "translate-x-full rotate-12 opacity-0",
 				swipeDir === "left" && "-translate-x-full -rotate-12 opacity-0",
 				!swipeDir && "scale-100 opacity-100",
@@ -68,11 +68,11 @@ export const FaceReviewCard = ({
 			{/* Main Face Crop */}
 			<div className="absolute inset-0 flex flex-col p-6">
 				<div
-					className="flex-1 rounded-2xl shadow-inner border-2 border-white/20 overflow-hidden"
+					className="flex-1 rounded-tile shadow-inner border-2 border-white/20 overflow-hidden"
 					style={faceStyle}
 				/>
 
-				<div className="mt-6 space-y-2 text-center bg-black/40 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+				<div className="mt-6 space-y-2 text-center bg-black/40 backdrop-blur-md p-6 rounded-card border border-white/10">
 					<p className="text-white/60 text-xs font-black uppercase tracking-widest">
 						Is this...
 					</p>
@@ -88,14 +88,14 @@ export const FaceReviewCard = ({
 					<button
 						type="button"
 						onClick={() => handleAction("left")}
-						className="flex-1 h-16 flex items-center justify-center bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl border border-white/10 text-white transition-all active:scale-95"
+						className="flex-1 h-16 flex items-center justify-center bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-control border border-white/10 text-white transition-all active:scale-95"
 					>
 						<X size={32} />
 					</button>
 					<button
 						type="button"
 						onClick={() => handleAction("right")}
-						className="flex-1 h-16 flex items-center justify-center bg-sage hover:bg-sage/90 shadow-xl shadow-sage/20 rounded-2xl text-zinc-950 transition-all active:scale-95"
+						className="flex-1 h-16 flex items-center justify-center bg-sage hover:bg-sage/90 shadow-xl shadow-sage/20 rounded-control text-zinc-950 transition-all active:scale-95"
 					>
 						<Check size={32} strokeWidth={3} />
 					</button>

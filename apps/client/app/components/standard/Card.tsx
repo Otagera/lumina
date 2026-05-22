@@ -18,9 +18,9 @@ export const Card = ({
 		<div
 			onClick={onClick}
 			className={cn(
-				"relative overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 transition-all duration-300",
+				"relative overflow-hidden rounded-card bg-white dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 transition-all duration-300",
 				hoverable &&
-					"hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-zinc-950 hover:-translate-y-1 cursor-pointer",
+				"hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-zinc-950 hover:-translate-y-1 cursor-pointer",
 				className,
 			)}
 		>

@@ -136,12 +136,14 @@ const run = async (jobData) => {
 		});
 
 		const embedding = response.data.embedding;
+		const embeddingModel = response.data.model || "clip-vit-b-32";
 
 		if (embedding && embedding.length > 0) {
 			// 5. Save embedding to database using raw SQL for pgvector compatibility
 			await prisma.$executeRaw`
 				UPDATE images 
-				SET embedding = ${embedding}::vector
+					SET embedding = ${embedding}::vector,
+						embedding_model = ${embeddingModel}
 				WHERE image_id = ${imageId}::uuid
 			`;
 

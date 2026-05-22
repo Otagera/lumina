@@ -1,6 +1,6 @@
-import type { ToastOptions } from "react-hot-toast";
+import type { DefaultToastOptions } from "react-hot-toast";
 
-export const toastOptions: ToastOptions = {
+export const toastOptions: DefaultToastOptions = {
 	style: {
 		background: "oklch(20% 0.02 250 / 80%)",
 		backdropFilter: "blur(20px) saturate(160%)",

@@ -13,6 +13,7 @@ import Search from "./routes/search";
 import Settings from "./routes/settings";
 import SharedAlbum from "./routes/sharedAlbum";
 import Signup from "./routes/signup";
+import StylePreview from "./routes/style-preview";
 import Trash from "./routes/trash";
 import Usage from "./routes/usage";
 import Welcome from "./welcome/Welcome";
@@ -51,6 +52,14 @@ export default [
 				path: "join/:token",
 				element: <JoinAlbum />,
 			},
+			...(import.meta.env.DEV
+				? [
+					{
+						path: "style-preview",
+						element: <StylePreview />,
+					},
+				]
+				: []),
 			{
 				element: <PrivateRoute />,
 				children: [

@@ -7,6 +7,7 @@
 	"type": "module",
 	"exports": {
 		"./auth.util": "./src/auth.util",
+		"./cache.util": "./src/cache.util",
 		"./constants.util": "./src/constants.util",
 		"./error.util": "./src/error.util",
 		"./file.util": "./src/file.util",

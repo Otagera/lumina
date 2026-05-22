@@ -1,5 +1,5 @@
-import { Button } from "@lumina/ui/components/ui/button";
-import { cn } from "@lumina/ui/lib/utils";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
 	AlertTriangle,
 	Camera,
@@ -141,7 +141,7 @@ export const InAppCamera = ({
 		} else {
 			setIsCapturing(false);
 		}
-	}, [webcamRef, onCapture, onClose, isCaptureReady]);
+	}, [onCapture, onClose, isCaptureReady]);
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -163,13 +163,14 @@ export const InAppCamera = ({
 
 	return (
 		<div
-			className="fixed inset-0 z-[140] bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300"
+			className="fixed inset-0 z-140 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300"
 			role="dialog"
 			aria-modal="true"
 			aria-label="Find your photos"
 		>
-			<div className="relative w-full max-w-[95vw] md:max-w-xl h-[85dvh] overflow-hidden bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+			<div className="relative w-full max-w-[95vw] md:max-w-xl h-[85dvh] overflow-hidden bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-modal flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
 				<button
+					type="button"
 					onClick={onClose}
 					className="absolute right-4 top-4 z-20 rounded-full p-3 bg-zinc-100/80 dark:bg-black/40 text-zinc-800 dark:text-white hover:bg-zinc-200 dark:hover:bg-black/60 transition-colors shadow-lg backdrop-blur-md"
 					aria-label="Close camera modal"
@@ -227,7 +228,7 @@ export const InAppCamera = ({
 							)}
 
 							<div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6 z-30">
-								<div className="w-full max-w-[260px] aspect-[3/4] border-2 border-white/20 rounded-[4rem] bg-white/5 backdrop-blur-[1px]" />
+								<div className="w-full max-w-65 aspect-3/4 border-2 border-white/20 rounded-[4rem] bg-white/5 backdrop-blur-[1px]" />
 								<div className="mt-6 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2">
 									<Sparkles className="w-4 h-4 text-sage" />
 									<span className="text-white text-[10px] font-black uppercase tracking-widest">
@@ -238,7 +239,7 @@ export const InAppCamera = ({
 						</>
 					) : (
 						<div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-6">
-							<div className="w-24 h-24 bg-sage/10 rounded-[2.5rem] flex items-center justify-center animate-in zoom-in duration-500">
+							<div className="w-24 h-24 bg-sage/10 rounded-tile flex items-center justify-center animate-in zoom-in duration-500">
 								<ImageIcon className="w-10 h-10 text-sage" />
 							</div>
 							<div className="space-y-2">
@@ -252,7 +253,7 @@ export const InAppCamera = ({
 							<Button
 								onClick={() => fileInputRef.current?.click()}
 								size="lg"
-								className="rounded-2xl px-10 h-14 bg-sage text-zinc-950 hover:bg-sage/90 font-black shadow-xl shadow-sage/20 border-none"
+								className="px-10 h-14 bg-sage text-zinc-950 hover:bg-sage/90 font-black shadow-xl shadow-sage/20 border-none"
 							>
 								Select Photo
 							</Button>
@@ -270,8 +271,9 @@ export const InAppCamera = ({
 
 				<div className="p-6 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-white/5 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-40">
 					<button
+						type="button"
 						onClick={() => setMode(mode === "camera" ? "upload" : "camera")}
-						className="p-4 bg-zinc-100 dark:bg-white/5 text-zinc-900 dark:text-white rounded-2xl hover:bg-zinc-200 dark:hover:bg-white/10 transition-all active:scale-90 flex flex-col items-center gap-1 shadow-sm min-w-[70px]"
+						className="p-4 bg-zinc-100 dark:bg-white/5 text-zinc-900 dark:text-white rounded-control hover:bg-zinc-200 dark:hover:bg-white/10 transition-all active:scale-90 flex flex-col items-center gap-1 shadow-sm min-w-17.5"
 					>
 						{mode === "camera" ? <Upload size={20} /> : <Camera size={20} />}
 						<span className="text-[10px] font-black uppercase opacity-60 tracking-tighter">
@@ -281,6 +283,7 @@ export const InAppCamera = ({
 
 					{mode === "camera" ? (
 						<button
+							type="button"
 							onClick={handleCapture}
 							disabled={isCapturing || !isCaptureReady}
 							className="group relative p-1 bg-zinc-900 dark:bg-white rounded-full transition-all active:scale-95 disabled:opacity-50 shadow-2xl"
@@ -299,8 +302,9 @@ export const InAppCamera = ({
 					)}
 
 					<button
+						type="button"
 						onClick={mode === "camera" ? toggleFacingMode : onClose}
-						className="p-4 bg-zinc-100 dark:bg-white/5 text-zinc-900 dark:text-white rounded-2xl hover:bg-zinc-200 dark:hover:bg-white/10 transition-all active:scale-90 flex flex-col items-center gap-1 shadow-sm min-w-[70px]"
+						className="p-4 bg-zinc-100 dark:bg-white/5 text-zinc-900 dark:text-white rounded-control hover:bg-zinc-200 dark:hover:bg-white/10 transition-all active:scale-90 flex flex-col items-center gap-1 shadow-sm min-w-17.5"
 					>
 						{mode === "camera" ? <RefreshCw size={20} /> : <X size={20} />}
 						<span className="text-[10px] font-black uppercase opacity-60 tracking-tighter">
@@ -313,7 +317,7 @@ export const InAppCamera = ({
 						<div className="grid grid-cols-2 gap-3">
 							<div
 								className={cn(
-									"rounded-2xl px-4 py-3 flex items-center justify-center gap-2 border transition-all duration-500",
+									"rounded-card px-4 py-3 flex items-center justify-center gap-2 border transition-all duration-500",
 									readiness.faceCentered
 										? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
 										: "bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-white/5 dark:border-white/10",
@@ -331,7 +335,7 @@ export const InAppCamera = ({
 							</div>
 							<div
 								className={cn(
-									"rounded-2xl px-4 py-3 flex items-center justify-center gap-2 border transition-all duration-500",
+									"rounded-card px-4 py-3 flex items-center justify-center gap-2 border transition-all duration-500",
 									readiness.lightingGood
 										? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
 										: "bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-white/5 dark:border-white/10",

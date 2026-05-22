@@ -67,7 +67,7 @@ const AlbumCard = ({ album, onEdit, onDelete }: AlbumCardProps) => {
 							{onDelete && (
 								<button
 									type="button"
-									className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 text-plum hover:bg-plum/10 transition-colors font-medium"
+									className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 text-plum dark:text-rose-300 hover:bg-plum/10 dark:hover:bg-rose-500/15 transition-colors font-medium"
 									onClick={(e) => {
 										e.preventDefault();
 										e.stopPropagation();
