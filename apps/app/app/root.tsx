@@ -51,7 +51,7 @@ export default function App() {
 				{/* Global Theme Toggle */}
 				<button
 					onClick={toggleTheme}
-					className="fixed top-4 left-4 z-[200] p-3 bg-white/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white rounded-2xl backdrop-blur-xl border border-zinc-200 dark:border-zinc-700 shadow-xl transition-all active:scale-90"
+					className="fixed top-4 left-4 z-200 p-3 bg-white/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-white rounded-control backdrop-blur-xl border border-zinc-200 dark:border-zinc-700 shadow-xl transition-all active:scale-90"
 					aria-label="Toggle dark mode"
 				>
 					{isDark ? <Sun size={20} /> : <Moon size={20} />}

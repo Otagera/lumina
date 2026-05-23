@@ -1,10 +1,15 @@
 import joi from "joi";
+import {
+	CACHE_TTL,
+	cacheGetOrSet,
+	cacheKeys,
+} from "../../../../../packages/utils/src/cache.util.ts";
 import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
 import {
 	aliaserSpec,
 	validateSpec,
 } from "../../../../../packages/utils/src/specValidator.util.ts";
-import { getAlbum, getAlbumForUser } from "./albums.lib.ts";
+import { getAlbumForUser } from "./albums.lib.ts";
 
 const spec = joi.object({
 	album_id: joi.string().required(),
@@ -36,16 +41,19 @@ const service = async (data: unknown) => {
 	const params = validateSpec(spec, aliasReq);
 
 	const { album_id, created_by } = params;
-	const album = await getAlbumForUser(album_id, created_by);
 
-	// Check if manual cover exists
-	const hasManualCover = album.cover_image && !album.cover_image.deleted_at;
+	const cacheKey = cacheKeys.album(album_id, created_by);
+	return cacheGetOrSet(cacheKey, CACHE_TTL.MEDIUM, async () => {
+		const album = await getAlbumForUser(album_id, created_by);
 
-	// Format coverImage to match client expectations
-	const formattedAlbum = {
-		...album,
-		coverImage: hasManualCover
-			? {
+		// Check if manual cover exists
+		const hasManualCover = album.cover_image && !album.cover_image.deleted_at;
+
+		// Format coverImage to match client expectations
+		const formattedAlbum = {
+			...album,
+			coverImage: hasManualCover
+				? {
 					id: album.cover_image.image_id,
 					url: normalizeImagePath(
 						album.cover_image.image_path,
@@ -53,10 +61,10 @@ const service = async (data: unknown) => {
 						album.cover_image.storage_key,
 					),
 				}
-			: null,
-		coverImages: hasManualCover
-			? []
-			: album.album_images
+				: null,
+			coverImages: hasManualCover
+				? []
+				: album.album_images
 					?.map((ai: any) => ai.images)
 					.filter(Boolean)
 					.map((img: any) =>
@@ -66,15 +74,16 @@ const service = async (data: unknown) => {
 							img.storage_key,
 						),
 					) || [],
-	};
+		};
 
-	const aliasRes = aliaserSpec(aliasSpec.response, {
-		...formattedAlbum,
-		// Use snake_case keys for aliasing
-		cover_image: formattedAlbum.coverImage,
-		cover_images: formattedAlbum.coverImages,
+		const aliasRes = aliaserSpec(aliasSpec.response, {
+			...formattedAlbum,
+			// Use snake_case keys for aliasing
+			cover_image: formattedAlbum.coverImage,
+			cover_images: formattedAlbum.coverImages,
+		});
+		return aliasRes;
 	});
-	return aliasRes;
 };
 
 export const fetchAlbumService = service;

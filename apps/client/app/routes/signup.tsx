@@ -1,7 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
+import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Input } from "~/components/standard/Input";
 import { useAuth } from "../utils/auth";
 
 const SignupPage = () => {
@@ -76,134 +78,63 @@ const SignupPage = () => {
 						</p>
 					</div>
 
-					<form className="space-y-5" onSubmit={handleSubmit}>
-						<div className="space-y-2">
-							<label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 ml-1">
-								Email Address
-							</label>
-							<input
-								type="email"
-								placeholder="name@example.com"
-								className="input-soft"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								required
-							/>
-						</div>
+					<form className="space-y-6" onSubmit={handleSubmit}>
+						<Input
+							type="email"
+							label="Email Address"
+							placeholder="name@example.com"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							required
+						/>
 
-						<div className="space-y-2">
-							<label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 ml-1">
-								Password
-							</label>
-							<div className="relative">
-								<input
-									type={showPassword ? "text" : "password"}
-									placeholder="••••••••"
-									className="input-soft pr-12"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									required
-								/>
+						<Input
+							type={showPassword ? "text" : "password"}
+							label="Password"
+							placeholder="••••••••"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							required
+							trailing={
 								<button
 									type="button"
 									onClick={() => setShowPassword(!showPassword)}
-									className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-sage transition-colors cursor-pointer"
+									className="p-1 text-zinc-400 hover:text-sage transition-colors cursor-pointer"
+									aria-label={
+										showPassword ? "Hide password" : "Show password"
+									}
 								>
-									{showPassword ? (
-										<svg
-											className="h-5 w-5"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-											/>
-										</svg>
-									) : (
-										<svg
-											className="h-5 w-5"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-											/>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-											/>
-										</svg>
-									)}
+									{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
 								</button>
-							</div>
-						</div>
+							}
+						/>
 
-						<div className="space-y-2">
-							<label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 ml-1">
-								Confirm Password
-							</label>
-							<div className="relative">
-								<input
-									type={showConfirmPassword ? "text" : "password"}
-									placeholder="••••••••"
-									className="input-soft pr-12"
-									value={confirmPassword}
-									onChange={(e) => setConfirmPassword(e.target.value)}
-									required
-								/>
+						<Input
+							type={showConfirmPassword ? "text" : "password"}
+							label="Confirm Password"
+							placeholder="••••••••"
+							value={confirmPassword}
+							onChange={(e) => setConfirmPassword(e.target.value)}
+							required
+							trailing={
 								<button
 									type="button"
 									onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-									className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-sage transition-colors cursor-pointer"
+									className="p-1 text-zinc-400 hover:text-sage transition-colors cursor-pointer"
+									aria-label={
+										showConfirmPassword
+											? "Hide password"
+											: "Show password"
+									}
 								>
 									{showConfirmPassword ? (
-										<svg
-											className="h-5 w-5"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-											/>
-										</svg>
+										<EyeOff size={18} />
 									) : (
-										<svg
-											className="h-5 w-5"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-											/>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-											/>
-										</svg>
+										<Eye size={18} />
 									)}
 								</button>
-							</div>
-						</div>
+							}
+						/>
 
 						<button
 							type="submit"
@@ -240,15 +171,12 @@ const SignupPage = () => {
 						</button>
 					</form>
 
-					<div className="relative">
-						<div className="absolute inset-0 flex items-center">
-							<div className="w-full border-t border-zinc-200 dark:border-zinc-800"></div>
-						</div>
-						<div className="relative flex justify-center text-xs uppercase">
-							<span className="bg-transparent px-2 text-zinc-500 dark:text-zinc-400 font-bold">
-								Or join with
-							</span>
-						</div>
+					<div className="flex items-center gap-3">
+						<div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+						<span className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-bold">
+							Or join with
+						</span>
+						<div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
 					</div>
 
 					<p className="text-center text-sm text-zinc-600 dark:text-zinc-400 font-medium">

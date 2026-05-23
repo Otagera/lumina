@@ -1,7 +1,89 @@
 import fs from "node:fs/promises";
 import { queueServices } from "../../../apps/worker/src/queue/queue.service.ts";
 import prisma from "../../config/src/db.config.ts";
+import {
+	cacheDel,
+	cacheDelPattern,
+	cacheKeys,
+} from "../../utils/src/cache.util.ts";
 import { logUsage } from "./usage.model.ts";
+
+// Album info needed to drive cache invalidation. Captured up-front because
+// hard-delete paths drop the album_images link rows during the transaction.
+type AlbumCacheInfo = {
+	album_id: string;
+	share_token: string | null;
+	created_by: string | null;
+	member_ids: string[];
+};
+
+// Resolve which albums depend on the given images. Call BEFORE a mutation if
+// that mutation may remove the album_images link rows.
+const resolveAlbumCacheInfoForImageIds = async (
+	imageIds: string[],
+): Promise<AlbumCacheInfo[]> => {
+	if (!imageIds || imageIds.length === 0) return [];
+	try {
+		const links = await prisma.album_images.findMany({
+			where: { image_id: { in: imageIds } },
+			select: {
+				albums: {
+					select: {
+						album_id: true,
+						share_token: true,
+						created_by: true,
+						album_members: { select: { user_id: true } },
+					},
+				},
+			},
+		});
+		const byAlbum = new Map<string, AlbumCacheInfo>();
+		for (const link of links) {
+			const a = link.albums;
+			if (!a || byAlbum.has(a.album_id)) continue;
+			byAlbum.set(a.album_id, {
+				album_id: a.album_id,
+				share_token: a.share_token,
+				created_by: a.created_by,
+				member_ids: (a.album_members ?? [])
+					.map((m) => m.user_id)
+					.filter((id): id is string => Boolean(id)),
+			});
+		}
+		return Array.from(byAlbum.values());
+	} catch {
+		return [];
+	}
+};
+
+// Issue cache deletes for the given album set. Best-effort; never throws.
+const invalidateAlbumCacheInfos = async (infos: AlbumCacheInfo[]) => {
+	if (!infos || infos.length === 0) return;
+	try {
+		const tasks: Promise<unknown>[] = [];
+		for (const a of infos) {
+			tasks.push(cacheDelPattern(cacheKeys.albumPattern(a.album_id)));
+			if (a.share_token)
+				tasks.push(cacheDelPattern(cacheKeys.publicAlbumPattern(a.share_token)));
+			if (a.created_by)
+				tasks.push(cacheDel(cacheKeys.userAlbums(a.created_by)));
+			for (const uid of a.member_ids) {
+				tasks.push(cacheDel(cacheKeys.userAlbums(uid)));
+			}
+		}
+		await Promise.all(tasks);
+	} catch {
+		// Swallow — cache invalidation must not break mutations.
+	}
+};
+
+// Convenience: resolve + invalidate. Safe to use when the album_images rows
+// will NOT be removed by the calling mutation (soft delete, restore, status
+// updates). Hard-delete paths must capture infos before the transaction.
+const invalidateCachesForImageIds = async (imageIds: string[]) => {
+	const infos = await resolveAlbumCacheInfoForImageIds(imageIds);
+	await invalidateAlbumCacheInfos(infos);
+};
 
 const uploadImage = async (imageData) => {
 	return await prisma.images.create({
@@ -91,9 +173,9 @@ const fetchAllImages = async () => {
 		faces:
 			image.faces.length > 0
 				? image.faces.map((face) => ({
-						face_id: face.face_id,
-						bounding_box: face.bounding_box,
-					}))
+					face_id: face.face_id,
+					bounding_box: face.bounding_box,
+				}))
 				: [],
 		image_path: image.image_path,
 		upload_time: image.upload_date,
@@ -105,7 +187,7 @@ const fetchAllImages = async () => {
 };
 
 const softDeleteImagesByIds = async (imageIds: string[]) => {
-	return await prisma.images.updateMany({
+	const result = await prisma.images.updateMany({
 		where: {
 			image_id: { in: imageIds },
 		},
@@ -113,10 +195,12 @@ const softDeleteImagesByIds = async (imageIds: string[]) => {
 			deleted_at: new Date(),
 		},
 	});
+	await invalidateCachesForImageIds(imageIds);
+	return result;
 };
 
 const restoreImagesByIds = async (imageIds: string[]) => {
-	return await prisma.images.updateMany({
+	const result = await prisma.images.updateMany({
 		where: {
 			image_id: { in: imageIds },
 		},
@@ -124,11 +208,16 @@ const restoreImagesByIds = async (imageIds: string[]) => {
 			deleted_at: null,
 		},
 	});
+	await invalidateCachesForImageIds(imageIds);
+	return result;
 };
 
 const deleteImage = async (where) => {
 	const image = await prisma.images.findFirst({ where });
 	if (!image) return;
+
+	// Capture album linkage BEFORE the transaction drops the album_images rows.
+	const albumInfos = await resolveAlbumCacheInfoForImageIds([image.image_id]);
 
 	const transaction = await prisma.$transaction(async (prisma) => {
 		await prisma.faces.deleteMany({
@@ -160,7 +249,7 @@ const deleteImage = async (where) => {
 					"delete_optimized",
 					-stats.size,
 				);
-			} catch (_e) {}
+			} catch (_e) { }
 		}
 
 		if (image.uploaded_by) {
@@ -178,12 +267,17 @@ const deleteImage = async (where) => {
 		{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
 	);
 
+	await invalidateAlbumCacheInfos(albumInfos);
+
 	return transaction;
 };
 
 const deleteImageById = async (image_id) => {
 	const image = await prisma.images.findUnique({ where: { image_id } });
 	if (!image) return;
+
+	// Capture album linkage BEFORE the transaction drops the album_images rows.
+	const albumInfos = await resolveAlbumCacheInfoForImageIds([image_id]);
 
 	const transaction = await prisma.$transaction(async (prisma) => {
 		await prisma.faces.deleteMany({
@@ -217,7 +311,7 @@ const deleteImageById = async (image_id) => {
 					"delete_optimized",
 					-stats.size,
 				);
-			} catch (_e) {}
+			} catch (_e) { }
 		}
 
 		if (image.uploaded_by) {
@@ -235,6 +329,8 @@ const deleteImageById = async (image_id) => {
 		{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
 	);
 
+	await invalidateAlbumCacheInfos(albumInfos);
+
 	return transaction;
 };
 
@@ -242,6 +338,9 @@ const deleteImagesByIds = async (imageIds) => {
 	const images = await prisma.images.findMany({
 		where: { image_id: { in: imageIds } },
 	});
+
+	// Capture album linkage BEFORE the transaction drops the album_images rows.
+	const albumInfos = await resolveAlbumCacheInfoForImageIds(imageIds);
 
 	const transaction = await prisma.$transaction(async (prisma) => {
 		await prisma.faces.deleteMany({
@@ -282,7 +381,7 @@ const deleteImagesByIds = async (imageIds) => {
 						"delete_optimized",
 						-stats.size,
 					);
-				} catch (_e) {}
+				} catch (_e) { }
 			}
 
 			if (image.uploaded_by) {
@@ -302,6 +401,8 @@ const deleteImagesByIds = async (imageIds) => {
 			{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
 		);
 	}
+
+	await invalidateAlbumCacheInfos(albumInfos);
 
 	return transaction;
 };
@@ -346,7 +447,7 @@ const deleteImagesByUserId = async (uploaded_by) => {
 						"delete_optimized",
 						-stats.size,
 					);
-				} catch (_e) {}
+				} catch (_e) { }
 			}
 
 			if (image.uploaded_by) {
@@ -364,6 +465,9 @@ const deleteImagesByUserId = async (uploaded_by) => {
 				worker: "fileDeletion",
 			},
 			{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },
+		);
+		await invalidateCachesForImageIds(
+			imagesToDelete.map((i) => i.image_id),
 		);
 	}
 
@@ -393,7 +497,7 @@ const deleteAllImages = async () => {
 						"delete_optimized",
 						-stats.size,
 					);
-				} catch (_e) {}
+				} catch (_e) { }
 			}
 
 			if (image.uploaded_by) {
@@ -482,10 +586,12 @@ const fetchAllImagesQuery = async () => {
 
 const deleteImagesByIdsQuery = async (imageIds) => {
 	try {
-		return await prisma.$transaction([
+		const result = await prisma.$transaction([
 			prisma.$queryRaw`DELETE FROM "faces" WHERE image_id = ANY(${imageIds}) RETURNING *;`,
 			prisma.$queryRaw`DELETE FROM "images" WHERE image_id = ANY(${imageIds}) RETURNING *;`,
 		]);
+		await invalidateCachesForImageIds(imageIds);
+		return result;
 	} finally {
 	}
 };
@@ -498,10 +604,12 @@ const deleteAllImagesQuery = async (userId: string) => {
 		});
 		const imageIds = images.map((i) => i.image_id);
 
-		return await prisma.$transaction([
+		const result = await prisma.$transaction([
 			prisma.faces.deleteMany({ where: { image_id: { in: imageIds } } }),
 			prisma.images.deleteMany({ where: { image_id: { in: imageIds } } }),
 		]);
+		await invalidateCachesForImageIds(imageIds);
+		return result;
 	} finally {
 	}
 };
@@ -514,7 +622,7 @@ const moderateImagesQuery = async (
 	const data: any = { status };
 	if (reason) data.rejection_reason = reason;
 
-	return await prisma.images.updateMany({
+	const result = await prisma.images.updateMany({
 		where: {
 			image_id: {
 				in: imageIds,
@@ -522,6 +630,8 @@ const moderateImagesQuery = async (
 		},
 		data,
 	});
+	await invalidateCachesForImageIds(imageIds);
+	return result;
 };
 
 const cleanupImageSideEffects = async (images: any[]) => {
@@ -538,7 +648,7 @@ const cleanupImageSideEffects = async (images: any[]) => {
 					"delete_optimized",
 					-stats.size,
 				);
-			} catch (_e) {}
+			} catch (_e) { }
 		}
 		if (image.uploaded_by) {
 			await logUsage(image.uploaded_by, "compute", "delete", -1);
@@ -558,6 +668,7 @@ const deleteImagesWithLogging = async (imageIds: string[]) => {
 	});
 
 	await cleanupImageSideEffects(images);
+	await invalidateCachesForImageIds(imageIds);
 };
 
 const linkGuestImagesToUser = async (
@@ -577,11 +688,13 @@ const linkGuestImagesToUser = async (
 
 const searchImagesByEmbedding = async ({
 	embedding,
+	embeddingModel = "clip-vit-b-32",
 	albumId,
 	shareToken,
 	limit = 20,
 }: {
 	embedding: number[];
+	embeddingModel?: string;
 	albumId?: string;
 	shareToken?: string;
 	limit?: number;
@@ -605,6 +718,8 @@ const searchImagesByEmbedding = async ({
 			WHERE ai.album_id = ${album.album_id}::uuid
 			AND i.deleted_at IS NULL
 			AND i.status = 'APPROVED'
+				AND i.embedding IS NOT NULL
+				AND COALESCE(i.embedding_model, 'clip-vit-b-32') = ${embeddingModel}
 			ORDER BY i.embedding <=> ${embedding}::vector
 			LIMIT ${limit}
 		`) as any[];
@@ -621,6 +736,8 @@ const searchImagesByEmbedding = async ({
 			JOIN album_images ai ON i.image_id = ai.image_id
 			WHERE ai.album_id = ${albumId}::uuid
 			AND i.deleted_at IS NULL
+				AND i.embedding IS NOT NULL
+				AND COALESCE(i.embedding_model, 'clip-vit-b-32') = ${embeddingModel}
 			ORDER BY i.embedding <=> ${embedding}::vector
 			LIMIT ${limit}
 		`) as any[];
@@ -634,6 +751,8 @@ const searchImagesByEmbedding = async ({
 			(embedding <=> ${embedding}::vector) AS distance
 		FROM images
 		WHERE deleted_at IS NULL
+			AND embedding IS NOT NULL
+			AND COALESCE(embedding_model, 'clip-vit-b-32') = ${embeddingModel}
 		ORDER BY embedding <=> ${embedding}::vector
 		LIMIT ${limit}
 	`) as any[];

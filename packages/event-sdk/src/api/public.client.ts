@@ -1,6 +1,17 @@
+export interface PublicAlbumSettings {
+	is_event?: boolean;
+	requires_approval?: boolean;
+	tagging_policy?: "HOST_ONLY" | "GUESTS_SELF" | "ANYONE";
+	expires_at?: string | null;
+	allow_guest_uploads?: boolean;
+	semantic_search_enabled?: boolean;
+	[key: string]: unknown;
+}
+
 export interface PublicAlbum {
 	id: string;
 	albumName?: string;
+	settings?: PublicAlbumSettings;
 	[key: string]: unknown;
 }
 
@@ -10,13 +21,18 @@ export interface EventFaceMatch {
 	[key: string]: unknown;
 }
 
+export interface SelfieSearchResult {
+	faces: EventFaceMatch[];
+	embedding?: number[];
+}
+
 export interface PublicEventClient {
 	getPublicAlbum: (token: string) => Promise<PublicAlbum | undefined>;
 	getPublicAlbumHighlights: (token: string) => Promise<EventFaceMatch[]>;
 	searchPublicAlbumBySelfie: (
 		token: string,
 		selfie: File | Blob,
-	) => Promise<{ faces: EventFaceMatch[] }>;
+	) => Promise<SelfieSearchResult>;
 }
 
 export const createPublicEventClient = (transport: {

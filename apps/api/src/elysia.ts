@@ -18,6 +18,7 @@ import albumsRoutes from "./routes/albums.route";
 import authRoutes from "./routes/auth.route";
 import billingWebhookRoutes from "./routes/billing-webhook.route";
 import facesRoutes from "./routes/faces.route";
+import metricsRoutes from "./routes/metrics.route";
 import notificationsRoutes from "./routes/notifications.route";
 import peopleRoutes from "./routes/people.route";
 import picturesRoutes from "./routes/pictures.route";
@@ -63,14 +64,14 @@ export const createElysiaApp = async () => {
 					transport:
 						env === "development"
 							? {
-									target: "pino-pretty",
-									options: {
-										colorize: true,
-										singleLine: true,
-										ignore: "pid,hostname",
-										translateTime: "HH:MM:ss.l",
-									},
-								}
+								target: "pino-pretty",
+								options: {
+									colorize: true,
+									singleLine: true,
+									ignore: "pid,hostname",
+									translateTime: "HH:MM:ss.l",
+								},
+							}
 							: undefined,
 				}),
 			)
@@ -125,6 +126,7 @@ export const createElysiaApp = async () => {
 				}
 			})
 			.get("/api/health", () => ({ status: "ok" }))
+			.group("/api", (app) => app.use(metricsRoutes))
 			.get(
 				"/api/v1/events",
 				({ set }) => {
@@ -167,7 +169,7 @@ export const createElysiaApp = async () => {
 								eventEmitter.off(EVENTS.REACTION_ADDED, handler);
 								try {
 									controller.close();
-								} catch (_e) {}
+								} catch (_e) { }
 							};
 
 							// Note: Bun's ReadableStream cancel() is triggered when client closes

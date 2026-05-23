@@ -20,11 +20,11 @@ export const EmptyState = ({
 	return (
 		<div
 			className={cn(
-				"flex flex-col items-center justify-center py-24 px-6 text-center bg-zinc-50/50 dark:bg-zinc-900/20 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-[3rem] animate-in fade-in duration-700",
+				"flex flex-col items-center justify-center py-24 px-6 text-center bg-zinc-50/50 dark:bg-zinc-900/20 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-modal animate-in fade-in duration-700",
 				className,
 			)}
 		>
-			<div className="w-24 h-24 bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-xl shadow-zinc-200/50 dark:shadow-none border border-zinc-100 dark:border-zinc-800 flex items-center justify-center text-zinc-400 mb-8 transform transition-transform hover:scale-110 duration-500">
+			<div className="w-24 h-24 bg-white dark:bg-zinc-900 rounded-tile shadow-xl shadow-zinc-200/50 dark:shadow-none border border-zinc-100 dark:border-zinc-800 flex items-center justify-center text-zinc-400 mb-8">
 				{icon || (
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

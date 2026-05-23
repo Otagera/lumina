@@ -1,4 +1,9 @@
 import Joi from "joi";
+import {
+	CACHE_TTL,
+	cacheGetOrSet,
+	cacheKeys,
+} from "../../../../../packages/utils/src/cache.util.ts";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import {
 	aliaserSpec,
@@ -13,19 +18,18 @@ const aliasSpec = {
 };
 
 const service = async () => {
-	const params = validateSpec(spec, aliaserSpec(aliasSpec.request, {}));
+	validateSpec(spec, aliaserSpec(aliasSpec.request, {}));
 
-	const plans = await prisma.plans.findMany({
-		orderBy: { order: "asc" },
-	});
-
-	return aliaserSpec(aliasSpec.response, {
-		plans: plans.map((p) => ({
+	const plans = await cacheGetOrSet(cacheKeys.plans(), CACHE_TTL.LONG, async () => {
+		const rows = await prisma.plans.findMany({ orderBy: { order: "asc" } });
+		return rows.map((p) => ({
 			...p,
 			features:
 				typeof p.features === "string" ? JSON.parse(p.features) : p.features,
-		})),
+		}));
 	});
+
+	return aliaserSpec(aliasSpec.response, { plans });
 };
 
 export const getPlansService = service;

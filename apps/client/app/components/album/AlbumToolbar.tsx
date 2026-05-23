@@ -20,15 +20,19 @@ export function AlbumToolbar({
 	return (
 		<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 w-full">
 			{(showModeration || showDuplicates) && (
-				<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl sm:p-1.5 sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner overflow-x-auto no-scrollbar w-full sm:w-auto">
+				<div
+					role="group"
+					aria-label="Album view"
+					className="bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl sm:p-1.5 sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner overflow-x-auto no-scrollbar w-full sm:w-auto"
+				>
 					<button
 						type="button"
 						onClick={() => onViewChange("gallery")}
-						className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-							view === "gallery"
+						aria-pressed={view === "gallery"}
+						className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "gallery"
 								? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
 								: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-						}`}
+							}`}
 					>
 						Gallery
 					</button>
@@ -36,11 +40,11 @@ export function AlbumToolbar({
 						<button
 							type="button"
 							onClick={() => onViewChange("moderation")}
-							className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-								view === "moderation"
+							aria-pressed={view === "moderation"}
+							className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "moderation"
 									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
 									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-							}`}
+								}`}
 						>
 							Moderation
 						</button>
@@ -49,11 +53,11 @@ export function AlbumToolbar({
 						<button
 							type="button"
 							onClick={() => onViewChange("duplicates")}
-							className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-								view === "duplicates"
+							aria-pressed={view === "duplicates"}
+							className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "duplicates"
 									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
 									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-							}`}
+								}`}
 						>
 							Duplicates
 						</button>
@@ -61,15 +65,20 @@ export function AlbumToolbar({
 				</div>
 			)}
 
-			<div className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner ml-auto">
+			<div
+				role="group"
+				aria-label="Display mode"
+				className="bg-zinc-100 dark:bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex items-center shadow-inner ml-auto"
+			>
 				<button
 					type="button"
 					onClick={() => onDisplayModeChange("grid")}
-					className={`p-2 rounded-xl transition-all ${
-						displayMode === "grid"
+					aria-pressed={displayMode === "grid"}
+					aria-label="Grid view"
+					className={`p-2 rounded-xl transition-all ${displayMode === "grid"
 							? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
 							: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-					}`}
+						}`}
 					title="Grid view"
 				>
 					<svg
@@ -86,11 +95,12 @@ export function AlbumToolbar({
 				<button
 					type="button"
 					onClick={() => onDisplayModeChange("list")}
-					className={`p-2 rounded-xl transition-all ${
-						displayMode === "list"
+					aria-pressed={displayMode === "list"}
+					aria-label="List view"
+					className={`p-2 rounded-xl transition-all ${displayMode === "list"
 							? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
 							: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-					}`}
+						}`}
 					title="List view"
 				>
 					<svg

@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import JSZip from "jszip";
-import { Upload } from "lucide-react";
+import { Camera, QrCode, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
+import { Modal } from "~/components/standard/Modal";
 import ImageGridItem from "~/Images/ImageGridItem";
 import ImageModal from "~/Images/ImageModal";
 import { getBentoSpanClass } from "~/utils/bento";
@@ -35,7 +36,7 @@ const SharedAlbumPage = () => {
 	const allImages = useMemo(() => albumData?.images || [], [albumData]);
 
 	const handleUpload = () => {
-		if (!uploadFiles || uploadFiles.length === 0) return;
+		if (!uploadFiles || uploadFiles.length === 0 || !albumData) return;
 
 		// Use the unified UploadContext for high-quality direct uploads
 		addUploads(
@@ -178,7 +179,9 @@ const SharedAlbumPage = () => {
 				threshold: 0.6,
 			});
 			if (results?.data?.faces) {
-				const ids = new Set(results.data.faces.map((f: any) => f.imageId));
+				const ids = new Set<string>(
+					results.data.faces.map((f: { imageId: string }) => f.imageId),
+				);
 				setFilteredIds(ids);
 				toast.success(`Found ${ids.size} photos with this face`, {
 					id: toastId,
@@ -219,9 +222,9 @@ const SharedAlbumPage = () => {
 
 	return (
 		<MainContainer>
-			<div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-6">
-				<div className="space-y-2">
-					<div className="flex items-center space-x-2">
+			<div className="rounded-tile bg-white/80 dark:bg-zinc-900/70 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 p-6 md:p-8 mb-10 grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+				<div className="space-y-3 min-w-0">
+					<div className="flex items-center gap-2 flex-wrap">
 						<span className="px-2 py-0.5 bg-sage/10 text-sage rounded text-[10px] font-black uppercase tracking-widest border border-sage/20">
 							Shared Album
 						</span>
@@ -235,61 +238,43 @@ const SharedAlbumPage = () => {
 							</button>
 						)}
 					</div>
-					<h1 className="text-4xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
-						{albumData.albumName}
+					<h1 className="text-3xl md:text-4xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight wrap-break-word">
+						{albumData!.albumName}
 					</h1>
 					<p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
 						{filteredImageIds
 							? `Showing ${displayedImages.length} photos of you`
-							: "Organized by the owner for you"}
+							: `${displayedImages.length} photos · organized by the owner for you`}
 					</p>
-				</div>
-
-				<div className="flex items-center space-x-3 w-full md:w-auto">
-					{albumData.canUpload && (
+					<div className="flex flex-wrap gap-2 pt-2">
 						<button
 							type="button"
-							className="flex-1 md:flex-none px-8 py-3.5 font-bold rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all flex items-center justify-center space-x-2 active:scale-95 shadow-xl cursor-pointer"
-							onClick={() => setIsUploadModalOpen(true)}
+							className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-control transition-all active:scale-95 cursor-pointer ${filteredImageIds
+								? "bg-sage text-zinc-950"
+								: "bg-sage text-zinc-950 hover:bg-sage/90"
+								}`}
+							onClick={() => setIsSelfieModalOpen(true)}
 						>
-							<Upload size={20} />
-							<span>Contribute</span>
+							<Camera className="w-3.5 h-3.5" aria-hidden />
+							{filteredImageIds ? "Change Photo" : "Find My Face"}
 						</button>
-					)}
-					<button
-						type="button"
-						className={`flex-1 md:flex-none px-8 py-3.5 font-bold rounded-2xl border transition-all flex items-center justify-center space-x-2 active:scale-95 shadow-xl ${
-							filteredImageIds
-								? "bg-sage text-white border-sage"
-								: "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer"
-						}`}
-						onClick={() => setIsSelfieModalOpen(true)}
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							className={`h-5 w-5 ${filteredImageIds ? "text-white" : "text-sage"}`}
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-							role="img"
-							aria-label="Find My Face"
-						>
-							<title>Find My Face</title>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-							/>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-							/>
-						</svg>
-						<span>{filteredImageIds ? "Change Photo" : "Find My Face"}</span>
-					</button>
+						{albumData!.canUpload && (
+							<button
+								type="button"
+								className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md border border-zinc-200 dark:border-zinc-700 rounded-control text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-800 transition-all active:scale-95 cursor-pointer"
+								onClick={() => setIsUploadModalOpen(true)}
+							>
+								<Upload className="w-3.5 h-3.5" aria-hidden />
+								Contribute
+							</button>
+						)}
+					</div>
+				</div>
+				<div
+					className="w-20 h-20 md:w-24 md:h-24 rounded-control bg-zinc-900 dark:bg-white flex items-center justify-center shrink-0 mx-auto md:mx-0"
+					aria-hidden
+				>
+					<QrCode className="w-10 h-10 md:w-12 md:h-12 text-white dark:text-zinc-900" />
 				</div>
 			</div>
 
@@ -304,7 +289,7 @@ const SharedAlbumPage = () => {
 					const spanClass = getBentoSpanClass(width, height, index, isFeatured);
 
 					return (
-						<div key={image.imageId} className={`relative ${spanClass}`}>
+						<div key={image.imageId} className={`relative cv-tile ${spanClass}`}>
 							<ImageGridItem
 								image={{
 									id: image.imageId,
@@ -313,12 +298,12 @@ const SharedAlbumPage = () => {
 									url: image.imagePath,
 									alt: image.imageId,
 								}}
-								onDelete={() => {}}
+								onDelete={() => { }}
 								onToggleSelect={toggleSelect}
 								isSelected={selectedIds.has(image.imageId)}
 								selectionMode={selectedIds.size > 0}
 								shared={true}
-								className="cursor-pointer rounded-xl transition-transform duration-300 hover:scale-[1.02] shadow-sm w-full object-cover"
+								className="cursor-pointer rounded-xl shadow-sm w-full object-cover"
 								onClick={() => !image.isPending && setSelectedImage(image)}
 								variant="admin"
 							/>
@@ -367,77 +352,76 @@ const SharedAlbumPage = () => {
 				onDownload={handleBulkDownload}
 			/>
 
-			{isUploadModalOpen && (
-				<div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-					<div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-2xl max-w-md w-full border border-zinc-200 dark:border-zinc-800 animate-in fade-in zoom-in duration-300">
-						<h2 className="text-2xl font-black mb-2">Contribute Photos</h2>
-						<p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-							Add your photos to this shared collection.
-						</p>
-
-						{albumData.settings?.requires_approval && (
-							<div className="mb-6 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl flex items-start space-x-3">
-								<div className="text-amber-500 mt-0.5">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										className="h-5 w-5"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-									>
-										<path
-											fillRule="evenodd"
-											d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-											clipRule="evenodd"
-										/>
-									</svg>
-								</div>
-								<div>
-									<h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 mb-1">
-										Moderation Enabled
-									</h4>
-									<p className="text-xs text-amber-700/80 dark:text-amber-500/80 leading-relaxed">
-										Photos uploaded to this album require approval from the host
-										before they become visible to everyone.
-									</p>
-								</div>
+			<Modal
+				isOpen={isUploadModalOpen}
+				onClose={() => setIsUploadModalOpen(false)}
+				size="md"
+				title="Contribute Photos"
+				description="Add your photos to this shared collection."
+			>
+				<div className="mt-4">
+					{albumData!.settings?.requires_approval && (
+						<div className="mb-6 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl flex items-start space-x-3">
+							<div className="text-amber-500 mt-0.5">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									className="h-5 w-5"
+									viewBox="0 0 20 20"
+									fill="currentColor"
+								>
+									<path
+										fillRule="evenodd"
+										d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+										clipRule="evenodd"
+									/>
+								</svg>
 							</div>
-						)}
-
-						<div className="relative group mb-8">
-							<input
-								type="file"
-								multiple
-								className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-								onChange={(e) => setUploadFiles(e.target.files)}
-							/>
-							<div className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center transition-all group-hover:border-sage group-hover:bg-sage/5">
-								<Upload className="h-10 w-10 text-zinc-300 group-hover:text-sage mb-4" />
-								<p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 text-center">
-									{uploadFiles
-										? `${uploadFiles.length} photos selected`
-										: "Drop photos or click to browse"}
+							<div>
+								<h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 mb-1">
+									Moderation Enabled
+								</h4>
+								<p className="text-xs text-amber-700/80 dark:text-amber-500/80 leading-relaxed">
+									Photos uploaded to this album require approval from the host
+									before they become visible to everyone.
 								</p>
 							</div>
 						</div>
+					)}
 
-						<div className="flex gap-3">
-							<Button
-								className="flex-1"
-								onClick={handleUpload}
-								disabled={!uploadFiles}
-							>
-								Add to Queue
-							</Button>
-							<Button
-								variant="ghost"
-								onClick={() => setIsUploadModalOpen(false)}
-							>
-								Cancel
-							</Button>
+					<div className="relative group mb-8">
+						<input
+							type="file"
+							multiple
+							className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+							onChange={(e) => setUploadFiles(e.target.files)}
+						/>
+						<div className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center transition-all group-hover:border-sage group-hover:bg-sage/5">
+							<Upload className="h-10 w-10 text-zinc-300 group-hover:text-sage mb-4" />
+							<p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 text-center">
+								{uploadFiles
+									? `${uploadFiles.length} photos selected`
+									: "Drop photos or click to browse"}
+							</p>
 						</div>
 					</div>
+
+					<div className="flex gap-3">
+						<Button
+							className="flex-1"
+							onClick={handleUpload}
+							disabled={!uploadFiles}
+						>
+							Add to Queue
+						</Button>
+						<Button
+							variant="ghost"
+							onClick={() => setIsUploadModalOpen(false)}
+						>
+							Cancel
+						</Button>
+					</div>
 				</div>
-			)}
+			</Modal>
 		</MainContainer>
 	);
 };

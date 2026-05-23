@@ -42,7 +42,7 @@ const ModerationGridItem = ({
 				alt={image.alt}
 				loading="lazy"
 				className={cn(
-					"w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
+					"w-full h-full object-cover",
 					isSelected ? "opacity-80" : "",
 				)}
 				onClick={(e) => {
@@ -69,8 +69,8 @@ const ModerationGridItem = ({
 				className={cn(
 					"absolute top-4 left-4 transition-all duration-300",
 					isSelected
-						? "opacity-100 scale-100"
-						: "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100",
+						? "opacity-100"
+						: "opacity-0 group-hover:opacity-100",
 				)}
 			>
 				<button

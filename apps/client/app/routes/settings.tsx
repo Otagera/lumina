@@ -15,6 +15,7 @@ import { MainContainer } from "~/components/MainContainer";
 import { Button } from "~/components/standard/Button";
 import { Card } from "~/components/standard/Card";
 import { Heading } from "~/components/standard/Heading";
+import { Input } from "~/components/standard/Input";
 import {
 	createStorageConfig,
 	deleteStorageConfig,
@@ -295,7 +296,7 @@ const Settings = () => {
 
 					<Card className="p-8 bg-gradient-to-br from-plum/10 to-plum/5 dark:from-plum/5 dark:to-transparent border-plum/20">
 						<div className="flex items-center gap-4 mb-6">
-							<div className="w-12 h-12 rounded-2xl bg-plum/15 flex items-center justify-center text-plum">
+							<div className="w-12 h-12 rounded-2xl bg-plum/15 flex items-center justify-center text-plum dark:bg-rose-500/15 dark:text-rose-300">
 								<Gauge size={24} />
 							</div>
 							<div>
@@ -305,8 +306,8 @@ const Settings = () => {
 								<p className="text-2xl font-black text-zinc-900 dark:text-white">
 									{formatBytes(
 										(settingsData?.data?.usage?.storageUsedMB || 0) *
-											1024 *
-											1024,
+										1024 *
+										1024,
 									)}
 								</p>
 							</div>
@@ -351,7 +352,7 @@ const Settings = () => {
 				</div>
 
 				{isFormOpen && (
-					<Card className="p-10 border-sage-500/30 bg-sage-500/5 backdrop-blur-xl rounded-[2.5rem]">
+					<Card className="p-10 border-sage-500/30 bg-sage-500/5 backdrop-blur-xl rounded-modal">
 						<form onSubmit={handleSubmit} className="space-y-8">
 							<div className="flex justify-between items-center mb-2">
 								<Heading level={3} className="text-xl font-bold">
@@ -362,27 +363,22 @@ const Settings = () => {
 							</div>
 
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-								<div className="space-y-3">
-									<label className="text-xs font-black uppercase tracking-widest text-zinc-500">
-										Config Name
-									</label>
-									<input
-										type="text"
-										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage-500 outline-none transition-all font-medium"
-										placeholder="e.g. My R2 Bucket"
-										value={formData.name}
-										onChange={(e) =>
-											setFormData({ ...formData, name: e.target.value })
-										}
-										required
-									/>
-								</div>
-								<div className="space-y-3">
-									<label className="text-xs font-black uppercase tracking-widest text-zinc-500">
+								<Input
+									type="text"
+									label="Config Name"
+									placeholder="e.g. My R2 Bucket"
+									value={formData.name}
+									onChange={(e) =>
+										setFormData({ ...formData, name: e.target.value })
+									}
+									required
+								/>
+								<div className="space-y-1.5 w-full">
+									<label className="block text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
 										Provider
 									</label>
 									<select
-										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage-500 outline-none transition-all font-bold"
+										className="flex h-11 w-full border-0 border-b-2 border-zinc-200 dark:border-zinc-800 focus:border-sage hover:border-zinc-300 dark:hover:border-zinc-700 bg-transparent px-0 py-2 text-base font-medium text-zinc-900 dark:text-white outline-none focus:ring-0 focus:outline-none transition-colors duration-200"
 										value={formData.provider}
 										onChange={(e) =>
 											setFormData({ ...formData, provider: e.target.value })
@@ -392,67 +388,46 @@ const Settings = () => {
 										<option value="s3">AWS S3</option>
 									</select>
 								</div>
-								<div className="space-y-3">
-									<label className="text-xs font-black uppercase tracking-widest text-zinc-500">
-										Bucket Name
-									</label>
-									<input
-										type="text"
-										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage-500 outline-none transition-all font-medium"
-										value={formData.bucket}
-										onChange={(e) =>
-											setFormData({ ...formData, bucket: e.target.value })
-										}
-										required
-									/>
-								</div>
-								<div className="space-y-3">
-									<label className="text-xs font-black uppercase tracking-widest text-zinc-500">
-										Endpoint
-									</label>
-									<input
-										type="text"
-										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage-500 outline-none transition-all font-medium"
-										placeholder="https://<id>.r2.cloudflarestorage.com"
-										value={formData.endpoint}
-										onChange={(e) =>
-											setFormData({ ...formData, endpoint: e.target.value })
-										}
-										required
-									/>
-								</div>
-								<div className="space-y-3">
-									<label className="text-xs font-black uppercase tracking-widest text-zinc-500">
-										Access Key ID {editingConfigId && "(Optional if unchanged)"}
-									</label>
-									<input
-										type="password"
-										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage-500 outline-none transition-all font-medium"
-										value={formData.accessKeyId}
-										onChange={(e) =>
-											setFormData({ ...formData, accessKeyId: e.target.value })
-										}
-										required={!editingConfigId}
-									/>
-								</div>
-								<div className="space-y-3">
-									<label className="text-xs font-black uppercase tracking-widest text-zinc-500">
-										Secret Access Key{" "}
-										{editingConfigId && "(Optional if unchanged)"}
-									</label>
-									<input
-										type="password"
-										className="w-full px-6 py-4 rounded-2xl border bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-2 focus:ring-sage-500 outline-none transition-all font-medium"
-										value={formData.secretAccessKey}
-										onChange={(e) =>
-											setFormData({
-												...formData,
-												secretAccessKey: e.target.value,
-											})
-										}
-										required={!editingConfigId}
-									/>
-								</div>
+								<Input
+									type="text"
+									label="Bucket Name"
+									value={formData.bucket}
+									onChange={(e) =>
+										setFormData({ ...formData, bucket: e.target.value })
+									}
+									required
+								/>
+								<Input
+									type="text"
+									label="Endpoint"
+									placeholder="https://<id>.r2.cloudflarestorage.com"
+									value={formData.endpoint}
+									onChange={(e) =>
+										setFormData({ ...formData, endpoint: e.target.value })
+									}
+									required
+								/>
+								<Input
+									type="password"
+									label={`Access Key ID${editingConfigId ? " (Optional if unchanged)" : ""}`}
+									value={formData.accessKeyId}
+									onChange={(e) =>
+										setFormData({ ...formData, accessKeyId: e.target.value })
+									}
+									required={!editingConfigId}
+								/>
+								<Input
+									type="password"
+									label={`Secret Access Key${editingConfigId ? " (Optional if unchanged)" : ""}`}
+									value={formData.secretAccessKey}
+									onChange={(e) =>
+										setFormData({
+											...formData,
+											secretAccessKey: e.target.value,
+										})
+									}
+									required={!editingConfigId}
+								/>
 							</div>
 							<div className="flex gap-4 justify-end pt-4">
 								<Button
@@ -483,7 +458,7 @@ const Settings = () => {
 					{settingsData?.data?.storageConfigs?.map((config: any) => (
 						<Card
 							key={config.id}
-							className="p-8 flex items-center justify-between group hover:border-sage-500/50 transition-all rounded-[2rem] bg-white/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 shadow-sm"
+							className="p-8 flex items-center justify-between group hover:border-sage-500/50 transition-all rounded-card bg-white/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 shadow-sm"
 						>
 							<div className="flex items-center gap-6">
 								<div className="w-14 h-14 rounded-2xl bg-sage-500/10 flex items-center justify-center text-sage-500 group-hover:bg-sage-500 group-hover:text-white transition-all duration-500">
@@ -524,7 +499,7 @@ const Settings = () => {
 					{(!settingsData?.data?.storageConfigs ||
 						settingsData.data.storageConfigs.length === 0) &&
 						!isFormOpen && (
-							<div className="text-center py-20 border-2 border-dashed rounded-[3rem] border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50">
+							<div className="text-center py-20 border-2 border-dashed rounded-modal border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50">
 								<div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-zinc-400">
 									<HardDrive size={32} />
 								</div>
@@ -563,11 +538,10 @@ const Settings = () => {
 							return (
 								<div
 									key={plan.name}
-									className={`relative rounded-[2.5rem] border p-8 flex flex-col transition-all duration-500 ${
-										isCurrentPlan
-											? "border-sage bg-sage/5 dark:bg-sage/5 shadow-xl shadow-sage/5"
-											: "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700"
-									}`}
+									className={`relative rounded-modal border p-8 flex flex-col transition-all duration-500 ${isCurrentPlan
+										? "border-sage bg-sage/5 dark:bg-sage/5 shadow-xl shadow-sage/5"
+										: "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700"
+										}`}
 								>
 									{plan.is_highlighted && (
 										<div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-plum px-4 py-1 text-[10px] font-black uppercase tracking-widest text-white">

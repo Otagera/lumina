@@ -6,7 +6,7 @@ import {
 } from "../models/src/passwordResets.lib.ts";
 import { updateUser } from "../models/src/users.lib.ts";
 import { encryptPassword } from "../utils/src/auth.util.ts";
-import { AuthError } from "../utils/src/error.util.ts";
+import { BadRequestError } from "../utils/src/error.util.ts";
 import { validateSpec } from "../utils/src/specValidator.util.ts";
 
 const spec = joi.object({
@@ -35,12 +35,12 @@ export const resetPasswordService = async (data: any) => {
 	}
 
 	if (!resetEntry) {
-		throw new AuthError("Invalid or expired password reset token");
+		throw new BadRequestError("Invalid or expired password reset token");
 	}
 
 	if (new Date() > new Date(resetEntry.expires_at)) {
 		await removePasswordReset({ id: resetEntry.id });
-		throw new AuthError("Password reset token has expired");
+		throw new BadRequestError("Password reset token has expired");
 	}
 
 	const encryptedPassword = await encryptPassword(password);

@@ -5,7 +5,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl text-sm font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-control font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
 	{
 		variants: {
 			variant: {
@@ -19,23 +19,26 @@ const buttonVariants = cva(
 				link: "text-primary underline-offset-4 hover:underline",
 			},
 			size: {
-				default: "h-10 px-5 py-2.5",
-				sm: "h-9 px-3 py-1.5 text-xs",
-				md: "h-10 px-5 py-2.5 text-sm",
-				lg: "h-12 px-8 py-4 text-base",
+				xs: "h-7 px-2 text-xs",
+				sm: "h-9 px-3 text-sm",
+				md: "h-10 px-4 text-sm",
+				lg: "h-12 px-6 text-base",
+				xl: "h-14 px-8 text-base",
 				icon: "h-10 w-10",
+				"icon-sm": "h-9 w-9",
+				"icon-xs": "h-7 w-7",
 			},
 		},
 		defaultVariants: {
 			variant: "primary",
-			size: "default",
+			size: "md",
 		},
 	},
 );
 
 export interface ButtonProps
 	extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-		VariantProps<typeof buttonVariants> {
+	VariantProps<typeof buttonVariants> {
 	asChild?: boolean;
 }
 

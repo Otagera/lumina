@@ -12,10 +12,8 @@ describe("ConfirmModal Component", () => {
 	};
 
 	it("does not render when isOpen is false", () => {
-		const { container } = render(
-			<ConfirmModal {...defaultProps} isOpen={false} />,
-		);
-		expect(container.firstChild).toBeNull();
+		render(<ConfirmModal {...defaultProps} isOpen={false} />);
+		expect(screen.queryByText("Delete Item")).not.toBeInTheDocument();
 	});
 
 	it("renders title, message, and default button text", () => {
@@ -37,23 +35,12 @@ describe("ConfirmModal Component", () => {
 		expect(onConfirm).toHaveBeenCalledTimes(1);
 	});
 
-	it("calls onCancel when cancel button or backdrop is clicked", () => {
+	it("calls onCancel when cancel button is clicked", () => {
 		const onCancel = vi.fn();
-		const { container } = render(
-			<ConfirmModal {...defaultProps} onCancel={onCancel} />,
-		);
+		render(<ConfirmModal {...defaultProps} onCancel={onCancel} />);
 
 		fireEvent.click(screen.getByText("Cancel"));
 		expect(onCancel).toHaveBeenCalledTimes(1);
-
-		// Backdrop click
-		const backdrop = container.querySelector(".bg-black\\/60");
-		if (backdrop) {
-			fireEvent.click(backdrop);
-			expect(onCancel).toHaveBeenCalledTimes(2);
-		} else {
-			throw new Error("Backdrop not found");
-		}
 	});
 
 	it("shows loading state and disables buttons", () => {

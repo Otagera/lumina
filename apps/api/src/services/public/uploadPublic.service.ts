@@ -13,7 +13,10 @@ import {
 	HTTP_STATUS_CODES,
 	UPLOADS_DIR,
 } from "../../../../../packages/utils/src/constants.util.ts";
-import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
+import {
+	BadRequestError,
+	NotFoundError,
+} from "../../../../../packages/utils/src/error.util.ts";
 import { validateFileFromBuffer } from "../../../../../packages/utils/src/file-validator.ts";
 import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
 import {
@@ -71,14 +74,14 @@ const enforceGuestUploadQuota = async ({
 		}),
 		guestSessionId
 			? prisma.album_images.count({
-					where: {
-						album_id: albumId,
-						images: {
-							guest_session_id: guestSessionId,
-							upload_date: { gte: windowStart },
-						},
+				where: {
+					album_id: albumId,
+					images: {
+						guest_session_id: guestSessionId,
+						upload_date: { gte: windowStart },
 					},
-				})
+				},
+			})
 			: Promise.resolve(0),
 	]);
 
@@ -86,13 +89,13 @@ const enforceGuestUploadQuota = async ({
 		guestSessionId &&
 		sessionWindowCount + incomingCount > GUEST_UPLOAD_QUOTA.sessionLimit
 	) {
-		throw new Error(
+		throw new BadRequestError(
 			`Guest upload session limit exceeded: max ${GUEST_UPLOAD_QUOTA.sessionLimit} images per hour.`,
 		);
 	}
 
 	if (albumWindowCount + incomingCount > GUEST_UPLOAD_QUOTA.tokenLimit) {
-		throw new Error(
+		throw new BadRequestError(
 			`Guest upload event limit exceeded: max ${GUEST_UPLOAD_QUOTA.tokenLimit} images per hour.`,
 		);
 	}

@@ -90,7 +90,7 @@ export default function PeoplePage() {
 			</div>
 
 			{isMergeMode && (
-				<div className="mb-12 p-6 bg-sage/5 border border-sage/20 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-6 animate-in slide-in-from-top-4 duration-500">
+				<div className="mb-12 p-6 bg-sage/5 border border-sage/20 rounded-card flex flex-col sm:flex-row items-center justify-between gap-6 animate-in slide-in-from-top-4 duration-500">
 					<div>
 						<h3 className="font-black text-xl text-zinc-900 dark:text-white">
 							Merge Mode Active
@@ -121,7 +121,7 @@ export default function PeoplePage() {
 						<div className="w-8 h-8 border-4 border-sage border-t-transparent rounded-full animate-spin" />
 					</div>
 				) : people.length === 0 ? (
-					<div className="text-center py-32 bg-zinc-50 dark:bg-zinc-900/30 rounded-[3rem] border border-zinc-100 dark:border-zinc-800">
+					<div className="text-center py-32 bg-zinc-50 dark:bg-zinc-900/30 rounded-modal border border-zinc-100 dark:border-zinc-800">
 						<p className="text-zinc-500 font-bold">
 							No people identified yet. Add tags or wait for clustering to run.
 						</p>
@@ -139,26 +139,24 @@ export default function PeoplePage() {
 									type="button"
 									onClick={() => handlePersonClick(person)}
 									disabled={isMergeMode && (isSource || isTarget)}
-									className={`group relative flex flex-col items-center gap-4 transition-all duration-300 ${
-										isSource
-											? "opacity-50 scale-95"
-											: isTarget
-												? "scale-105"
-												: isSelectable
-													? "hover:scale-105 cursor-pointer"
-													: "cursor-default"
-									}`}
+									className={`group relative flex flex-col items-center gap-4 transition-all duration-300 ${isSource
+										? "opacity-50"
+										: isTarget
+											? ""
+											: isSelectable
+												? "cursor-pointer"
+												: "cursor-default"
+										}`}
 								>
 									<div
-										className={`relative aspect-square w-full rounded-[2.5rem] overflow-hidden border-4 transition-all duration-300 bg-zinc-100 dark:bg-zinc-800 shadow-sm ${
-											isSource
-												? "border-red-500 shadow-red-500/20"
-												: isTarget
-													? "border-green-500 shadow-xl shadow-green-500/20"
-													: isSelectable
-														? "border-transparent group-hover:border-sage group-hover:shadow-lg group-hover:shadow-sage/10"
-														: "border-transparent"
-										}`}
+										className={`relative aspect-square w-full rounded-tile overflow-hidden border-4 transition-all duration-300 bg-zinc-100 dark:bg-zinc-800 shadow-sm ${isSource
+											? "border-red-500 shadow-red-500/20"
+											: isTarget
+												? "border-green-500 shadow-xl shadow-green-500/20"
+												: isSelectable
+													? "border-transparent group-hover:border-sage group-hover:shadow-lg group-hover:shadow-sage/10"
+													: "border-transparent"
+											}`}
 									>
 										{person.faceUrl ? (
 											<img
@@ -208,13 +206,12 @@ export default function PeoplePage() {
 									</div>
 
 									<span
-										className={`font-black text-center line-clamp-1 px-2 transition-colors ${
-											isSource
-												? "text-red-500"
-												: isTarget
-													? "text-green-500"
-													: "text-zinc-900 dark:text-white"
-										}`}
+										className={`font-black text-center line-clamp-1 px-2 transition-colors ${isSource
+											? "text-red-500"
+											: isTarget
+												? "text-green-500"
+												: "text-zinc-900 dark:text-white"
+											}`}
 									>
 										{person.name}
 									</span>

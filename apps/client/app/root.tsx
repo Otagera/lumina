@@ -55,13 +55,16 @@ const Navbar = () => {
 	};
 
 	return (
-		<nav className="sticky top-0 z-50 w-full bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-b border-zinc-200/50 dark:border-zinc-800/50 transition-all duration-300">
+		<nav
+			aria-label="Primary"
+			className="sticky top-0 z-50 w-full bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-b border-zinc-200/50 dark:border-zinc-800/50 transition-all duration-300"
+		>
 			<div className="max-w-6xl mx-auto px-2 sm:px-6 py-2 sm:py-4 flex flex-wrap justify-between items-center gap-2">
 				<Link
 					to="/"
 					className="group flex items-center space-x-1.5 sm:space-x-2"
 				>
-					<div className="w-6 h-6 sm:w-8 sm:h-8 bg-sage rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg shadow-sage/20 transition-transform group-hover:scale-110">
+					<div className="w-6 h-6 sm:w-8 sm:h-8 bg-sage rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg shadow-sage/20">
 						<div className="w-2 h-2 sm:w-3 sm:h-3 bg-zinc-950 rounded-full" />
 					</div>
 					<span className="text-base sm:text-xl font-black tracking-tighter text-zinc-900 dark:text-white">
@@ -77,10 +80,9 @@ const Navbar = () => {
 								<NavLink
 									to="/home"
 									className={({ isActive }) =>
-										`px-3 py-1.5 text-sm font-bold transition-colors ${
-											isActive
-												? "text-sage underline underline-offset-4 decoration-2"
-												: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+										`px-3 py-1.5 text-sm font-bold transition-colors ${isActive
+											? "text-sage underline underline-offset-4 decoration-2"
+											: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
 										}`
 									}
 								>
@@ -89,10 +91,9 @@ const Navbar = () => {
 								<NavLink
 									to="/people"
 									className={({ isActive }) =>
-										`px-3 py-1.5 text-sm font-bold transition-colors ${
-											isActive
-												? "text-sage underline underline-offset-4 decoration-2"
-												: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+										`px-3 py-1.5 text-sm font-bold transition-colors ${isActive
+											? "text-sage underline underline-offset-4 decoration-2"
+											: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
 										}`
 									}
 								>
@@ -101,10 +102,9 @@ const Navbar = () => {
 								<NavLink
 									to="/settings"
 									className={({ isActive }) =>
-										`px-3 py-1.5 text-sm font-bold transition-colors ${
-											isActive
-												? "text-sage underline underline-offset-4 decoration-2"
-												: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+										`px-3 py-1.5 text-sm font-bold transition-colors ${isActive
+											? "text-sage underline underline-offset-4 decoration-2"
+											: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
 										}`
 									}
 								>
@@ -113,10 +113,9 @@ const Navbar = () => {
 								<NavLink
 									to="/trash"
 									className={({ isActive }) =>
-										`px-3 py-1.5 text-sm font-bold transition-colors ${
-											isActive
-												? "text-sage underline underline-offset-4 decoration-2"
-												: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+										`px-3 py-1.5 text-sm font-bold transition-colors ${isActive
+											? "text-sage underline underline-offset-4 decoration-2"
+											: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
 										}`
 									}
 								>
@@ -132,7 +131,7 @@ const Navbar = () => {
 							<button
 								type="button"
 								onClick={handleLogout}
-								className="text-zinc-500 dark:text-zinc-400 hover:text-plum dark:hover:text-plum font-bold text-sm transition-colors px-3 py-1.5"
+								className="text-zinc-500 dark:text-zinc-400 hover:text-plum dark:hover:text-rose-300 font-bold text-sm transition-colors px-3 py-1.5"
 							>
 								Logout
 							</button>
@@ -146,6 +145,9 @@ const Navbar = () => {
 					<button
 						type="button"
 						onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+						aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+						aria-expanded={isMobileMenuOpen}
+						aria-controls="primary-mobile-menu"
 						className="sm:hidden p-2 text-zinc-500 dark:text-zinc-400 hover:text-sage transition-colors"
 					>
 						{isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -154,7 +156,10 @@ const Navbar = () => {
 
 				{/* Mobile Menu Dropdown */}
 				{isMobileMenuOpen && isHydrated && isAuthenticated && (
-					<div className="w-full sm:hidden mt-2 pb-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800 pt-3">
+					<div
+						id="primary-mobile-menu"
+						className="w-full sm:hidden mt-2 pb-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800 pt-3"
+					>
 						<UsageIndicator />
 						<div className="flex items-center justify-between">
 							<div className="flex items-center gap-2">
@@ -167,10 +172,9 @@ const Navbar = () => {
 							to="/home"
 							onClick={() => setIsMobileMenuOpen(false)}
 							className={({ isActive }) =>
-								`block py-2 text-sm font-bold transition-colors ${
-									isActive
-										? "text-sage underline underline-offset-4 decoration-2"
-										: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+								`block py-2 text-sm font-bold transition-colors ${isActive
+									? "text-sage underline underline-offset-4 decoration-2"
+									: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
 								}`
 							}
 						>
@@ -180,10 +184,9 @@ const Navbar = () => {
 							to="/people"
 							onClick={() => setIsMobileMenuOpen(false)}
 							className={({ isActive }) =>
-								`block py-2 text-sm font-bold transition-colors ${
-									isActive
-										? "text-sage underline underline-offset-4 decoration-2"
-										: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+								`block py-2 text-sm font-bold transition-colors ${isActive
+									? "text-sage underline underline-offset-4 decoration-2"
+									: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
 								}`
 							}
 						>
@@ -193,10 +196,9 @@ const Navbar = () => {
 							to="/settings"
 							onClick={() => setIsMobileMenuOpen(false)}
 							className={({ isActive }) =>
-								`block py-2 text-sm font-bold transition-colors ${
-									isActive
-										? "text-sage underline underline-offset-4 decoration-2"
-										: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+								`block py-2 text-sm font-bold transition-colors ${isActive
+									? "text-sage underline underline-offset-4 decoration-2"
+									: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
 								}`
 							}
 						>
@@ -206,10 +208,9 @@ const Navbar = () => {
 							to="/trash"
 							onClick={() => setIsMobileMenuOpen(false)}
 							className={({ isActive }) =>
-								`block py-2 text-sm font-bold transition-colors ${
-									isActive
-										? "text-sage underline underline-offset-4 decoration-2"
-										: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+								`block py-2 text-sm font-bold transition-colors ${isActive
+									? "text-sage underline underline-offset-4 decoration-2"
+									: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
 								}`
 							}
 						>
@@ -218,7 +219,7 @@ const Navbar = () => {
 						<button
 							type="button"
 							onClick={handleLogout}
-							className="block text-zinc-500 dark:text-zinc-400 hover:text-plum dark:hover:text-plum font-bold text-sm transition-colors py-2"
+							className="block text-zinc-500 dark:text-zinc-400 hover:text-plum dark:hover:text-rose-300 font-bold text-sm transition-colors py-2"
 						>
 							Logout
 						</button>
@@ -232,8 +233,11 @@ const Navbar = () => {
 const AppContent = () => {
 	return (
 		<>
+			<a href="#main-content" className="skip-link">
+				Skip to main content
+			</a>
 			<Navbar />
-			<main className="w-full h-full">
+			<main id="main-content" tabIndex={-1} className="w-full h-full">
 				<Outlet />
 			</main>
 		</>
@@ -307,7 +311,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 				className="max-w-md w-full p-12 text-center border-none shadow-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-3xl"
 				hoverable={false}
 			>
-				<div className="w-20 h-20 bg-plum/10 text-plum rounded-[2rem] flex items-center justify-center mx-auto mb-8">
+				<div className="w-20 h-20 bg-plum/10 text-plum dark:bg-rose-500/15 dark:text-rose-300 rounded-tile flex items-center justify-center mx-auto mb-8">
 					<span className="text-4xl font-black">
 						{message === "404" ? "404" : "!"}
 					</span>
@@ -329,7 +333,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 							<summary className="text-xs text-zinc-500 font-bold uppercase tracking-widest group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">
 								Technical Stack Trace
 							</summary>
-							<pre className="mt-4 w-full p-6 overflow-x-auto bg-zinc-950 rounded-2xl text-[10px] font-mono text-plum/80 border border-zinc-800 leading-relaxed">
+							<pre className="mt-4 w-full p-6 overflow-x-auto bg-zinc-950 rounded-2xl text-[10px] font-mono text-plum/80 dark:text-rose-300/80 border border-zinc-800 leading-relaxed">
 								<code>{stack}</code>
 							</pre>
 						</details>

@@ -1,14 +1,14 @@
 import { ImageIcon, MoreHorizontal, Trash2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
-import type { ImageFromDB } from "~/types";
+import type { AlbumImage } from "~/types";
 
 interface CompactListViewProps {
-	images: ImageFromDB[];
+	images: AlbumImage[];
 	selectedIds: Set<string>;
 	onToggleSelect: (id: string) => void;
 	onSelectAll?: () => void;
-	onImageClick: (image: ImageFromDB) => void;
+	onImageClick: (image: AlbumImage) => void;
 	onDelete?: (imageId: string) => void;
 	onSetCover?: (imageId: string) => void;
 	coverImageId?: string;
@@ -26,7 +26,7 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 }) => {
 	const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 	return (
-		<div className="w-full bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 overflow-x-auto shadow-sm no-scrollbar">
+		<div className="w-full bg-white dark:bg-zinc-900 rounded-card border border-zinc-200 dark:border-zinc-800 overflow-x-auto shadow-sm no-scrollbar">
 			<table className="w-full text-left border-collapse min-w-[600px]">
 				<thead>
 					<tr className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800">
@@ -81,9 +81,8 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 						return (
 							<tr
 								key={image.imageId}
-								className={`group hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer ${
-									isSelected ? "bg-sage/10" : ""
-								}`}
+								className={`group hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer ${isSelected ? "bg-sage/10" : ""
+									}`}
 								onClick={() => onImageClick(image)}
 							>
 								<td
@@ -145,12 +144,17 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 								</td>
 								<td className="p-4 hidden lg:table-cell">
 									<span className="text-xs text-zinc-500">
-										{image.originalSize.width} x {image.originalSize.height}
+										{image.originalSize?.width ?? 0} x{" "}
+										{image.originalSize?.height ?? 0}
 									</span>
 								</td>
-								<td className="p-4 text-right">
+								<td
+									className="p-4 text-right"
+									onClick={(e) => e.stopPropagation()}
+								>
 									<div className="relative inline-block">
 										<button
+											type="button"
 											className="p-2 text-zinc-400 hover:text-sage transition-colors"
 											onClick={(e) => {
 												e.stopPropagation();
@@ -162,11 +166,15 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 											<MoreHorizontal size={20} />
 										</button>
 										{openMenuId === image.imageId && (
-											<div className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-20">
+											<div
+												className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-zinc-800 rounded-card shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-20"
+												onClick={(e) => e.stopPropagation()}
+											>
 												{onSetCover && (
 													<button
 														type="button"
-														onClick={() => {
+														onClick={(e) => {
+															e.stopPropagation();
 															onSetCover(image.imageId);
 															setOpenMenuId(null);
 														}}
@@ -180,7 +188,8 @@ export const CompactListView: React.FC<CompactListViewProps> = ({
 												)}
 												<button
 													type="button"
-													onClick={() => {
+													onClick={(e) => {
+														e.stopPropagation();
 														onDelete?.(image.imageId);
 														setOpenMenuId(null);
 													}}

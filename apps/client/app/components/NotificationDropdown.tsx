@@ -71,9 +71,16 @@ export const NotificationDropdown = () => {
 	return (
 		<div className="relative">
 			<button
+				type="button"
 				onClick={() => setIsOpen(!isOpen)}
 				className="relative p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-				aria-label="Notification Dropdown"
+				aria-label={
+					unreadCount > 0
+						? `Notifications (${unreadCount} unread)`
+						: "Notifications"
+				}
+				aria-expanded={isOpen}
+				aria-haspopup="menu"
 			>
 				<Bell className="w-5 h-5 text-zinc-600 dark:text-zinc-300" />
 				{unreadCount > 0 && (
@@ -97,6 +104,7 @@ export const NotificationDropdown = () => {
 							</h3>
 							{unreadCount > 0 && (
 								<button
+									type="button"
 									onClick={handleMarkAllRead}
 									disabled={markReadMutation.isPending}
 									className="text-xs text-sage hover:text-sage/80 font-medium flex items-center gap-1"
@@ -121,9 +129,8 @@ export const NotificationDropdown = () => {
 									{notifications.map((notification) => (
 										<div
 											key={notification.id}
-											className={`p-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 ${
-												!notification.is_read ? "bg-sage/5 dark:bg-sage/10" : ""
-											}`}
+											className={`p-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 ${!notification.is_read ? "bg-sage/5 dark:bg-sage/10" : ""
+												}`}
 											onClick={() => {
 												if (!notification.is_read) {
 													markReadMutation.mutate({

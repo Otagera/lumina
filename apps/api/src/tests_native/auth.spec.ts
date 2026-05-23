@@ -71,7 +71,7 @@ describe("Auth Routes (Native)", () => {
 			const res = await app.handle(
 				req.post("/api/v1/auth/login", {
 					email: testEmail,
-					password: "wrong-password",
+					password: "WrongPassword1!",
 				}),
 			);
 

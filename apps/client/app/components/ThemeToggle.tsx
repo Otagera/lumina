@@ -53,9 +53,13 @@ export const ThemeToggle = () => {
 
 	return (
 		<button
+			type="button"
 			onClick={toggleTheme}
-			className="p-2 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all focus:outline-none bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95 group"
-			aria-label="Toggle theme"
+			className="p-2 rounded-control hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all focus:outline-none bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm active:scale-95 group"
+			aria-label={
+				theme === "light" ? "Switch to dark theme" : "Switch to light theme"
+			}
+			title={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
 		>
 			{theme === "light" ? (
 				<svg

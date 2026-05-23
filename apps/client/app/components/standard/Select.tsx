@@ -29,9 +29,9 @@ export const Select = ({
 			)}
 			<select
 				className={`
-					w-full px-4 py-2.5 rounded-xl border bg-white dark:bg-zinc-900 
+					w-full px-4 py-2.5 rounded-control border bg-white dark:bg-zinc-900
 					text-sm font-medium text-zinc-900 dark:text-white
-					focus:outline-none focus:ring-2 focus:ring-sage focus:border-transparent
+					focus-ring
 					transition-all duration-200
 					disabled:opacity-50 disabled:cursor-not-allowed
 					${error ? "border-plum focus:ring-plum" : "border-zinc-200 dark:border-zinc-700"}
@@ -50,7 +50,7 @@ export const Select = ({
 					</option>
 				))}
 			</select>
-			{error && <p className="text-xs text-plum font-medium">{error}</p>}
+			{error && <p className="text-xs text-plum dark:text-rose-300 font-medium">{error}</p>}
 		</div>
 	);
 };

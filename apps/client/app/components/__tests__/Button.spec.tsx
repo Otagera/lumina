@@ -18,7 +18,7 @@ describe("Button Component", () => {
 	it("renders with ghost variant", () => {
 		render(<Button variant="ghost">Click me</Button>);
 		const button = screen.getByRole("button", { name: /click me/i });
-		expect(button).toHaveClass("bg-transparent");
+		expect(button).toHaveClass("hover:bg-zinc-100");
 	});
 
 	it("renders with danger variant", () => {
@@ -42,13 +42,13 @@ describe("Button Component", () => {
 	it("renders medium size", () => {
 		render(<Button size="md">Click me</Button>);
 		const button = screen.getByRole("button", { name: /click me/i });
-		expect(button).toHaveClass("px-5");
+		expect(button).toHaveClass("px-4");
 	});
 
 	it("renders large size", () => {
 		render(<Button size="lg">Click me</Button>);
 		const button = screen.getByRole("button", { name: /click me/i });
-		expect(button).toHaveClass("px-8");
+		expect(button).toHaveClass("px-6");
 	});
 
 	it("handles click events", () => {

@@ -191,8 +191,17 @@ const authRoutes = new Elysia({ prefix: "/auth" })
 	)
 	.post("/logout", async ({ cookie: { accessToken, refreshToken } }) => {
 		await logoutService(refreshToken.value);
-		accessToken.remove();
-		refreshToken.remove();
+		const expiredOptions = {
+			value: "",
+			httpOnly: true,
+			secure: config.env === "production",
+			sameSite: "lax" as const,
+			path: "/",
+			maxAge: 0,
+			expires: new Date(0),
+		};
+		accessToken.set(expiredOptions);
+		refreshToken.set(expiredOptions);
 		return {
 			status: "completed",
 			message: "Logged out successfully",

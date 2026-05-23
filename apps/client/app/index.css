@@ -1,20 +1,6 @@
 @import "tailwindcss";
 @import "@lumina/config-tailwind/theme.css";
 
-@source "../../packages/ui/src/**/*.tsx";
+@source "../../../packages/ui/src/**/*.tsx";
 
 @variant dark (&:where(.dark, .dark *));
-
-@layer components {
-  .glass-panel {
-    @apply bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl border border-zinc-200/50 dark:border-zinc-800/60 shadow-xl;
-  }
-
-  .input-soft {
-    @apply w-full px-5 py-4 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sage/50 focus:border-sage transition-all dark:text-white placeholder:text-zinc-400;
-  }
-
-  .btn-primary {
-    @apply bg-sage hover:bg-sage/90 text-zinc-950 font-semibold rounded-2xl transition-all shadow-lg shadow-sage/20 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100;
-  }
-}

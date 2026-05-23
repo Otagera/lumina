@@ -41,9 +41,9 @@ export class ErrorBoundary extends Component<
 			return (
 				<div className="min-h-[400px] flex items-center justify-center p-8">
 					<div className="text-center max-w-md">
-						<div className="w-16 h-16 mx-auto mb-6 rounded-full bg-plum/10 flex items-center justify-center">
+						<div className="w-16 h-16 mx-auto mb-6 rounded-full bg-plum/10 dark:bg-rose-500/15 flex items-center justify-center">
 							<svg
-								className="w-8 h-8 text-plum"
+								className="w-8 h-8 text-plum dark:text-rose-300"
 								fill="none"
 								viewBox="0 0 24 24"
 								stroke="currentColor"
@@ -112,7 +112,7 @@ export class AsyncErrorBoundary extends Component<
 	render() {
 		if (this.state.hasError) {
 			return (
-				<div className="p-6 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-200 dark:border-red-800">
+				<div className="p-6 bg-red-50 dark:bg-red-900/20 rounded-card border border-red-200 dark:border-red-800">
 					<div className="flex items-start gap-4">
 						<div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center shrink-0">
 							<svg

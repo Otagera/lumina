@@ -39,14 +39,39 @@ export interface Person {
 	boundingBox?: BoundingBox;
 }
 
+export interface SearchResultFace {
+	faceId: number;
+	imageId: string;
+	imagePath: string;
+	originalWidth?: number;
+	originalHeight?: number;
+	boundingBox?: BoundingBox;
+	distance?: number;
+	personId?: string | null;
+	personName?: string | null;
+	isConfirmed?: boolean;
+	isIgnored?: boolean;
+	hidden?: boolean;
+}
+
+export interface SearchSourceFace {
+	faceId: number;
+	personId: string | null;
+	personName?: string;
+	imagePath?: string;
+	boundingBox?: BoundingBox;
+	originalWidth?: number;
+	originalHeight?: number;
+}
+
 // ============== Image Types ==============
 
 export interface ImageFromDB {
-	faces: Face[];
+	faces?: Face[];
 	imageId: string;
 	imagePath: string;
-	originalSize: { width: number; height: number };
-	uploadDate: string;
+	originalSize?: { width: number; height: number };
+	uploadDate?: string;
 	status?: "PENDING" | "APPROVED" | "REJECTED";
 	original?: string;
 }
@@ -67,6 +92,7 @@ export interface AlbumSettings {
 	tagging_policy?: "HOST_ONLY" | "GUESTS_SELF" | "ANYONE";
 	expires_at?: string | null;
 	allow_guest_uploads?: boolean;
+	semantic_search_enabled?: boolean;
 }
 
 // API response uses different field names
@@ -152,6 +178,17 @@ export interface AlbumImage {
 	uploadDate?: string;
 	status?: "PENDING" | "APPROVED" | "REJECTED";
 	faces?: Face[];
+	reactionCount?: number;
+	isPending?: boolean;
+}
+
+export interface SharedAlbum {
+	id: string;
+	albumName: string;
+	settings?: AlbumSettings;
+	images: AlbumImage[];
+	canUpload?: boolean;
+	coverImage?: { id: string | null; url: string | null } | string | null;
 }
 
 export interface ImagesInAlbum {

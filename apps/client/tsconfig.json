@@ -1,7 +1,15 @@
 {
-	"include": ["app/**/*", "**/.server/**/*", "**/.client/**/*"],
+	"include": [
+		"app/**/*",
+		"**/.server/**/*",
+		"**/.client/**/*"
+	],
 	"compilerOptions": {
-		"lib": ["DOM", "DOM.Iterable", "ES2022"],
+		"lib": [
+			"DOM",
+			"DOM.Iterable",
+			"ES2022"
+		],
 		"types": [
 			"node",
 			"vite/client",
@@ -14,9 +22,15 @@
 		"jsx": "react-jsx",
 		"baseUrl": ".",
 		"paths": {
-			"~/*": ["./app/*"],
-			"@lumina/ui/*": ["../../packages/ui/src/*"],
-			"@/*": ["../../packages/ui/src/*"]
+			"~/*": [
+				"./app/*"
+			],
+			"@lumina/ui/*": [
+				"../../packages/ui/src/*"
+			],
+			"@/*": [
+				"../../packages/ui/src/*"
+			]
 		},
 		"esModuleInterop": true,
 		"verbatimModuleSyntax": true,
@@ -29,7 +43,6 @@
 	"exclude": [
 		"../api",
 		".react-router",
-		"app/entry.server.tsx",
 		"app/root.tsx",
 		"app/routes/+types"
 	]

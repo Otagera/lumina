@@ -1,4 +1,9 @@
 import joi from "joi";
+import {
+	CACHE_TTL,
+	cacheGetOrSet,
+	cacheKeys,
+} from "../../../../../packages/utils/src/cache.util.ts";
 import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
 import {
 	aliaserSpec,
@@ -34,6 +39,14 @@ const service = async (data) => {
 	const aliasReq = aliaserSpec(aliasSpec.request, data);
 	const { created_by } = validateSpec(spec, aliasReq);
 
+	return cacheGetOrSet(
+		cacheKeys.userAlbums(created_by),
+		CACHE_TTL.SHORT,
+		async () => buildPayload(created_by),
+	);
+};
+
+const buildPayload = async (created_by: string) => {
 	const albums = await getAlbumsForUser(created_by);
 
 	const mappedAlbums = albums.map((album: any) => {
@@ -55,16 +68,16 @@ const service = async (data) => {
 		const coverImages = coverImage
 			? []
 			: album.album_images
-					?.slice(0, 4)
-					.map((ai: any) => ai.images)
-					.filter(Boolean)
-					.map((img: any) =>
-						normalizeImagePath(
-							img.image_path,
-							img.storage_provider,
-							img.storage_key,
-						),
-					) || [];
+				?.slice(0, 4)
+				.map((ai: any) => ai.images)
+				.filter(Boolean)
+				.map((img: any) =>
+					normalizeImagePath(
+						img.image_path,
+						img.storage_provider,
+						img.storage_key,
+					),
+				) || [];
 
 		return {
 			...album,

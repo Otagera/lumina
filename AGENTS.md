@@ -140,3 +140,121 @@ This standard is enforced by:
 - Validation Utils: `packages/utils/src/specValidator.util.ts`
 - Service Generator: `apps/api/src/utils/scripts/service-generator.ts`
 - Example Service: `apps/api/src/services/auth/create.service.ts`
+
+---
+
+## Frontend Architecture Standard
+
+All client-side code in `apps/client/`, `apps/app/`, and `packages/ui/` MUST follow these rules.
+
+### Component Layers
+
+```
+Route → Hook → Service/API → Component
+```
+
+- **Routes** (`app/routes/*.tsx`): Compose hooks and components. No fetch calls, no business logic, no raw `fetch`/Eden calls inline. Target ≤ 200 lines.
+- **Hooks** (`app/hooks/**/*.ts`): Encapsulate all React Query, mutations, derived state, and side effects. Routes call hooks; hooks call api modules.
+- **Components** (`app/components/**/*.tsx`): Presentational. Receive data via props. May own local UI state (open/closed, hover) but no remote data fetching.
+- **API modules** (`app/utils/api.ts`, `app/utils/eden.ts`): Type-safe wrappers around Eden / fetch. Return typed promises; never throw raw HTTP errors.
+
+### Design Tokens (NON-NEGOTIABLE)
+
+All radii, focus rings, and motion MUST go through tokens in `packages/config/tailwind/theme.css`.
+
+| Token | Use | Value |
+|---|---|---|
+| `rounded-control` | Inputs, buttons, chips | 8px |
+| `rounded-card` | Cards, panels, alerts | 12px |
+| `rounded-tile` | Bento tiles, image thumbnails | 16px |
+| `rounded-modal` | Modal containers, sheets | 20px |
+| `.focus-ring` | Any focusable non-Button element | sage ring + offset |
+| `.skip-link` | Skip-to-content link | hidden until focused |
+| `.cv-tile` | Off-screen render skip | `content-visibility: auto` |
+
+**DO NOT** use ad-hoc `rounded-[12px]`, `rounded-xl`, `rounded-2xl`, etc. Use the semantic token.
+
+### Component Hierarchy
+
+| Need | Use |
+|---|---|
+| Any clickable action | `<Button>` from `@lumina/ui/components/ui/button` |
+| Text input | `<Input>` from `@lumina/ui/components/ui/input` |
+| Modal | `<Modal>` wrapper (already focus-trapped, dismiss-on-Esc) |
+| Card surface | `<Card>` standard wrapper |
+| Heading | `<Heading level={1-6}>` |
+
+Raw `<button>` is allowed ONLY for: bento grid cells, file picker triggers, dropdown items, and toggle chips that need pixel-precise positioning. Such buttons MUST include:
+- `type="button"` (never default to `submit`)
+- `aria-label` (if icon-only) or visible text
+- `.focus-ring` utility OR explicit `focus-visible:ring-*` classes
+
+### Accessibility (a11y) Rules
+
+EVERY interactive element MUST be reachable by keyboard and announced to assistive tech.
+
+1. **Icon-only buttons** require `aria-label` describing the action (e.g. `aria-label="Close"`, not `aria-label="X"`).
+2. **Toggle buttons** use `aria-pressed={boolean}`. Coerce non-boolean state with `!!value`.
+3. **Switches** use `role="switch"` + `aria-checked={boolean}`.
+4. **Disclosure buttons** (menus, dropdowns) use `aria-expanded`, `aria-haspopup`, and `aria-controls` referencing the panel's `id`.
+5. **Dialogs / modals** require `role="dialog"`, `aria-modal="true"`, and an accessible name via `aria-label` or `aria-labelledby`.
+6. **Regions** with contextual content (bulk action bars, side panels) use `role="region"` + `aria-label`.
+7. **Skip link**: every top-level layout must include `<a href="#main-content" className="skip-link">` and a `<main id="main-content" tabIndex={-1}>`.
+8. **Reduced motion**: never bypass the `@media (prefers-reduced-motion: reduce)` reset in `theme.css`.
+9. **Form fields**: use the shared `<Input>` (which renders `<label>` + `aria-describedby` for errors/hints). If raw `<input>`, pair with `<label htmlFor>`.
+
+### Type Safety Rules
+
+1. NO `any` in props, hook returns, or API responses. Use `unknown` + narrowing if the shape is truly dynamic.
+2. API response types live in `app/types/index.ts` and are imported by hooks AND components.
+3. Optional backend fields that may be `null` are typed `T | null`; use `?? undefined` when forwarding to a prop typed `T | undefined`.
+4. NEVER suppress with `@ts-ignore`. Use `@ts-expect-error <reason>` only for generated/auto types.
+
+### Route File Limits
+
+- Routes MUST be ≤ 200 lines.
+- Routes > 200 lines MUST extract logic into `app/hooks/<route>/` and JSX sections into `app/components/<route>/`.
+- A route file should read like a table of contents: a few `useX()` calls, then JSX composition.
+
+### Anti-Patterns to AVOID
+
+```tsx
+// ❌ WRONG: Raw fetch in route
+export default function Album() {
+  const [data, setData] = useState();
+  useEffect(() => { fetch("/api/album").then(...) }, []); // BAD
+}
+
+// ❌ WRONG: Icon button without label
+<button onClick={onClose}><X size={20} /></button>
+
+// ❌ WRONG: Ad-hoc radius
+<div className="rounded-[14px] rounded-2xl">
+
+// ❌ WRONG: any in props
+function Card(props: any) { ... }
+
+// ✅ CORRECT: Hook-driven route
+export default function Album() {
+  const { data, isLoading } = useAlbum(albumId);
+  if (isLoading) return <SkeletonGrid />;
+  return <AlbumView album={data} />;
+}
+
+// ✅ CORRECT: Labelled icon button
+<button type="button" onClick={onClose} aria-label="Close dialog">
+  <X size={20} />
+</button>
+
+// ✅ CORRECT: Semantic radius
+<div className="rounded-card">
+```
+
+### Key Files Reference (Frontend):
+
+- Theme tokens: `packages/config/tailwind/theme.css`
+- Standard Button: `packages/ui/src/components/ui/button.tsx`
+- Standard Input: `packages/ui/src/components/ui/input.tsx`
+- Modal wrapper: `apps/client/app/components/Modal.tsx`
+- Shared types: `apps/client/app/types/index.ts`
+- API surface: `apps/client/app/utils/api.ts`

@@ -5,6 +5,7 @@ import type {
 	AlbumImage,
 	AlbumImageFilters,
 	ApiResponse,
+	ImagesInAlbum,
 	ImagesInAlbumResponse,
 } from "~/types";
 import { fetchAlbum, fetchImagesInAlbum, fetchSettings } from "~/utils/api";
@@ -30,8 +31,8 @@ export interface UseAlbumImagesReturn {
 	albumData: ApiResponse<Album> | undefined;
 	isAlbumLoading: boolean;
 	settingsData:
-		| { data: { usage: { imagesUsed: number; imagesLimit: number } } }
-		| undefined;
+	| { data: { usage: { imagesUsed: number; imagesLimit: number } } }
+	| undefined;
 }
 
 export function useAlbumImages({

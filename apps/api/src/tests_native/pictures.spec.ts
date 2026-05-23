@@ -11,6 +11,7 @@ describe("Pictures Routes (Native)", () => {
 	let app: any;
 	let user: any;
 	let testImageId: string;
+	let testAlbumId: string;
 
 	beforeAll(async () => {
 		app = await getApp();
@@ -22,6 +23,16 @@ describe("Pictures Routes (Native)", () => {
 			key: "test-image.jpg",
 			contentType: "image/jpeg",
 		});
+
+		const albumRes = await app.handle(
+			req.post(
+				"/api/v1/albums",
+				{ albumName: "Pictures Test Album" },
+				{ Cookie: user.cookie },
+			),
+		);
+		const albumBody = await parseRes(albumRes);
+		testAlbumId = albumBody.data.id;
 	});
 
 	afterAll(async () => {
@@ -36,7 +47,10 @@ describe("Pictures Routes (Native)", () => {
 			const res = await app.handle(
 				req.post(
 					"/api/v1/images",
-					{ uploadedImages: [{ existingKey: "test-image.jpg" }] },
+					{
+						uploadedImages: [{ existingKey: "test-image.jpg" }],
+						albumId: testAlbumId,
+					},
 					{ Cookie: user.cookie },
 				),
 			);

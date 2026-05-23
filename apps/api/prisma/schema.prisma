@@ -121,6 +121,7 @@ model images {
   uploaded_by      String?        @db.Uuid
   guest_session_id String?        @db.Uuid
   embedding        Unsupported("vector(512)")?
+  embedding_model  String?        @default("clip-vit-b-32")
   users            users?         @relation(fields: [uploaded_by], references: [user_id], onDelete: Cascade)
   covered_albums   albums[]       @relation("AlbumCover")
   reactions        reactions[]

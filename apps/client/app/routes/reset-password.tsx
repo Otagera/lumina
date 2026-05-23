@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Input } from "~/components/standard/Input";
 import { resetPassword } from "../utils/api";
 
 const ResetPasswordPage = () => {
@@ -33,7 +34,7 @@ const ResetPasswordPage = () => {
 		} catch (error: any) {
 			toast.error(
 				error.response?.data?.message ||
-					"Failed to reset password. The link may have expired.",
+				"Failed to reset password. The link may have expired.",
 			);
 		} finally {
 			setIsLoading(false);
@@ -66,7 +67,7 @@ const ResetPasswordPage = () => {
 			</div>
 
 			<div className="w-full max-w-md relative">
-				<div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 space-y-8">
+				<div className="glass-panel p-8 space-y-8">
 					<div className="text-center space-y-2">
 						<h1 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
 							New <span className="text-sage">Password</span>
@@ -77,37 +78,27 @@ const ResetPasswordPage = () => {
 					</div>
 
 					<form className="space-y-6" onSubmit={handleSubmit}>
-						<div className="space-y-2">
-							<label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 ml-1">
-								New Password
-							</label>
-							<input
-								type="password"
-								placeholder="••••••••"
-								className="w-full px-5 py-4 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sage/50 focus:border-sage transition-all dark:text-white"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								required
-							/>
-						</div>
+						<Input
+							type="password"
+							label="New Password"
+							placeholder="••••••••"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							required
+						/>
 
-						<div className="space-y-2">
-							<label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 ml-1">
-								Confirm New Password
-							</label>
-							<input
-								type="password"
-								placeholder="••••••••"
-								className="w-full px-5 py-4 bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sage/50 focus:border-sage transition-all dark:text-white"
-								value={confirmPassword}
-								onChange={(e) => setConfirmPassword(e.target.value)}
-								required
-							/>
-						</div>
+						<Input
+							type="password"
+							label="Confirm New Password"
+							placeholder="••••••••"
+							value={confirmPassword}
+							onChange={(e) => setConfirmPassword(e.target.value)}
+							required
+						/>
 
 						<button
 							type="submit"
-							className="w-full py-4 px-6 bg-sage hover:bg-sage/90 text-white font-bold rounded-2xl transition-all shadow-lg shadow-sage/20 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center space-x-2"
+							className="w-full py-4 px-6 bg-sage hover:bg-sage/90 text-white font-bold rounded-control transition-all shadow-lg shadow-sage/20 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center space-x-2"
 							disabled={isLoading}
 						>
 							{isLoading ? (
