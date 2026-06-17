@@ -1,448 +1,222 @@
-# Lumina
+# Lumina — Product Requirements Document
 
-### Overview
+## Overview
 
-This application, Lumina, allows users to upload photos and organize them into albums. The primary feature is face-matching. When viewing a photo, a user can select a recognized face and search for other photos within the same album containing that face.  Users will also be able to share their albums by generating a link that will allow others to view the album's photos and perform face searches.
+Lumina is an AI-powered photo platform for events. Hosts create albums and share a single QR code; guests upload photos without an account; anyone finds every photo of themselves by taking a selfie. The platform separates AI compute from physical storage, supporting both managed Cloudflare R2 and user-supplied S3 buckets (BYOS).
 
-For this demo application, a simplified authentication will be used. This allows users to quickly start uploading pictures and using the app. Only the uploader and those they share album links with will be able to view the content.
+---
 
-The application uses a Python script to analyze uploaded images and store data about the faces it recognizes. Image processing is handled by a background worker for better performance and scalability.
-
-### Image Optimization & Performance
-
-To ensure high performance while maintaining image quality, the application employs a two-tier strategy:
-*   **Original Tier:** The original uploaded file is stored to allow high-quality sharing and downloads.
-*   **Display Tier:** A worker automatically generates a WebP version of the image (max width 2000px). This optimized version is used for the app's UI, gallery, and face processing to minimize bandwidth and load times.
-*   **Storage Management:** Users have the option to purge "Original" files to save storage once the optimized versions are ready.
-
-### Background Uploads
-
-The application implements a non-intrusive background upload system similar to Google Photos:
-*   **Persistent Queue:** Uploads are managed in a global queue persisted via **IndexedDB**. This allows uploads to resume automatically if the page is refreshed or the browser is closed.
-*   **Background UI:** A floating manager at the bottom of the screen tracks progress, allowing the user to continue using the application during large uploads.
-*   **Control:** Users can pause, resume, or retry failed uploads.
-
-### Real-time Updates
-
-*   **Server-Sent Events (SSE):** The application uses SSE to push real-time status updates from the worker to the client. When face recognition is complete, the UI updates automatically without requiring a page refresh.
-
-### Task Tracking
-
-Development is tracked using `beads` (bd). Current active tasks:
-*   `lumina-ofp`: Optimization: Worker-based Image Processing
-*   `lumina-apr`: Upload: Persistent Background Manager
-*   `lumina-kgm`: Real-time: SSE Status Updates
-*   `lumina-r2b`: Infrastructure: R2 Migration & BYOS Support
-*   `lumina-evt`: Features: Collaborative Events & Moderation
+## Core Features
 
 ### Collaborative Events
-
-Lumina is evolving from a personal gallery into a social, collaborative platform. **Events** are special types of albums designed for crowdsourcing photos:
-*   **Frictionless Contribution:** Guests can upload photos via a QR code or link without creating an account.
-*   **"Selfie to Join":** An optional flow where guests take a selfie to instantly find all photos of themselves within the event.
-*   **Host Control:** Hosts can review and approve guest uploads before they appear in the main gallery.
-*   **Automatic Expiration:** Upload windows can be set to close automatically after a specific duration.
-
-### Storage & Pricing Strategy (Compute vs. Storage)
-
-The application separates the cost of **AI Intelligence** from **Physical Storage**:
-*   **Compute Credits:** Users pay for "Compute Units" (CPU/GPU time) consumed by face detection, embedding generation, and clustering.
-*   **Managed Storage:** Default storage provided by Lumina (using Cloudflare R2 for zero-egress costs).
-*   **BYOS (Bring Your Own Storage):** Power users and pros can connect their own S3-compatible buckets (AWS, Cloudflare R2). In this mode, Lumina acts as the "AI Layer," while the user retains full ownership and cost-control of their image files.
-
-### Infrastructure: Cloudflare R2 Migration
-
-To ensure a sustainable free tier and low-cost scaling, the application is migrating to **Cloudflare R2**:
-*   **Zero Egress Fees:** Eliminates bandwidth costs when users view or download photos.
-*   **Storage Abstraction:** A unified `StorageService` allows the app to seamlessly switch between local, managed R2, and BYOS buckets.
-*   **Direct-to-Cloud Uploads:** Using S3 Presigned URLs, the client uploads directly to storage, bypassing the API server to save resources.
-
-### Scalability Considerations
-
-As this application grows, it will be important to address the following scalability concerns:
-
-*   **Database:** The PostgreSQL database will need to efficiently handle an increasing number of photos and recognized faces. Database query optimization and potential schema adjustments may be needed.
-*   **Image Processing:** The Python image processing script (or the future background worker) will need to scale to handle many image uploads concurrently. We will need to make sure that it has enough resources.
-*   **Face Matching:** The face-matching algorithm may need to be optimized to maintain fast search times as the number of stored faces increases.
-*   **Storage:** The storage solution (local in development, Cloudinary/AWS in production) must be able to accommodate a growing volume of image data.
-* **Authentication**: The authentication will need to handle an increasing number of users.
-
-These are initial considerations and will be revisited as development progresses.
-
-### UI Design
-
-The application will have a clean and modern design, similar to the UI found on [playbook.com](https://playbook.com). The UI should be intuitive and easy to navigate.  Tailwind CSS will be used as the primary styling framework, leveraging its utility classes to create a consistent visual style.
-
-The UI will consist of the following key components:
-
--   **Welcome Page:** The initial page users see when opening the application.
--   **Albums Page:** This page will display all of the user's albums and provide a way to create new ones.
--   **Album Page:** Displays all the photos within a selected album.
--   **Image Modal:** A modal that appears when a user clicks on a photo in an album. It will display more information about the photo and show the faces that have been recognized in the image.
-- **Search Page:** After a face is clicked on in the Image Modal a search will be initiated and the result will be displayed in the Search page.
-
-The following framework will be used:
-
--   React
--   React Router DOM
--   TypeScript
--   Tailwind CSS
--   `tanstack/react-query`
-
-The color schemes and fonts will be based on what tailwind provides, and will be revisited at a later date.
-
-### Data Source
-
-PostgreSQL will be used as the database for the application. The database will store paths that reference the images. In development, the images will be stored locally on the filesystem, while in production, images will be stored in either AWS S3 or Cloudinary.
-
-The `prisma` ORM will be used for interacting with the PostgreSQL database.
-
-Redis will be used as a caching layer to improve query performance.
-
-#### Database Schema
-**Table: `images`**
-| Column Name       | Data Type       | Description                                                                     |
-| ------------------ | --------------- | ------------------------------------------------------------------------------- |
-| image\_id         | UUID (Primary)  | Unique identifier for the image                                                |
-| image\_path       | TEXT            | Path to the original image (local or cloud)                                    |
-| optimized\_path   | TEXT            | Path to the optimized WebP image                                               |
-| status            | TEXT            | Moderation status: `PENDING`, `APPROVED`, `REJECTED`                           |
-| upload\_date      | TIMESTAMPTZ     | Date and time the image was uploaded (default: `CURRENT_TIMESTAMP`)            |
-| update\_date      | TIMESTAMPTZ     | Date and time the image was last updated (default: `CURRENT_TIMESTAMP`)        |
-| original\_width   | INT             | Original width of the image                                                   |
-| original\_height  | INT             | Original height of the image                                                  |
-| uploaded\_by      | UUID (Foreign)  | ID of the user who uploaded the image (references `users.user_id`)             |
-
-**Table: `faces`**
-| Column Name       | Data Type       | Description                                                                     |
-| ------------------ | --------------- | ------------------------------------------------------------------------------- |
-| face\_id          | SERIAL (Primary)| Unique identifier for the face                                                 |
-| image\_id         | UUID (Foreign)  | ID of the image containing this face (references `images.image_id`)            |
-| person\_id        | UUID (Foreign)  | ID of the person tagged in this face (references `people.person_id`)           |
-| embedding         | REAL[]          | Vector representation of the face                                              |
-| bounding\_box     | JSONB           | JSON object containing bounding box coordinates for the face                   |
-| processed\_time   | TIMESTAMPTZ     | Date and time the face was processed (default: `CURRENT_TIMESTAMP`)            |
-
-**Table: `people`**
-| Column Name       | Data Type       | Description                                                                     |
-| ------------------ | --------------- | ------------------------------------------------------------------------------- |
-| person\_id        | UUID (Primary)  | Unique identifier for the person                                               |
-| name              | TEXT            | Name assigned to the person                                                    |
-| user\_id          | UUID (Foreign)  | Owner of this person record (references `users.user_id`)                       |
-| created\_at       | TIMESTAMPTZ     | Date and time the person was created (default: `CURRENT_TIMESTAMP`)            |
-| updated\_at       | TIMESTAMPTZ     | Date and time the person was last updated (default: `CURRENT_TIMESTAMP`)       |
-
-**Table: `albums`**
-| Column Name       | Data Type       | Description                                                                     |
-| ------------------ | --------------- | ------------------------------------------------------------------------------- |
-| album\_id         | UUID (Primary)  | Unique identifier for the album                                                |
-| album\_name       | TEXT            | Name of the album                                                              |
-| created\_by       | UUID (Foreign)  | ID of the user who created the album (references `users.user_id`)              |
-| storage\_config\_id| UUID (Foreign) | Linked BYOS storage (references `user_storage_configs.id`)                     |
-| creation\_date    | TIMESTAMPTZ     | Date and time the album was created (default: `CURRENT_TIMESTAMP`)             |
-| shared\_link      | TEXT            | The generated link to share the album                                          |
-| share\_token      | TEXT (Unique)   | Token used to authenticate public access to shared albums                      |
-
-**Table: `album_settings`**
-| Column Name       | Data Type       | Description                                                                     |
-| ------------------ | --------------- | ------------------------------------------------------------------------------- |
-| album\_id         | UUID (Primary)  | Unique identifier (references `albums.album_id`)                               |
-| is\_event         | BOOLEAN         | Whether collaborative features are enabled                                     |
-| requires\_approval| BOOLEAN         | Whether guest uploads require host approval                                    |
-| tagging\_policy   | TEXT            | Who can tag faces (`HOST_ONLY`, `GUESTS_SELF`, `ANYONE`)                       |
-| expires\_at       | TIMESTAMPTZ     | When the event upload window closes                                            |
-| allow\_guest\_uploads| BOOLEAN      | Whether guests can contribute photos                                           |
-
-**Table: `album_images`**
-| Column Name       | Data Type       | Description                                                                     |
-| ------------------ | --------------- | ------------------------------------------------------------------------------- |
-| album\_images\_id | UUID (Primary)  | Unique identifier for the album-image relationship                             |
-| image\_id         | UUID (Foreign)  | ID of the image (references `images.image_id`)                                 |
-| album\_id         | UUID (Foreign)  | ID of the album (references `albums.album_id`)                                 |
-
-**Table: `user_storage_configs`**
-| Column Name       | Data Type       | Description                                                                     |
-| ------------------ | --------------- | ------------------------------------------------------------------------------- |
-| id                | UUID (Primary)  | Unique identifier                                                              |
-| user\_id          | UUID (Foreign)  | Owner of the config (references `users.user_id`)                               |
-| provider          | TEXT            | Storage provider (`r2`, `s3`)                                                  |
-| name              | TEXT            | Friendly name for the config                                                   |
-| access\_key\_id   | TEXT            | Encrypted API key                                                              |
-| secret\_access\_key| TEXT           | Encrypted API secret                                                           |
-| bucket            | TEXT            | Bucket name                                                                    |
-| endpoint          | TEXT            | S3-compatible endpoint URL                                                     |
-| region            | TEXT            | Optional S3 region                                                             |
-| is\_active        | BOOLEAN         | Whether this is the default managed config                                     |
-
-**Table: `usage_logs`**
-| Column Name       | Data Type       | Description                                                                     |
-| ------------------ | --------------- | ------------------------------------------------------------------------------- |
-| id                | SERIAL (Primary)| Unique identifier                                                              |
-| user\_id          | UUID (Foreign)  | User to charge (references `users.user_id`)                                    |
-| resource          | TEXT            | Resource type (`compute_unit`, `storage_gb`)                                   |
-| operation         | TEXT            | Specific action (`face_detection`, `clustering`)                               |
-| quantity          | INT             | Amount consumed                                                                |
-| timestamp         | TIMESTAMPTZ     | Date and time of consumption                                                   |
-
-**Table: `users`**
-| Column Name       | Data Type       | Description                                                                     |
-| ------------------ | --------------- | ------------------------------------------------------------------------------- |
-| user\_id          | UUID (Primary)  | Unique identifier for the user                                                 |
-| email             | TEXT (Unique)   | Email address of the user                                                      |
-| password          | TEXT            | Password of the user                                                           |
-| preferences       | JSONB           | User-level global settings                                                     |
-
-
-
-### Implementation Details
-
--   **Tech Stack:**
-    -   Server: TypeScript (Bun, ElysiaJS) - **Fully Migrated from Express**
-    -   Client: TypeScript, ReactJS, React Router DOM, Tailwind CSS
-- **Python**:
-    - Python (FastAPI/Uvicorn) is used for the face recognition service.
--   **Configuration:**
-    -   Docker (Compose) is used to deploy the entire stack.
-    -   **Base Image:** `oven/bun:1.2` for optimized monorepo support.
-    -   **Services:** `db` (pgvector), `redis`, `ai_service` (Python), `api` (Elysia), `worker` (Bun), and `client` (Vite/React).
-
-### Monorepo Architecture
-
-The project has transitioned to a monorepo structure utilizing Bun workspaces to separate concerns and improve maintainability:
--   **`apps/`**: Contains the runnable services.
-    -   `apps/api`: The core ElysiaJS backend.
-    -   `apps/client`: The React/Vite frontend.
-    -   `apps/ai`: The Python FastAPI face recognition service.
-    -   `apps/worker`: The Bun worker for background processing (e.g., image optimization).
--   **`packages/`**: Contains shared libraries and domain logic used across apps (e.g., `@lumina/models`, `@lumina/auth`, `@lumina/utils`, `@lumina/config`). This architecture isolates database models and shared utility functions from the application layers.
-
-### Project Milestones
-
-(Agent will check in with the user weekly for feedback and progress confirmation. Check-in will also occur after each milestone.)
-
-**Milestone 1: Prepare this Document (PRD.mdx)**
-
-*   Tasks:
-    *   Complete the review and refinement of all sections in the `PRD.mdx` file.
-* Status: Done
-
-**Milestone 2: Define and Implement API Endpoints**
-
-*   Tasks:
-    *   2.1. User Authentication Endpoints:
-        *   Create endpoints for user creation.
-        *   Create endpoints for user login.
-    *   2.2. Album Management Endpoints:
-        *   Create endpoints to list albums.
-        *   Create endpoints to create new albums.
-        *   Create endpoints to view an album.
-        *   Create endpoints to delete an album.
-        *   Create endpoints to edit an album.
-    * 2.3. Image Management Endpoints:
-        *   Create endpoints to upload images.
-        *   Create endpoints to view images.
-    *   2.4. Face Management Endpoints:
-        *   Create endpoints to process faces.
-        *   Create endpoints to search for faces.
-*   Status: Done.
-**Milestone 3: Create Basic Page Outlines**
-
-*   Tasks:
-    *   3.1. Welcome Page: Create a basic layout for the Welcome Page.
-    *   3.2. Albums Page: Create a basic layout for the Albums Page (listing existing albums and a "create new album" button).
-    *   3.3. Album Page: Create a basic layout for an Album Page (displaying the photos in an album).
-    *   3.4. Image Modal: Create a basic structure for the Image Modal.
-    * 3.5 Search page: Create a basic structure for the search page.
-*   Status: Done.
-
-**Milestone 4: Connect Frontend to Backend**
-
-*   Tasks:
-    *   4.1. Connect the albums page to the backend.
-    *   4.2. Connect the album page to the backend.
-*   Status: Done.
-
-**Milestone 5: Implement User Authentication**
-
-* Tasks:
-    * 5.1 User Auth Backend: Implement user authentication and session logic on the server.
-    * 5.2 User Auth Frontend: Implement user login/registration on the frontend.
-    * 5.3 User Auth Endpoints: Test all User auth endpoints.
-    * 5.4 User Auth UI: Test all user auth views.
-* Status: Done.
-
-**Milestone 6: Implement Album Management**
-
-* Tasks:
-    * 6.1 Album Management Backend: Implement album creation, listing, deletion and edition logic on the server.
-    * 6.2 Album Management Frontend: Implement album views, album creation on the frontend.
-    * 6.3 Album Management Endpoints: Test all album management endpoints.
-    * 6.4 Album Management UI: test all album management views.
-* Status: Done.
-
-**Milestone 7: Implement Image Upload**
-
-* Tasks:
-    * 7.1 Image Upload Backend: Implement image uploading logic on the server.
-    * 7.2 Image Upload Frontend: Implement image upload on the frontend.
-    * 7.3 Image Upload Endpoints: Test all image upload endpoints.
-    * 7.4 Image Upload UI: test all image upload views.
-* Status: Done.
-
-**Milestone 8: Implement Image View**
-
-* Tasks:
-    * 8.1 Image View Backend: Implement image viewing logic on the server.
-    * 8.2 Image View Frontend: Implement image viewing on the frontend.
-    * 8.3 Image View Endpoints: Test all image view endpoints.
-    * 8.4 Image View UI: test all image view views.
-* Status: Done.
-
-**Milestone 9: Implement Face Recognition**
-
-*   Tasks:
-    *   9.1. Integrate Python Script: Integrate the existing Python face recognition script with the server.
-    *   9.2. Process Faces: Create logic for processing faces on image upload.
-    *   9.3. Store Face Embeddings: Store the face embedding information in the `faces` table.
-    *   9.4 Test: test that faces are processed correctly.
-*   Status: Done.
-    
-**Milestone 10: Implement Face Search**
-
-* Tasks:
-    * 10.1 Face search Backend: Implement face search on the server.
-    * 10.2 Face search Frontend: Implement face search on the frontend.
-    * 10.3 Face search Endpoints: Test all face search endpoints.
-    * 10.4 Face search UI: test all face search views.
-* Status: Done.
-
-**Milestone 11: Framework Migration (Express.js to ElysiaJS)**
-
-* Tasks:
-    * 11.1 Setup Bun and ElysiaJS environment: Done.
-    * 11.2 Convert server code to TypeScript and ES Modules: Done.
-    * 11.3 Migrate User Authentication routes: Done.
-    * 11.4 Migrate Album Management routes: Done.
-    * 11.5 Migrate Image Management routes: Done.
-    * 11.6 Migrate Face Management routes: Done.
-    * 11.7 Replace Joi with TypeBox for validation: Pending (Standardized Joi usage within Elysia context for now).
-    * 11.8 Verify all migrated endpoints with tests: Done.
-    * 11.9 Retire legacy Express entry points (`index.ts`, `app.ts`): **Done**.
-* Status: Done.
-
-**Milestone 12: Advanced Features**
-
-* Tasks:
-    * 12.1 Face Confirmation (Tagging): Implement people management and face tagging. Done.
-    * 12.2 Shared Albums: Implement public access with share tokens. Done.
-    * 12.3 Real-time Updates: Implement SSE for live status updates. Done.
-    * 12.4 Background Uploads: Implement persistent uploads with IndexedDB. Done.
-    * 12.5 Image Optimization: Implement WebP conversion worker. Done.
-    * 12.6 Selfie Search: Implement camera-based guest search for shared albums. Done.
-    * 12.7 Improved Auth UI: Redesign Login/Signup and add Forgot Password flow. Done.
-    * 12.8 Fix Album Pagination: Ensure infinite scroll respects limits. Done.
-* Status: Done.
-
-**Milestone 13: UI/UX Overhaul & Finalization**
-
-* Tasks:
-    * 13.1 Cinematic & Stealth Design: Standardize Zinc-950/Indigo-500 palette. Done.
-    * 13.2 Intelligent Bento Grid: Implement content-aware layout using resolution and aspect ratio. Done.
-    * 13.3 Theatre Mode: Major refactor of Image Modal with carousel, side panel, and keyboard navigation. Done.
-    * 13.4 Feature Parity: Bring shared views up to the same quality as owner views. Done.
-    * 13.5 Data Integrity: Fix nested data access across all main views. Done.
-* Status: Done.
-
-**Milestone 14: Collaborative Events & BYOS**
-
-* Tasks:
-    * 14.1 Storage Abstraction Layer: Implement `StorageService` with R2 and Local providers. Done.
-    * 14.2 R2 Migration: Move all existing image flows to Cloudflare R2 with Presigned URLs. Done.
-    * 14.3 Settings Infrastructure: Implement Global User Preferences and Local Album/Event settings. Done.
-    * 14.4 Event Logic: Implement QR-based guest uploads, moderation queues, and expiration. Done.
-    * 14.5 BYOS Support: Implement secure storage for user S3 keys and dynamic provider initialization. Done.
-    * 14.6 Usage & Quotas: Implement "Compute Unit" tracking and host-based billing logic. Done.
-* Status: Done.
-
-### Monitoring & Observability
-
-Lumina uses a cloud-offloaded observability stack to maintain high performance on lightweight servers:
-*   **Structured Logging (Better Stack + Vector):** High-performance log collection using Rust-based **Vector**. It automatically gathers structured JSON logs from all Docker containers and streams them to Better Stack for indexing and querying.
-*   **Error Tracking (Sentry):** Full-stack exception monitoring for both the ElysiaJS backend and React frontend. Provides real-time crash reporting, breadcrumbs, and session replays to resolve production issues instantly.
-*   **Infrastructure Health:** Basic container metrics and disk usage tracking are managed via Docker's native tools and Coolify's built-in monitoring.
-
-**Milestone 15: Observability & Search Refinement**
-
-* Tasks:
-    * 15.1 Structured Logging: Refactor Elysia logger to support JSON output and smart filtering (ignoring static assets). Done.
-    * 15.2 Log Shipping: Integrate Vector as a sidecar for Better Stack log ingestion. Done.
-    * 15.3 Error Tracking: Full-stack Sentry integration (Bun + React). Done.
-    * 15.4 Search Accuracy: Implement cosine similarity thresholding (similarity > 0.5) to eliminate irrelevant results. Done.
-    * 15.5 Face Review (Tinder-style): Implement mobile-first gamified UI for guest face confirmation. Done.
-* Status: Done.
-
-### Expected Deliverables
-
-The Lumina application is expected to deliver the following core features and capabilities:
-
-*   **User Authentication:**
-    *   Users can create accounts.
-    *   Users can log in to their accounts.
-    *   Only logged-in users can use the application features.
-*   **Album Management:**
-    *   Users can create new albums.
-    *   Users can view a list of their existing albums.
-    *   Users can open an album to view its contents.
-    *   Users can delete albums.
-    * Users can edit albums.
-*   **Image Management:**
-    *   Users can upload images to their albums.
-    *   Users can view uploaded images.
-    * The original size of the image is saved.
-*   **Face Recognition:**
-    *   The application automatically processes uploaded images to recognize faces.
-    *   The application stores data about the recognized faces (embedding and bounding box).
-*   **Face Search:**
-    *   Users can select a recognized face in an image.
-    *   Users can search for other images within the same album containing that face.
-*   **Album Sharing:**
-    *  Users can generate a link to an album.
-    * Users can share the generated link with other users.
-    *  Users can view the shared album.
-    * Users can use face search in shared album.
-*   **Error Handling and Logging:**
-    *   The application handles errors gracefully.
-    *   The application logs important events and errors.
-* **Caching**:
-    * The application will use caching to speed up the loading time.
-
-## 2026 Product Refinements (Wedding Workflows & Visual Redesign)
-
-Based on recent user feedback and product directions, the following features are integrated into the product roadmap:
-
-### 1. Two-Album Wedding Flow & Image Porting
-* **Two-Album Separation:** Instead of a single public/collaborative album, hosts can maintain two distinct albums:
-  * **Candid/Public Sharing Album:** A guest contribution pool where candid photos are crowd-sourced.
-  * **Official Curated Album:** A photographer-led, high-quality showcase containing edited wedding photos.
-* **Easy Photo Porting:** The host dashboard allows selecting images in the Candid/Public Album and moving/copying them directly into the Official Album with a single click.
-* **Customizable Official Page:** Hosts can style and template the official album page shared with the couple/owner (selecting custom presets and layouts).
-
-### 2. Custom Visual Themes & Designer Presets
-* **Curated Preset Palettes:** Instead of raw hex color pickers, hosts can choose from a set of pre-designed visual presets (e.g. *Sage Garden*, *Classic Black/White*, *Dusty Rose*, *Royal Gold*).
-* Presets apply unified styling to backgrounds, Glass Hero cards, text colors, and CTA buttons on public shared pages.
-
-### 3. Guest Privacy Control & Opt-out
-* **Indexing Opt-Out:** Guests can opt-out of face indexing when contributing photos (checking a box on upload so their photos bypass face clustering/detection).
-* **Selfie Deletion:** Guests can instantly delete their search selfie embeddings from the system right after their matching gallery search results are generated.
-
-### 4. Party Mode "Live Slideshow"
-* A dedicated real-time slideshow UI that dynamically appends new guest photos as soon as they are uploaded and approved (powered by the SSE `useLiveAlbum` feed).
-
-### 5. Free Tier Photo expiration (14-day TTL)
-* Photos uploaded to Free Tier albums expire and are automatically hard deleted after **14 days** to control storage costs and incentivize plan upgrades.
-
-### 6. Minimalist UI Layout & Sidebar Navigation (Inspiration: `inspo.png`) [DEFERRED]
-* **Dashboard Sidebar:** (Deferred for future refinement) Sleek left sidebar replacing the top navigation bar to create a premium "app vibe".
-* **Ultra-clean Masonry Grid:** (Deferred for future refinement) Tightly-packed, borderless gallery cards with compact gaps and hover-revealed action indicators, mimicking the elegant image grid of `inspo.png`.
-
-
+Hosts enable "Event Mode" on an album. Guests upload via QR/link, with optional moderation queues and upload-window expiry. Three lifecycle phases — *collecting* → *curating* → *delivered* — are visible to guests on the shared page.
+
+### Face Recognition & Search
+InsightFace (buffalo_l) detects faces, generates 512-dimension embeddings stored in pgvector, and DBSCAN clusters them into people across the album. Hosts tag people by name; guests search with a selfie.
+
+### Semantic Natural Language Search
+CLIP (clip-ViT-B-32 via sentence-transformers) encodes photos at upload time. Text queries use a 4-template prompt ensemble ("a photo of {}", "a picture of {}", "an image of {}", "{}") to improve recall for short keywords. Results are filtered at cosine similarity ≥ 0.2 after over-fetching from Postgres to ensure the filter has enough candidates.
+
+### Visual Theme Editor
+A full-screen Framer-style editor at `/album/:id/theme`. Dimensions:
+
+| Dimension | Options |
+|---|---|
+| Preset | wedding, dark-luxe, garden, minimal, editorial, party |
+| Accent color | Any hex |
+| Background | light / dark / gradient (with from/to colors) |
+| Background texture | none / noise / dots / grid-lines |
+| Font | Inter / Playfair Display / Raleway / DM Sans |
+| Corner radius | rounded / sharp / pill |
+| Hero layout | two-col / centered / full banner |
+| Hero background | solid / image URL / slideshow (cross-fade) |
+| Photo grid | bento / uniform / masonry |
+| Host branding | handle + URL link |
+| Show cover in hero | boolean |
+| Section ordering | drag-to-reorder, show/hide optional sections |
+
+All config is stored in `theme_config JSONB` on `album_settings`. CSS variables are injected at runtime — no class-name rebuilding required.
+
+### Storage & Pricing
+- **Compute credits** — users pay for face detection, embedding generation, clustering.
+- **Managed storage** — Cloudflare R2 (zero egress).
+- **BYOS** — users connect their own S3/R2 bucket; Lumina acts as the AI layer only.
+- **Free tier TTL** — images expire and are hard-deleted after 14 days.
+
+### Guest Privacy
+- Face-indexing opt-out on upload.
+- Selfie embedding deleted on demand after search.
+
+### Observability
+- Structured JSON logging → Vector (Rust) → Better Stack.
+- Sentry for full-stack error tracking (Bun + React).
+
+---
+
+## Architecture
+
+### Monorepo (Bun Workspaces)
+
+```
+apps/
+  api/     — Elysia JS backend (Bun)
+  client/  — React/Vite host dashboard + shared album guest experience
+  ai/      — Python/FastAPI: InsightFace embeddings + CLIP semantic search
+  worker/  — Bun: image optimization (WebP), background queues
+packages/
+  models/  — Prisma DB queries
+  auth/    — JWT / session logic
+  config/  — DB + Redis client
+  utils/   — Validators, image utils, cache
+  event-sdk/ — Public album client types
+```
+
+### Tech Stack
+| Layer | Technology |
+|---|---|
+| API | TypeScript, Elysia JS, Bun |
+| Frontend | TypeScript, React, Vite, Tailwind CSS |
+| AI service | Python 3.11, FastAPI, InsightFace, sentence-transformers |
+| Database | PostgreSQL + pgvector (Prisma ORM) |
+| Cache | Redis |
+| Storage | Cloudflare R2 (managed) + S3-compatible BYOS |
+| Real-time | Server-Sent Events (SSE) |
+| Observability | Vector, Better Stack, Sentry |
+| Deployment | Docker Compose / Coolify |
+
+---
+
+## Database Schema
+
+**`images`**
+| Column | Type | Description |
+|---|---|---|
+| image_id | UUID (PK) | |
+| image_path | TEXT | Original file path or cloud URL |
+| optimized_path | TEXT | WebP display-tier path |
+| storage_provider | TEXT | `local`, `r2`, `s3`, `byos` |
+| storage_key | TEXT | Key within the storage provider |
+| status | TEXT | `PENDING` / `APPROVED` / `REJECTED` |
+| upload_date | TIMESTAMPTZ | |
+| original_width / original_height | INT | |
+| uploaded_by | UUID (FK → users) | |
+| guest_session_id | UUID | Guest session for PENDING filtering |
+| embedding | vector(512) | CLIP semantic embedding |
+| embedding_model | TEXT | e.g. `clip-vit-b-32` |
+| expires_at | TIMESTAMPTZ | Free-tier 14-day TTL |
+| size / optimized_size | INT | Bytes |
+
+**`faces`**
+| Column | Type | Description |
+|---|---|---|
+| face_id | SERIAL (PK) | |
+| image_id | UUID (FK → images) | |
+| person_id | UUID (FK → people) | |
+| embedding | REAL[] | 512-dim InsightFace embedding |
+| bounding_box | JSONB | |
+| processed_time | TIMESTAMPTZ | |
+
+**`people`**
+| Column | Type | Description |
+|---|---|---|
+| person_id | UUID (PK) | |
+| name | TEXT | |
+| user_id | UUID (FK → users) | |
+| created_at / updated_at | TIMESTAMPTZ | |
+
+**`albums`**
+| Column | Type | Description |
+|---|---|---|
+| album_id | UUID (PK) | |
+| album_name | TEXT | |
+| created_by | UUID (FK → users) | |
+| storage_config_id | UUID (FK → user_storage_configs) | |
+| cover_image_id | UUID (FK → images) | |
+| share_token | TEXT (unique) | Public access token |
+| qr_color / qr_logo_url | TEXT | QR customization |
+| creation_date | TIMESTAMPTZ | |
+
+**`album_settings`**
+| Column | Type | Description |
+|---|---|---|
+| album_id | UUID (PK, FK → albums) | |
+| is_event | BOOLEAN | Collaborative event mode |
+| requires_approval | BOOLEAN | Guest upload moderation |
+| tagging_policy | TEXT | `HOST_ONLY` / `GUESTS_SELF` / `ANYONE` |
+| expires_at | TIMESTAMPTZ | Upload window close time |
+| allow_guest_uploads | BOOLEAN | |
+| semantic_search_enabled | BOOLEAN | Enables CLIP text search |
+| curating | BOOLEAN | Phase flag |
+| delivered | BOOLEAN | Phase flag |
+| tagline | TEXT | Custom message on shared page |
+| theme_config | JSONB | Full visual theme (ThemeConfig) |
+| webhook_url | TEXT | |
+
+**`user_storage_configs`**
+| Column | Type | Description |
+|---|---|---|
+| id | UUID (PK) | |
+| user_id | UUID (FK → users) | |
+| provider | TEXT | `r2`, `s3` |
+| bucket / endpoint / region | TEXT | |
+| access_key_id / secret_access_key | TEXT | Encrypted |
+
+**`usage_logs`**
+| Column | Type | Description |
+|---|---|---|
+| id | SERIAL (PK) | |
+| user_id | UUID (FK → users) | |
+| resource | TEXT | `storage`, `compute` |
+| operation | TEXT | `face_recognition`, `face_search`, etc. |
+| quantity | INT | |
+| timestamp | TIMESTAMPTZ | |
+
+**`plans`** — free / pro / enterprise plan definitions with storage_mb, compute_units_per_month, price.
+
+**`album_members`** — role-based album membership (VIEWER / CONTRIBUTOR / ADMIN) with invite tokens.
+
+---
+
+## Milestones
+
+All milestones 1–15 are complete. See commit history for implementation detail.
+
+**Milestone 1–10:** Core CRUD, auth, face detection, face search, album sharing. ✅
+
+**Milestone 11:** Framework migration Express → Elysia JS + Bun. ✅
+
+**Milestone 12:** Advanced features — selfie search, SSE real-time, background uploads, image optimization, face tagging, improved auth. ✅
+
+**Milestone 13:** UI/UX overhaul — bento grid, theatre mode, shared view parity. ✅
+
+**Milestone 14:** Collaborative events & BYOS — storage abstraction, R2, event lifecycle, moderation, usage tracking. ✅
+
+**Milestone 15: Observability & Search** ✅
+- Structured JSON logging + Vector + Better Stack.
+- Full-stack Sentry integration.
+- Semantic search with cosine similarity filtering (threshold 0.2, prompt ensemble).
+- Mobile-first Tinder-style face confirmation UI.
+
+**Milestone 16: Visual Theme Editor** ✅
+- Full-screen theme editor at `/album/:id/theme`.
+- 6 curated presets with live preview pane.
+- 8 theming dimensions: accent, background (light/dark/gradient), texture, font, corner radius, hero layout, hero background (solid/image/slideshow), photo grid style.
+- Host branding strip + album cover in hero.
+- `theme_config JSONB` as sole theme store; `theme_preset` column removed.
+- Home page updated: 4-card features section, "Custom themes" trust signal.
+- `/share/demo` themed with wedding preset.
+
+**Milestone 17: Semantic Search Quality** ✅
+- Threshold lowered 0.5 → 0.2 (correct CLIP matches score 0.20–0.35).
+- Over-fetch from DB (`limit × 5`, max 200) before threshold filtering.
+- 4-template prompt ensemble on all CLIP adapters for better keyword recall.
+
+---
+
+## Deferred / Future Work
+
+- **Sidebar navigation** — sleek left sidebar replacing top nav.
+- **Live slideshow mode** — real-time SSE-fed display for venue screens.
+- **Two-album wedding flow** — candid pool + official curated album with one-click photo porting.
+- **Mobile PWA** — installable guest experience as a standalone app.
+- **AI search improvements** — re-rank with cross-encoder, multi-modal query (image + text).
