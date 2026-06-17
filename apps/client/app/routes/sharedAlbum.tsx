@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { BulkActionBar } from "~/components/BulkActionBar";
@@ -218,8 +218,8 @@ const SharedAlbumPage = () => {
 		);
 	}
 
-	const showSemanticSearch =
-		albumData.settings?.semantic_search_enabled && phase === "delivered";
+	const themeConfig = albumData.settings?.theme_config ?? undefined;
+	const gridStyle = (themeConfig as any)?.gridStyle ?? "bento";
 
 	const hasExpiring = albumData.images?.some(
 		(img: any) => img.expires_at && new Date(img.expires_at) > new Date() && new Date(img.expires_at) < new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
@@ -231,19 +231,118 @@ const SharedAlbumPage = () => {
 			.sort((a: Date, b: Date) => a.getTime() - b.getTime())[0]
 		: null;
 
-	return (
-		<ThemeProvider preset={albumData.settings?.theme_preset}>
-		<MainContainer className="pb-24 sm:pb-6">
-			{hasExpiring && earliestExpiry && (
-				<div className="mb-4 flex items-center gap-3 px-4 py-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl text-sm text-amber-800 dark:text-amber-300 font-medium">
-					<span>⚠</span>
-					<span>
-						Some photos expire on{" "}
-						<strong>{earliestExpiry.toLocaleDateString(undefined, { month: "long", day: "numeric" })}</strong>.
-						Download them before then.
-					</span>
+	const showSemanticSearch =
+		albumData.settings?.semantic_search_enabled && phase === "delivered";
+
+	const photoGrid = (
+		<>
+			{gridStyle === "uniform" && (
+				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 w-full">
+					{displayedImages.map((image: any) => {
+						const width = image.originalSize?.width || 0;
+						const height = image.originalSize?.height || 0;
+						const _liveCount = reactions[image.imageId] ?? image.reactionCount ?? 0;
+						return (
+							<div key={image.imageId} className="relative aspect-square">
+								<ImageGridItem
+									image={{ id: image.imageId, width, height, url: image.imagePath, alt: image.imageId }}
+									onDelete={() => {}}
+									onToggleSelect={toggleSelect}
+									isSelected={selectedIds.has(image.imageId)}
+									selectionMode={selectedIds.size > 0}
+									shared={true}
+									className="cursor-pointer rounded-xl shadow-sm w-full h-full object-cover"
+									onClick={() => !image.isPending && setSelectedImage(image)}
+									variant="admin"
+								/>
+								{image.isPending && (
+									<div className="absolute top-2 left-2 z-10 px-2 py-1 bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-lg flex items-center gap-1.5">
+										<div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+										Up for moderation
+									</div>
+								)}
+							</div>
+						);
+					})}
 				</div>
 			)}
+
+			{gridStyle === "masonry" && (
+				<div className="columns-2 sm:columns-3 lg:columns-4 gap-2 w-full">
+					{displayedImages.map((image: any) => {
+						const width = image.originalSize?.width || 0;
+						const height = image.originalSize?.height || 0;
+						const _liveCount = reactions[image.imageId] ?? image.reactionCount ?? 0;
+						return (
+							<div key={image.imageId} className="relative break-inside-avoid mb-2 w-full">
+								<ImageGridItem
+									image={{ id: image.imageId, width, height, url: image.imagePath, alt: image.imageId }}
+									onDelete={() => {}}
+									onToggleSelect={toggleSelect}
+									isSelected={selectedIds.has(image.imageId)}
+									selectionMode={selectedIds.size > 0}
+									shared={true}
+									className="cursor-pointer rounded-xl shadow-sm w-full object-cover"
+									onClick={() => !image.isPending && setSelectedImage(image)}
+									variant="admin"
+								/>
+								{image.isPending && (
+									<div className="absolute top-2 left-2 z-10 px-2 py-1 bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-lg flex items-center gap-1.5">
+										<div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+										Up for moderation
+									</div>
+								)}
+							</div>
+						);
+					})}
+				</div>
+			)}
+
+			{(gridStyle === "bento" || !gridStyle) && (
+				<div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full auto-rows-[150px] md:auto-rows-[200px] grid-flow-dense">
+					{displayedImages.map((image: any, index: number) => {
+						const width = image.originalSize?.width || 0;
+						const height = image.originalSize?.height || 0;
+						const area = width * height;
+						const isFeatured = area > 2000000;
+						const spanClass = getBentoSpanClass(width, height, index, isFeatured);
+						const _liveCount = reactions[image.imageId] ?? image.reactionCount ?? 0;
+
+						return (
+							<div key={image.imageId} className={`relative cv-tile ${spanClass}`}>
+								<ImageGridItem
+									image={{ id: image.imageId, width, height, url: image.imagePath, alt: image.imageId }}
+									onDelete={() => {}}
+									onToggleSelect={toggleSelect}
+									isSelected={selectedIds.has(image.imageId)}
+									selectionMode={selectedIds.size > 0}
+									shared={true}
+									className="cursor-pointer rounded-xl shadow-sm w-full object-cover"
+									onClick={() => !image.isPending && setSelectedImage(image)}
+									variant="admin"
+								/>
+								{image.isPending && (
+									<div className="absolute top-2 left-2 z-10 px-2 py-1 bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-lg flex items-center gap-1.5">
+										<div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+										Up for moderation
+									</div>
+								)}
+							</div>
+						);
+					})}
+				</div>
+			)}
+
+			{displayedImages.length === 0 && (
+				<div className="text-center py-32">
+					<p className="text-zinc-500 font-medium">No photos found matching this filter.</p>
+				</div>
+			)}
+		</>
+	);
+
+	const sectionComponents: Record<string, React.ReactNode> = {
+		hero: (
 			<SharedAlbumHero
 				album={albumData}
 				phase={phase}
@@ -254,62 +353,45 @@ const SharedAlbumPage = () => {
 				onContribute={() => setIsUploadModalOpen(true)}
 				onDownloadAll={phase === "delivered" ? handleDownloadAll : undefined}
 			/>
+		),
+		stats: <StatsStrip stats={stats} isLoading={isLoading} />,
+		search: showSemanticSearch ? (
+			<SemanticSearchBar
+				searchQuery={searchQuery}
+				setSearchQuery={setSearchQuery}
+				onSubmit={handleSemanticSearch}
+				onClear={clearSearch}
+				isSearchLoading={isSearchLoading}
+			/>
+		) : null,
+		grid: photoGrid,
+	};
 
-			<StatsStrip stats={stats} isLoading={isLoading} />
+	const orderedSections: Array<"hero" | "stats" | "search" | "grid"> =
+		(themeConfig as any)?.sections ?? ["hero", "stats", "search", "grid"];
 
-			{showSemanticSearch && (
-				<SemanticSearchBar
-					searchQuery={searchQuery}
-					setSearchQuery={setSearchQuery}
-					onSubmit={handleSemanticSearch}
-					onClear={clearSearch}
-					isSearchLoading={isSearchLoading}
-				/>
+	return (
+		<ThemeProvider config={themeConfig ?? undefined}>
+		<div
+			className="min-h-screen transition-colors duration-300 antialiased overflow-x-hidden"
+			style={{ background: "var(--theme-bg)", color: "var(--theme-text)", fontFamily: "var(--theme-font)" }}
+		>
+		<div className="max-w-6xl mx-auto px-5 sm:px-8 py-10 pb-24 sm:pb-6">
+			{hasExpiring && earliestExpiry && (
+				<div className="mb-4 flex items-center gap-3 px-4 py-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl text-sm text-amber-800 dark:text-amber-300 font-medium">
+					<span>⚠</span>
+					<span>
+						Some photos expire on{" "}
+						<strong>{earliestExpiry.toLocaleDateString(undefined, { month: "long", day: "numeric" })}</strong>.
+						Download them before then.
+					</span>
+				</div>
 			)}
 
-			<div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full auto-rows-[150px] md:auto-rows-[200px] grid-flow-dense">
-				{displayedImages.map((image: any, index: number) => {
-					const width = image.originalSize?.width || 0;
-					const height = image.originalSize?.height || 0;
-					const area = width * height;
-					const isFeatured = area > 2000000;
-					const spanClass = getBentoSpanClass(width, height, index, isFeatured);
-					const liveCount = reactions[image.imageId] ?? image.reactionCount ?? 0;
-
-					return (
-						<div key={image.imageId} className={`relative cv-tile ${spanClass}`}>
-							<ImageGridItem
-								image={{
-									id: image.imageId,
-									width,
-									height,
-									url: image.imagePath,
-									alt: image.imageId,
-								}}
-								onDelete={() => {}}
-								onToggleSelect={toggleSelect}
-								isSelected={selectedIds.has(image.imageId)}
-								selectionMode={selectedIds.size > 0}
-								shared={true}
-								className="cursor-pointer rounded-xl shadow-sm w-full object-cover"
-								onClick={() => !image.isPending && setSelectedImage(image)}
-								variant="admin"
-							/>
-							{image.isPending && (
-								<div className="absolute top-2 left-2 z-10 px-2 py-1 bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-lg flex items-center gap-1.5">
-									<div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-									Up for moderation
-								</div>
-							)}
-						</div>
-					);
-				})}
-			</div>
-
-			{displayedImages.length === 0 && (
-				<div className="text-center py-32">
-					<p className="text-zinc-500 font-medium">No photos found matching this filter.</p>
-				</div>
+			{orderedSections.map((key) =>
+				sectionComponents[key] ? (
+					<React.Fragment key={key}>{sectionComponents[key]}</React.Fragment>
+				) : null,
 			)}
 
 			<ImageModal
@@ -430,7 +512,8 @@ const SharedAlbumPage = () => {
 					</div>
 				</div>
 			</Modal>
-		</MainContainer>
+		</div>
+		</div>
 		</ThemeProvider>
 	);
 };

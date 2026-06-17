@@ -111,6 +111,10 @@ export const LivePreview = ({ demoToken = "demo" }: LivePreviewProps) => {
 								<span className="text-sage mt-0.5">·</span>
 								<span>Download originals, no account required</span>
 							</li>
+							<li className="flex items-start gap-2">
+								<span className="text-sage mt-0.5">·</span>
+								<span>Customize your album's look with themes</span>
+							</li>
 						</ul>
 						<Button asChild className="font-bold w-full sm:w-auto">
 							<Link to={demoHref}>

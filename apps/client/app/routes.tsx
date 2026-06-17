@@ -3,6 +3,7 @@ import { Navigate, useParams } from "react-router-dom";
 import PrivateRoute from "./components/PrivateRoute";
 import App, { ErrorBoundary as AppErrorBoundary } from "./root";
 import Album from "./routes/album";
+import ThemeEditor from "./routes/themeEditor";
 import ForgotPassword from "./routes/forgot-password";
 import Home from "./routes/home";
 import JoinAlbum from "./routes/joinAlbum";
@@ -85,6 +86,10 @@ export default [
 					{
 						path: "album/:albumId",
 						element: <Album />,
+					},
+					{
+						path: "album/:albumId/theme",
+						element: <ThemeEditor />,
 					},
 					{
 						path: "search",

@@ -1,4 +1,4 @@
-import { HardDrive, Search, Users } from "lucide-react";
+import { HardDrive, Paintbrush, Search, Users } from "lucide-react";
 
 const FEATURES = [
 	{
@@ -19,6 +19,12 @@ const FEATURES = [
 		title: "Storage that grows with you.",
 		body: "Start free with 1GB managed storage. Bring your own S3 or R2 bucket anytime — your photos, your control.",
 	},
+	{
+		icon: <Paintbrush className="h-6 w-6" />,
+		eyebrow: "Brand",
+		title: "Make it yours.",
+		body: "Custom themes, fonts, and layouts. Add your branding, pick a photo grid style, and set the mood for every event.",
+	},
 ];
 
 export const FeaturesSoft = () => {
@@ -37,7 +43,7 @@ export const FeaturesSoft = () => {
 					in the moment with your guests.
 				</p>
 			</div>
-			<div className="grid gap-12 md:grid-cols-3 max-w-5xl mx-auto">
+			<div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
 				{FEATURES.map((f) => (
 					<article key={f.title} className="space-y-4">
 						<div className="inline-flex h-12 w-12 items-center justify-center rounded-card bg-sage/10 text-sage">

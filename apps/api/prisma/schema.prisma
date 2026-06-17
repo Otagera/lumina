@@ -66,8 +66,8 @@ model album_settings {
   curating                 Boolean   @default(false)
   delivered                Boolean   @default(false)
   // Custom theme & branding
-  theme_preset             String?   // e.g. "sage", "rose", "gold", "dark"
   tagline                  String?   // Custom host message shown on shared page
+  theme_config             Json?     // Full visual theme configuration (ThemeConfig)
   album                    albums    @relation(fields: [album_id], references: [album_id], onDelete: Cascade)
 }
 

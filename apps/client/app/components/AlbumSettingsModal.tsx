@@ -313,35 +313,6 @@ export const AlbumSettingsModal = ({
 					</p>
 				</div>
 
-				{/* Theme Preset */}
-				<div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
-					<p className="font-bold text-zinc-900 dark:text-white text-sm mb-3">
-						Color Theme
-					</p>
-					<div className="grid grid-cols-4 gap-2">
-						{[
-							{ id: "sage", label: "Sage", swatch: "bg-[#7C9A7E]" },
-							{ id: "rose", label: "Rose", swatch: "bg-rose-400" },
-							{ id: "gold", label: "Gold", swatch: "bg-yellow-400" },
-							{ id: "dark", label: "Dark", swatch: "bg-zinc-800" },
-						].map(({ id, label, swatch }) => {
-							const active = (localSettings.theme_preset || "sage") === id;
-							return (
-								<button
-									key={id}
-									type="button"
-									onClick={() => handleSettingChange("theme_preset", id)}
-									className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${active ? "border-sage bg-sage/5" : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"}`}
-								>
-									<span className={`w-8 h-8 rounded-full ${swatch} shadow-sm`} />
-									<span className={`text-[10px] font-bold ${active ? "text-sage" : "text-zinc-500 dark:text-zinc-400"}`}>
-										{label}
-									</span>
-								</button>
-							);
-						})}
-					</div>
-				</div>
 			</div>
 
 			<div className="mt-8 flex items-center space-x-3">

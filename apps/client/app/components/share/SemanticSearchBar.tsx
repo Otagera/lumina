@@ -1,3 +1,4 @@
+import type React from "react";
 import { Search, X } from "lucide-react";
 import { Button } from "../standard/Button";
 
@@ -27,7 +28,10 @@ export const SemanticSearchBar = ({
 				>
 					Search Photos
 				</label>
-				<div className="flex items-center gap-2 border-b-2 border-zinc-200 dark:border-zinc-800 focus-within:border-sage transition-colors">
+				<div
+					className="flex items-center gap-2 border-b-2 transition-colors"
+					style={{ borderColor: "var(--theme-border)" }}
+				>
 					<Search size={18} className="text-zinc-400 shrink-0" aria-hidden />
 					<input
 						id="semantic-search-input"
@@ -35,14 +39,15 @@ export const SemanticSearchBar = ({
 						placeholder='e.g. "dancing", "sunset"'
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="flex-1 bg-transparent border-0 outline-none focus:ring-0 py-2 text-base font-medium text-zinc-900 dark:text-white placeholder:text-zinc-400"
+						className="flex-1 bg-transparent border-0 outline-none focus:ring-0 py-2 text-base font-medium placeholder:text-zinc-400"
+						style={{ color: "var(--theme-text)" }}
 					/>
 					{searchQuery && (
 						<button
 							type="button"
 							onClick={onClear}
 							aria-label="Clear search"
-							className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400 shrink-0 focus-ring"
+							className="p-1 rounded-full text-zinc-400 shrink-0 focus-ring hover:opacity-70"
 						>
 							<X size={14} aria-hidden />
 						</button>
@@ -51,7 +56,8 @@ export const SemanticSearchBar = ({
 						type="submit"
 						size="sm"
 						disabled={isSearchLoading || !searchQuery.trim()}
-						className="bg-sage text-zinc-950 font-black tracking-tight shrink-0 mb-1 px-5"
+						className="font-black tracking-tight shrink-0 mb-1 px-5"
+						style={{ backgroundColor: "var(--theme-accent)", color: "var(--theme-accent-fg)" } as React.CSSProperties}
 					>
 						{isSearchLoading ? "..." : "Search"}
 					</Button>
@@ -70,11 +76,12 @@ export const SemanticSearchBar = ({
 						role="listitem"
 						aria-pressed={searchQuery === chip}
 						onClick={() => setSearchQuery(chip)}
-						className={`snap-start shrink-0 px-3 py-1.5 rounded-control text-xs font-bold border transition-all focus-ring ${
+						className="snap-start shrink-0 px-3 py-1.5 rounded-control text-xs font-bold border transition-all focus-ring"
+						style={
 							searchQuery === chip
-								? "bg-sage text-zinc-950 border-sage"
-								: "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-sage"
-						}`}
+								? { backgroundColor: "var(--theme-accent)", color: "var(--theme-accent-fg)", borderColor: "var(--theme-accent)" }
+								: { background: "var(--theme-surface)", color: "var(--theme-text-muted)", borderColor: "var(--theme-border)" }
+						}
 					>
 						{chip}
 					</button>

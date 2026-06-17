@@ -84,6 +84,30 @@ export interface UploadImagesProps {
 	};
 }
 
+// ============== Theme Types ==============
+
+export interface ThemeConfig {
+	preset?: string;
+	accent?: string;
+	background?: "light" | "dark" | "gradient";
+	gradientFrom?: string;
+	gradientTo?: string;
+	font?: "inter" | "playfair" | "raleway" | "dm-sans";
+	heroLayout?: "two-col" | "centered" | "banner";
+	heroMode?: "solid" | "image" | "slideshow";
+	heroImage?: string;
+	heroSlideshow?: string[];
+	showStats?: boolean;
+	showSearch?: boolean;
+	sections?: Array<"hero" | "stats" | "search" | "grid">;
+	gridStyle?: "bento" | "uniform" | "masonry";
+	cornerRadius?: "rounded" | "sharp" | "pill";
+	backgroundTexture?: "none" | "noise" | "dots" | "grid-lines";
+	brandingHandle?: string;
+	brandingUrl?: string;
+	showCoverInHero?: boolean;
+}
+
 // ============== Album Types ==============
 
 export interface AlbumSettings {
@@ -94,7 +118,7 @@ export interface AlbumSettings {
 	allow_guest_uploads?: boolean;
 	semantic_search_enabled?: boolean;
 	tagline?: string | null;
-	theme_preset?: string | null;
+	theme_config?: ThemeConfig | null;
 }
 
 // API response uses different field names

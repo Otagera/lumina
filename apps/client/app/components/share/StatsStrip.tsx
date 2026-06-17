@@ -17,9 +17,12 @@ interface StatCardProps {
 }
 
 const StatCard = ({ label, value }: StatCardProps) => (
-	<div className="flex-1 min-w-0 rounded-card bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md border border-zinc-100 dark:border-zinc-700 px-4 py-3 text-center">
-		<p className="text-xl font-black text-zinc-900 dark:text-white tabular-nums">{value}</p>
-		<p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-0.5 truncate">{label}</p>
+	<div
+		className="flex-1 min-w-0 rounded-card backdrop-blur-md px-4 py-3 text-center"
+		style={{ background: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: "var(--theme-radius-card)" }}
+	>
+		<p className="text-xl font-black tabular-nums" style={{ color: "var(--theme-accent)" }}>{value}</p>
+		<p className="text-[10px] font-bold uppercase tracking-widest mt-0.5 truncate" style={{ color: "var(--theme-text-muted)" }}>{label}</p>
 	</div>
 );
 

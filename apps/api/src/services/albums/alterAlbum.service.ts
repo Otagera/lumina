@@ -23,7 +23,7 @@ const spec = joi.object({
 			allow_guest_uploads: joi.boolean().optional(),
 			semantic_search_enabled: joi.boolean().optional(),
 			tagline: joi.string().max(120).optional().allow(null, ""),
-			theme_preset: joi.string().valid("sage", "rose", "gold", "dark").optional().allow(null),
+			theme_config: joi.object().optional().allow(null),
 		})
 		.optional(),
 });

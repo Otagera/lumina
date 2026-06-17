@@ -15,7 +15,6 @@ export interface PublicAlbumSettings {
 	semantic_search_enabled?: boolean;
 	curating?: boolean;
 	delivered?: boolean;
-	theme_preset?: string | null;
 	tagline?: string | null;
 	[key: string]: unknown;
 }
