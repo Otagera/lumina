@@ -51,6 +51,18 @@ const aliasSpec = {
 // share_token.
 const DEMO_SHARE_TOKEN = "demo";
 
+export type AlbumPhase = "collecting" | "curating" | "delivered";
+
+const derivePhase = (
+	settings: { curating?: boolean; delivered?: boolean } | null | undefined,
+	canUpload: boolean,
+): AlbumPhase => {
+	if (settings?.delivered) return "delivered";
+	if (settings?.curating) return "curating";
+	if (canUpload) return "collecting";
+	return "delivered";
+};
+
 const buildDemoAlbum = () => {
 	const cover = (url: string, width: number, height: number) => ({
 		image_path: url,
@@ -107,11 +119,19 @@ const buildDemoAlbum = () => {
 		albumName: "Summer Wedding 2025",
 		settings: {
 			is_event: true,
-			allow_guest_uploads: false,
+			allow_guest_uploads: true,
 			requires_approval: false,
 			expires_at: null,
+			curating: false,
+			delivered: false,
 		},
-		canUpload: false,
+		canUpload: true,
+		phase: "collecting" as AlbumPhase,
+		stats: {
+			guestCount: 12,
+			recentMatches: 4,
+			lastActivityAt: new Date().toISOString(),
+		},
 		images,
 	};
 };
@@ -194,30 +214,56 @@ const service = async (data: any) => {
 			(!album.settings?.expires_at ||
 				new Date(album.settings.expires_at) > new Date());
 
-		const images = album.album_images
+		const rawImages = album.album_images
 			.map((ai) => ai.images)
-			.filter((img): img is any => img !== null)
-			.map((img) => ({
-				...img,
-				imageId: img.image_id,
-				imagePath: normalizeImagePath(
-					img.image_path,
-					img.storage_provider,
-					img.storage_key,
-				),
-				originalSize: {
-					width: img.original_width,
-					height: img.original_height,
-				},
-				isPending: img.status === "PENDING",
-				reactionCount: img.reactions.length,
-			}));
+			.filter((img): img is any => img !== null);
+
+		const images = rawImages.map((img) => ({
+			...img,
+			imageId: img.image_id,
+			imagePath: normalizeImagePath(
+				img.image_path,
+				img.storage_provider,
+				img.storage_key,
+			),
+			originalSize: {
+				width: img.original_width,
+				height: img.original_height,
+			},
+			isPending: img.status === "PENDING",
+			reactionCount: img.reactions.length,
+		}));
+
+		const guestCount = new Set(
+			rawImages
+				.filter((img) => img.guest_session_id)
+				.map((img) => img.guest_session_id),
+		).size;
+		const recentMatches = rawImages.filter(
+			(img) => img.reactions.length > 0,
+		).length;
+		const lastActivityAt = rawImages.reduce(
+			(max: Date | null, img) => {
+				if (!img.upload_date) return max;
+				const d = new Date(img.upload_date);
+				return !max || d > max ? d : max;
+			},
+			null as Date | null,
+		);
+
+		const phase = derivePhase(album.settings, canUpload);
 
 		return {
 			id: album.album_id,
 			albumName: album.album_name,
 			settings: album.settings,
 			canUpload,
+			phase,
+			stats: {
+				guestCount,
+				recentMatches,
+				lastActivityAt: lastActivityAt?.toISOString() ?? null,
+			},
 			images,
 		};
 	};

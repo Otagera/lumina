@@ -415,3 +415,34 @@ The Lumina application is expected to deliver the following core features and ca
     *   The application logs important events and errors.
 * **Caching**:
     * The application will use caching to speed up the loading time.
+
+## 2026 Product Refinements (Wedding Workflows & Visual Redesign)
+
+Based on recent user feedback and product directions, the following features are integrated into the product roadmap:
+
+### 1. Two-Album Wedding Flow & Image Porting
+* **Two-Album Separation:** Instead of a single public/collaborative album, hosts can maintain two distinct albums:
+  * **Candid/Public Sharing Album:** A guest contribution pool where candid photos are crowd-sourced.
+  * **Official Curated Album:** A photographer-led, high-quality showcase containing edited wedding photos.
+* **Easy Photo Porting:** The host dashboard allows selecting images in the Candid/Public Album and moving/copying them directly into the Official Album with a single click.
+* **Customizable Official Page:** Hosts can style and template the official album page shared with the couple/owner (selecting custom presets and layouts).
+
+### 2. Custom Visual Themes & Designer Presets
+* **Curated Preset Palettes:** Instead of raw hex color pickers, hosts can choose from a set of pre-designed visual presets (e.g. *Sage Garden*, *Classic Black/White*, *Dusty Rose*, *Royal Gold*).
+* Presets apply unified styling to backgrounds, Glass Hero cards, text colors, and CTA buttons on public shared pages.
+
+### 3. Guest Privacy Control & Opt-out
+* **Indexing Opt-Out:** Guests can opt-out of face indexing when contributing photos (checking a box on upload so their photos bypass face clustering/detection).
+* **Selfie Deletion:** Guests can instantly delete their search selfie embeddings from the system right after their matching gallery search results are generated.
+
+### 4. Party Mode "Live Slideshow"
+* A dedicated real-time slideshow UI that dynamically appends new guest photos as soon as they are uploaded and approved (powered by the SSE `useLiveAlbum` feed).
+
+### 5. Free Tier Photo expiration (14-day TTL)
+* Photos uploaded to Free Tier albums expire and are automatically hard deleted after **14 days** to control storage costs and incentivize plan upgrades.
+
+### 6. Minimalist UI Layout & Sidebar Navigation (Inspiration: `inspo.png`) [DEFERRED]
+* **Dashboard Sidebar:** (Deferred for future refinement) Sleek left sidebar replacing the top navigation bar to create a premium "app vibe".
+* **Ultra-clean Masonry Grid:** (Deferred for future refinement) Tightly-packed, borderless gallery cards with compact gaps and hover-revealed action indicators, mimicking the elegant image grid of `inspo.png`.
+
+

@@ -182,12 +182,22 @@ export interface AlbumImage {
 	isPending?: boolean;
 }
 
+export type AlbumPhase = "collecting" | "curating" | "delivered";
+
+export interface AlbumStats {
+	guestCount: number;
+	recentMatches: number;
+	lastActivityAt: string | null;
+}
+
 export interface SharedAlbum {
 	id: string;
 	albumName: string;
 	settings?: AlbumSettings;
 	images: AlbumImage[];
 	canUpload?: boolean;
+	phase?: AlbumPhase;
+	stats?: AlbumStats;
 	coverImage?: { id: string | null; url: string | null } | string | null;
 }
 

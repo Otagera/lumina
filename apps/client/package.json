@@ -15,6 +15,8 @@
 	},
 	"dependencies": {
 		"@elysiajs/eden": "^1.4.9",
+		"@lumina/event-sdk": "workspace:*",
+		"@lumina/ui": "workspace:*",
 		"@mjackson/form-data-parser": "^0.7.0",
 		"@sentry/react": "^8.52.1",
 		"@tailwindcss/vite": "^4.1.11",
@@ -33,8 +35,7 @@
 		"react-router": "^7.1.5",
 		"react-router-dom": "^7.7.0",
 		"recharts": "^3.8.1",
-		"@lumina/ui": "workspace:*",
-		"@lumina/event-sdk": "workspace:*"
+		"vite-plugin-pwa": "^1.3.0"
 	},
 	"devDependencies": {
 		"@tailwindcss/postcss": "^4.1.11",

@@ -10,6 +10,7 @@ import { getSharedImageService } from "../services/public/getSharedImage.service
 import { searchFacesPublicService } from "../services/public/searchFacesPublic.service.ts";
 import { selfieSearchService } from "../services/public/selfieSearch.service.ts";
 import { uploadPublicService } from "../services/public/uploadPublic.service.ts";
+import { addPublicReactionService } from "../services/reactions/addPublicReaction.service.ts";
 import { guestPlugin } from "./middleware/guest.plugin.ts";
 import { checkQuota } from "./middleware/quota.middleware";
 import {
@@ -121,38 +122,6 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 				return {
 					status: "completed",
 					message: "Highlights fetched successfully.",
-					data,
-				};
-			} catch (error: any) {
-				set.status =
-					error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
-				return {
-					status: "error",
-					message: error?.message || "Internal server error",
-					data: null,
-				};
-			}
-		},
-		{
-			params: t.Object({ token: t.String() }),
-			query: t.Object({
-				limit: t.Optional(t.Numeric()),
-			}),
-		},
-	)
-	.get(
-		"/albums/:token/highlights",
-		async ({ params, query, set }) => {
-			try {
-				const data = await getHighlightsService({
-					token: params.token,
-					limit: query.limit ? Number.parseInt(String(query.limit), 10) : 10,
-				});
-
-				set.status = HTTP_STATUS_CODES.OK;
-				return {
-					status: "completed",
-					message: "Highlights retrieved successfully.",
 					data,
 				};
 			} catch (error: any) {
@@ -308,6 +277,38 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 				},
 			)
 			.post(
+				"/albums/:token/images/:imageId/react",
+				async ({ params, body, set, guestSessionId }) => {
+					try {
+						const data = await addPublicReactionService({
+							shareToken: params.token,
+							imageId: params.imageId,
+							type: body.type,
+							guestSessionId: guestSessionId as string | undefined,
+						});
+
+						set.status = HTTP_STATUS_CODES.CREATED;
+						return {
+							status: "completed",
+							message: "Reaction added.",
+							data,
+						};
+					} catch (error: any) {
+						set.status =
+							error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+						return {
+							status: "error",
+							message: error?.message || "Internal server error",
+							data: null,
+						};
+					}
+				},
+				{
+					params: t.Object({ token: t.String(), imageId: t.String() }),
+					body: t.Object({ type: t.Optional(t.String()) }),
+				},
+			)
+			.post(
 				"/albums/:token/upload",
 				async ({ params, body, set, guestSessionId, request }) => {
 					try {
@@ -424,4 +425,12 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 		},
 	);
 
+const legacyGuestRedirect = new Elysia()
+	.get("/e/:token", ({ params, set }) => {
+		set.status = 301;
+		set.headers["Location"] = `/share/${params.token}`;
+		return null;
+	});
+
+export { legacyGuestRedirect };
 export default publicRoutes;
