@@ -11,7 +11,6 @@ COPY package.json bun.lock ./
 # 3. Copy all workspace member package.json files for dependency resolution
 COPY apps/api/package.json apps/api/
 COPY apps/client/package.json apps/client/
-COPY apps/app/package.json apps/app/
 COPY apps/worker/package.json apps/worker/
 
 COPY packages/auth/package.json packages/auth/
@@ -49,10 +48,3 @@ RUN cd apps/client && bun run build
 EXPOSE 5173
 # Typically you'd serve this with Nginx or a lightweight static server, but for now we'll run the preview
 CMD ["bun", "run", "start"]
-
-# Stage: Guest App (Builder & Server)
-FROM base AS app
-# Build the guest app
-RUN cd apps/app && bun run build
-EXPOSE 5174
-CMD ["bun", "run", "start:app"]

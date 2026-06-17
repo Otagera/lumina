@@ -138,20 +138,6 @@ services:
       - "5173:5173"
     environment:
       - VITE_API_URL=${VITE_API_URL:-http://localhost:3005}
-      - VITE_GUEST_APP_URL=${VITE_GUEST_APP_URL:-http://localhost:5174}
-    depends_on:
-      api:
-        condition: service_started
-
-  guest_app:
-    build:
-      context: .
-      target: app
-    ports:
-      - "5174:5174"
-    environment:
-      - VITE_API_URL=${VITE_API_URL:-http://localhost:3005}
-      - VITE_CLIENT_APP_URL=${VITE_CLIENT_APP_URL:-http://localhost:5173}
     depends_on:
       api:
         condition: service_started
