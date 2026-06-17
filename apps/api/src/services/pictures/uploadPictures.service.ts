@@ -39,6 +39,8 @@ const spec = Joi.object({
 	album_id: Joi.string().uuid().optional(),
 	uploaded_by: Joi.string().uuid().optional(),
 	guest_session_id: Joi.string().uuid().optional(),
+	expires_at: Joi.date().iso().optional(),
+	skip_face_indexing: Joi.boolean().optional().default(false),
 	status: Joi.string()
 		.valid("PENDING", "APPROVED", "REJECTED")
 		.default("APPROVED"),
@@ -51,6 +53,8 @@ const aliasSpec = {
 		files: "files",
 		userId: "uploaded_by",
 		guestSessionId: "guest_session_id",
+		expiresAt: "expires_at",
+		skipFaceIndexing: "skip_face_indexing",
 		status: "status",
 	},
 	response: {
@@ -289,6 +293,7 @@ const service = async (data) => {
 			uploaded_by: params.uploaded_by,
 			guest_session_id: params.guest_session_id,
 			status: hasQuota ? params.status : "QUOTA_EXCEEDED",
+			expires_at: params.expires_at,
 			file_hash: undefined,
 			album_id: params.album_id,
 		};
@@ -318,6 +323,7 @@ const service = async (data) => {
 					storageProvider: imageInfo.storageProvider,
 					storageKey: imageInfo.storageKey,
 					albumId: params.album_id,
+					skipFaceIndexing: params.skip_face_indexing || false,
 					worker: "imageOptimization",
 				},
 				{ removeOnComplete: { count: 100 }, removeOnFail: { count: 100 } },

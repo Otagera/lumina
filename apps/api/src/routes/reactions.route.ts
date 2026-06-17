@@ -6,7 +6,10 @@ import { guestPlugin } from "./middleware/guest.plugin.ts";
 
 const reactionsRoutes = new Elysia({ prefix: "/reactions" })
 	.use(guestPlugin)
-	.derive(authDerivation)
+	.derive(async (ctx) => {
+		try { return await authDerivation(ctx); }
+		catch { return { userId: undefined, user: undefined }; }
+	})
 	.post(
 		"/",
 		async ({ body, userId, guestSessionId, set }) => {

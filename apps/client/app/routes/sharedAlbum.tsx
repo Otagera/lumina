@@ -19,6 +19,7 @@ import { getBentoSpanClass } from "~/utils/bento";
 import { searchFaces } from "../utils/api";
 import axiosAPI from "../utils/axios";
 import { useUpload } from "../utils/UploadContext";
+import { ThemeProvider } from "../utils/ThemeContext";
 import { Upload } from "lucide-react";
 
 const SharedAlbumPage = () => {
@@ -29,6 +30,8 @@ const SharedAlbumPage = () => {
 	const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [uploadFiles, setUploadFiles] = useState<FileList | null>(null);
+	const [skipFaceIndexing, setSkipFaceIndexing] = useState(false);
+	const [showDeleteSearchData, setShowDeleteSearchData] = useState(false);
 	const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
 
 	const { album: albumData, phase, stats, isLoading, isError } = useSharedAlbum(token);
@@ -158,16 +161,26 @@ const SharedAlbumPage = () => {
 		}
 	};
 
-	const handleUpload = () => {
+	const handleUpload = async () => {
 		if (!uploadFiles || uploadFiles.length === 0 || !albumData) return;
-		addUploads(
-			uploadFiles,
-			albumData.id,
-			albumData.settings?.requires_approval ? "PENDING" : "APPROVED",
-			token,
-		);
+		const status = albumData.settings?.requires_approval ? "PENDING" : "APPROVED";
+
+		if (skipFaceIndexing) {
+			const form = new FormData();
+			Array.from(uploadFiles).forEach((f) => form.append("uploadedImages", f));
+			form.append("skipFaceIndexing", "true");
+			try {
+				await axiosAPI.post(`/public/albums/${token}/upload`, form);
+				toast.success(albumData.settings?.requires_approval ? "Photos pending approval." : "Photos uploaded.");
+			} catch {
+				toast.error("Upload failed.");
+			}
+		} else {
+			addUploads(uploadFiles, albumData.id, status, token);
+		}
 		setIsUploadModalOpen(false);
 		setUploadFiles(null);
+		setSkipFaceIndexing(false);
 	};
 
 	if (isLoading) {
@@ -208,8 +221,29 @@ const SharedAlbumPage = () => {
 	const showSemanticSearch =
 		albumData.settings?.semantic_search_enabled && phase === "delivered";
 
+	const hasExpiring = albumData.images?.some(
+		(img: any) => img.expires_at && new Date(img.expires_at) > new Date() && new Date(img.expires_at) < new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+	);
+	const earliestExpiry = hasExpiring
+		? albumData.images
+			?.filter((img: any) => img.expires_at)
+			.map((img: any) => new Date(img.expires_at))
+			.sort((a: Date, b: Date) => a.getTime() - b.getTime())[0]
+		: null;
+
 	return (
+		<ThemeProvider preset={albumData.settings?.theme_preset}>
 		<MainContainer className="pb-24 sm:pb-6">
+			{hasExpiring && earliestExpiry && (
+				<div className="mb-4 flex items-center gap-3 px-4 py-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl text-sm text-amber-800 dark:text-amber-300 font-medium">
+					<span>⚠</span>
+					<span>
+						Some photos expire on{" "}
+						<strong>{earliestExpiry.toLocaleDateString(undefined, { month: "long", day: "numeric" })}</strong>.
+						Download them before then.
+					</span>
+				</div>
+			)}
 			<SharedAlbumHero
 				album={albumData}
 				phase={phase}
@@ -294,8 +328,39 @@ const SharedAlbumPage = () => {
 					onResults={(results) => {
 						const ids = new Set(results.map((r) => r.imageId));
 						setFilteredImageIds(ids);
+						setShowDeleteSearchData(true);
 					}}
 				/>
+			)}
+
+			{showDeleteSearchData && filteredImageIds && filteredImageIds.size > 0 && (
+				<div className="fixed bottom-24 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 bg-zinc-900/95 backdrop-blur-md border border-zinc-700 rounded-2xl shadow-2xl text-sm text-zinc-300">
+					<span>Your selfie was not saved.</span>
+					<button
+						type="button"
+						className="text-rose-400 font-bold hover:text-rose-300 transition-colors underline"
+						onClick={async () => {
+							try {
+								await axiosAPI.delete(`/public/albums/${token}/selfie-data`);
+								setFilteredImageIds(null);
+								setShowDeleteSearchData(false);
+								toast.success("Search data deleted.");
+							} catch {
+								toast.error("Failed to delete search data.");
+							}
+						}}
+					>
+						Delete search data
+					</button>
+					<button
+						type="button"
+						className="text-zinc-500 hover:text-zinc-300 transition-colors ml-1"
+						onClick={() => setShowDeleteSearchData(false)}
+						aria-label="Dismiss"
+					>
+						&times;
+					</button>
+				</div>
 			)}
 
 			<BulkActionBar
@@ -343,9 +408,21 @@ const SharedAlbumPage = () => {
 						</div>
 					</div>
 
+					<label className="flex items-center gap-3 mb-6 cursor-pointer select-none">
+						<input
+							type="checkbox"
+							checked={skipFaceIndexing}
+							onChange={(e) => setSkipFaceIndexing(e.target.checked)}
+							className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-sage focus:ring-sage"
+						/>
+						<span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
+							Don't use my photos for face search
+						</span>
+					</label>
+
 					<div className="flex gap-3">
 						<Button className="flex-1" onClick={handleUpload} disabled={!uploadFiles}>
-							Add to Queue
+							{skipFaceIndexing ? "Upload (No Face Search)" : "Add to Queue"}
 						</Button>
 						<Button variant="ghost" onClick={() => setIsUploadModalOpen(false)}>
 							Cancel
@@ -354,6 +431,7 @@ const SharedAlbumPage = () => {
 				</div>
 			</Modal>
 		</MainContainer>
+		</ThemeProvider>
 	);
 };
 

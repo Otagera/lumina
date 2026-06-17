@@ -1,4 +1,5 @@
 import type { RouteObject } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import PrivateRoute from "./components/PrivateRoute";
 import App, { ErrorBoundary as AppErrorBoundary } from "./root";
 import Album from "./routes/album";
@@ -12,11 +13,17 @@ import ResetPassword from "./routes/reset-password";
 import Search from "./routes/search";
 import Settings from "./routes/settings";
 import SharedAlbum from "./routes/sharedAlbum";
+import Slideshow from "./routes/slideshow";
 import Signup from "./routes/signup";
 import StylePreview from "./routes/style-preview";
 import Trash from "./routes/trash";
 import Usage from "./routes/usage";
 import Welcome from "./welcome/Welcome";
+
+const ETokenRedirect = () => {
+	const { token } = useParams<{ token: string }>();
+	return <Navigate to={`/share/${token}`} replace />;
+};
 
 export default [
 	{
@@ -45,8 +52,16 @@ export default [
 				element: <ResetPassword />,
 			},
 			{
+				path: "e/:token",
+				element: <ETokenRedirect />,
+			},
+			{
 				path: "share/:token",
 				element: <SharedAlbum />,
+			},
+			{
+				path: "share/:token/slideshow",
+				element: <Slideshow />,
 			},
 			{
 				path: "join/:token",

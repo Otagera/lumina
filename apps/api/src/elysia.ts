@@ -231,6 +231,18 @@ export const createElysiaApp = async () => {
 
 		eventEmitter.setMaxListeners(100);
 
+		// Schedule daily image expiration sweep (3am UTC, skip in test env)
+		if (config.env !== "test") {
+			queueServices.defaultQueueLib
+				.getQueue()
+				.add(
+					"expireImages",
+					{ worker: "expireImages" },
+					{ repeat: { pattern: "0 3 * * *" }, jobId: "expire-images-cron" },
+				)
+				.catch((err) => logger.error("Failed to schedule expireImages cron", { error: err.message }));
+		}
+
 		return app;
 	} catch (error: any) {
 		console.log("Failed to start Elysia server:", error);

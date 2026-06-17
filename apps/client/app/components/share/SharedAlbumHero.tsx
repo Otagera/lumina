@@ -1,5 +1,6 @@
 import { Camera, QrCode, Upload } from "lucide-react";
 import type { AlbumPhase, SharedAlbum } from "~/types";
+import { useTheme } from "~/utils/ThemeContext";
 import { Button } from "../standard/Button";
 import { PhaseBadge } from "./PhaseBadge";
 import { QuickContribute } from "./QuickContribute";
@@ -25,6 +26,7 @@ export const SharedAlbumHero = ({
 	onContribute,
 	onDownloadAll,
 }: SharedAlbumHeroProps) => {
+	const theme = useTheme();
 	const showContribute = album.canUpload && phase === "collecting";
 	const showDownloadAll = phase === "delivered" && onDownloadAll;
 
@@ -62,11 +64,17 @@ export const SharedAlbumHero = ({
 							: `${imageCount} photos · organized by the owner for you`}
 					</p>
 
+					{album.settings?.tagline && (
+						<p className="text-sm text-zinc-600 dark:text-zinc-300 font-medium italic">
+							{album.settings.tagline}
+						</p>
+					)}
+
 					{/* Desktop CTAs */}
 					<div className="hidden sm:flex flex-wrap gap-2 pt-2">
 						<button
 							type="button"
-							className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-sage text-zinc-950 rounded-control transition-all active:scale-95 hover:bg-sage/90"
+							className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold ${theme.accentBg} ${theme.accentText} rounded-control transition-all active:scale-95 ${theme.accentHover}`}
 							onClick={onFindMyFace}
 						>
 							<Camera className="w-3.5 h-3.5" aria-hidden />
@@ -113,7 +121,7 @@ export const SharedAlbumHero = ({
 				<div className="flex gap-2 px-4 py-3">
 					<button
 						type="button"
-						className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-sage text-zinc-950 rounded-control transition-all active:scale-95 hover:bg-sage/90 min-h-[44px]"
+						className={`flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold ${theme.accentBg} ${theme.accentText} rounded-control transition-all active:scale-95 ${theme.accentHover} min-h-[44px]`}
 						onClick={onFindMyFace}
 					>
 						<Camera className="w-4 h-4" aria-hidden />

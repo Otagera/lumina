@@ -93,6 +93,8 @@ export interface AlbumSettings {
 	expires_at?: string | null;
 	allow_guest_uploads?: boolean;
 	semantic_search_enabled?: boolean;
+	tagline?: string | null;
+	theme_preset?: string | null;
 }
 
 // API response uses different field names

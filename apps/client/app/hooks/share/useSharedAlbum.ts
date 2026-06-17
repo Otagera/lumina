@@ -10,11 +10,15 @@ export interface UseSharedAlbumResult {
 	isError: boolean;
 }
 
-export const useSharedAlbum = (token: string | undefined): UseSharedAlbumResult => {
+export const useSharedAlbum = (
+	token: string | undefined,
+	options?: { refetchInterval?: number },
+): UseSharedAlbumResult => {
 	const { data: albumResponse, isLoading, isError } = useQuery({
 		queryKey: ["shared-album", token],
 		queryFn: () => fetchSharedAlbum(token!),
 		enabled: !!token,
+		refetchInterval: options?.refetchInterval,
 	});
 
 	const album = albumResponse?.data;

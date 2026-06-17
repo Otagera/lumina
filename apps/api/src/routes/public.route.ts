@@ -10,6 +10,7 @@ import { getSharedImageService } from "../services/public/getSharedImage.service
 import { searchFacesPublicService } from "../services/public/searchFacesPublic.service.ts";
 import { selfieSearchService } from "../services/public/selfieSearch.service.ts";
 import { uploadPublicService } from "../services/public/uploadPublic.service.ts";
+import { deleteSelfieDataService } from "../services/public/deleteSelfieData.service.ts";
 import { addPublicReactionService } from "../services/reactions/addPublicReaction.service.ts";
 import { guestPlugin } from "./middleware/guest.plugin.ts";
 import { checkQuota } from "./middleware/quota.middleware";
@@ -393,6 +394,35 @@ const publicRoutes = new Elysia({ prefix: "/public" })
 					params: t.Object({ token: t.String() }),
 					body: t.Optional(t.Any()),
 					bodyLimit: 500 * 1024 * 1024,
+				},
+			)
+			.delete(
+				"/albums/:token/selfie-data",
+				async ({ params, set, guestSessionId }) => {
+					try {
+						const data = await deleteSelfieDataService({
+							shareToken: params.token,
+							guestSessionId: guestSessionId as string,
+						});
+
+						set.status = HTTP_STATUS_CODES.OK;
+						return {
+							status: "completed",
+							message: "Search data deleted.",
+							data,
+						};
+					} catch (error: any) {
+						set.status =
+							error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+						return {
+							status: "error",
+							message: error?.message || "Internal server error",
+							data: null,
+						};
+					}
+				},
+				{
+					params: t.Object({ token: t.String() }),
 				},
 			),
 	)
