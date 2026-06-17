@@ -1,12 +1,40 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { VitePWA } from "vite-plugin-pwa";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-// Define the target dynamically
 const target = process.env.API_TARGET || "http://localhost:3005";
 
 export default defineConfig({
-	plugins: [react(), tsconfigPaths()],
+	plugins: [
+		react(),
+		tsconfigPaths(),
+		VitePWA({
+			registerType: "autoUpdate",
+			includeAssets: ["icons/icon-192.svg", "icons/icon-512.svg"],
+			manifest: false,
+			workbox: {
+				globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+				runtimeCaching: [
+					{
+						urlPattern: /\/api\/v1\/public\/albums\/.*/,
+						handler: "NetworkFirst",
+						options: {
+							cacheName: "album-api-cache",
+							networkTimeoutSeconds: 3,
+							expiration: {
+								maxEntries: 40,
+								maxAgeSeconds: 60 * 60,
+							},
+							cacheableResponse: {
+								statuses: [0, 200],
+							},
+						},
+					},
+				],
+			},
+		}),
+	],
 	test: {
 		globals: true,
 		environment: "jsdom",
@@ -17,11 +45,7 @@ export default defineConfig({
 		host: true,
 		port: 5173,
 		proxy: {
-			"/api": {
-				target: target,
-				changeOrigin: true,
-				secure: false,
-			},
+			"/api": { target, changeOrigin: true, secure: false },
 		},
 		allowedHosts: true,
 	},
@@ -29,11 +53,7 @@ export default defineConfig({
 		host: true,
 		port: 4173,
 		proxy: {
-			"/api": {
-				target: target,
-				changeOrigin: true,
-				secure: false,
-			},
+			"/api": { target, changeOrigin: true, secure: false },
 		},
 	},
 });

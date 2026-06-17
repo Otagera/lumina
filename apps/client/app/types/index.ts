@@ -84,6 +84,30 @@ export interface UploadImagesProps {
 	};
 }
 
+// ============== Theme Types ==============
+
+export interface ThemeConfig {
+	preset?: string;
+	accent?: string;
+	background?: "light" | "dark" | "gradient";
+	gradientFrom?: string;
+	gradientTo?: string;
+	font?: "inter" | "playfair" | "raleway" | "dm-sans";
+	heroLayout?: "two-col" | "centered" | "banner";
+	heroMode?: "solid" | "image" | "slideshow";
+	heroImage?: string;
+	heroSlideshow?: string[];
+	showStats?: boolean;
+	showSearch?: boolean;
+	sections?: Array<"hero" | "stats" | "search" | "grid">;
+	gridStyle?: "bento" | "uniform" | "masonry";
+	cornerRadius?: "rounded" | "sharp" | "pill";
+	backgroundTexture?: "none" | "noise" | "dots" | "grid-lines";
+	brandingHandle?: string;
+	brandingUrl?: string;
+	showCoverInHero?: boolean;
+}
+
 // ============== Album Types ==============
 
 export interface AlbumSettings {
@@ -93,6 +117,8 @@ export interface AlbumSettings {
 	expires_at?: string | null;
 	allow_guest_uploads?: boolean;
 	semantic_search_enabled?: boolean;
+	tagline?: string | null;
+	theme_config?: ThemeConfig | null;
 }
 
 // API response uses different field names
@@ -182,12 +208,22 @@ export interface AlbumImage {
 	isPending?: boolean;
 }
 
+export type AlbumPhase = "collecting" | "curating" | "delivered";
+
+export interface AlbumStats {
+	guestCount: number;
+	recentMatches: number;
+	lastActivityAt: string | null;
+}
+
 export interface SharedAlbum {
 	id: string;
 	albumName: string;
 	settings?: AlbumSettings;
 	images: AlbumImage[];
 	canUpload?: boolean;
+	phase?: AlbumPhase;
+	stats?: AlbumStats;
 	coverImage?: { id: string | null; url: string | null } | string | null;
 }
 

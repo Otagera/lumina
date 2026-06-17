@@ -3,9 +3,11 @@ import { HTTP_STATUS_CODES } from "../../../../packages/utils/src/constants.util
 import { semanticSearchService } from "../services/pictures/semanticSearch.service.ts";
 import { authPlugin } from "./middleware/auth.plugin.ts";
 import { guestPlugin } from "./middleware/guest.plugin.ts";
+import { strictPublicRateLimit } from "./middleware/rate-limit.plugin.ts";
 
 const searchRoutes = new Elysia({ prefix: "/search" })
 	.use(guestPlugin)
+	.use(strictPublicRateLimit)
 	// Public semantic search (via share token)
 	.post(
 		"/semantic/public",

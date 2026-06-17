@@ -46,13 +46,14 @@ const service = async (params: any) => {
 	const queryEmbedding = response.data.embedding;
 	const embeddingModel = response.data.model || "clip-vit-b-32";
 
-	// 2. Perform vector search using the model
+	// 2. Perform vector search — over-fetch so the threshold filter still returns `limit` results
+	const fetchLimit = Math.min(limit * 5, 200);
 	const rawImages = await searchImagesByEmbedding({
 		embedding: queryEmbedding,
 		embeddingModel,
 		albumId,
 		shareToken,
-		limit,
+		limit: fetchLimit,
 	});
 
 	console.log(`[SEARCH] Found ${rawImages.length} results`);
@@ -88,10 +89,11 @@ const service = async (params: any) => {
 				similarity,
 			};
 		})
-		.filter((img) => img.similarity >= 0.5); // Only return results with at least 50% similarity
+		.filter((img) => img.similarity >= 0.2)
+		.slice(0, limit);
 
 	console.log(
-		`[SEARCH] Filtered ${rawImages.length} -> ${mappedImages.length} results (Threshold: 0.5)`,
+		`[SEARCH] Filtered ${rawImages.length} -> ${mappedImages.length} results (Threshold: 0.2)`,
 	);
 
 	return aliaserSpec(aliasSpec.response, {

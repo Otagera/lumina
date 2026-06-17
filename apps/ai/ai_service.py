@@ -106,6 +106,22 @@ def embedding_response(embedding):
     }
 
 
+PROMPT_TEMPLATES = [
+    "a photo of {}",
+    "a picture of {}",
+    "an image of {}",
+    "{}",
+]
+
+
+def _ensemble_text_embedding(encode_fn, text: str) -> np.ndarray:
+    """Average embeddings across prompt templates then renormalize."""
+    embeddings = np.stack([encode_fn(t.format(text)) for t in PROMPT_TEMPLATES])
+    mean = embeddings.mean(axis=0)
+    norm = np.linalg.norm(mean)
+    return mean / norm if norm > 0 else mean
+
+
 class SentenceTransformersClipAdapter:
     model_name = "clip-vit-b-32"
     backend = "torch"
@@ -117,7 +133,7 @@ class SentenceTransformersClipAdapter:
         self.model = SentenceTransformer("clip-ViT-B-32")
 
     def encode_text(self, text: str):
-        return self.model.encode(text)
+        return _ensemble_text_embedding(self.model.encode, text)
 
     def encode_image(self, image: Image.Image):
         return self.model.encode(image)
@@ -147,12 +163,15 @@ class OpenClipMobileClipAdapter:
         self.tokenizer = open_clip.get_tokenizer("MobileCLIP-S2")
         self.torch = torch
 
-    def encode_text(self, text: str):
+    def _encode_text_single(self, text: str):
         with self.torch.no_grad():
             tokens = self.tokenizer([text])
             features = self.model.encode_text(tokens)
             features = features / features.norm(dim=-1, keepdim=True)
             return features.squeeze(0).cpu().numpy()
+
+    def encode_text(self, text: str):
+        return _ensemble_text_embedding(self._encode_text_single, text)
 
     def encode_image(self, image: Image.Image):
         with self.torch.no_grad():

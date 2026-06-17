@@ -32,6 +32,7 @@ import { Button } from "./components/standard/Button";
 import { Card } from "./components/standard/Card";
 import { Heading } from "./components/standard/Heading";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { InstallPrompt } from "./components/InstallPrompt";
 import { UploadManager } from "./components/UploadManager";
 import { UsageIndicator } from "./components/UsageIndicator";
 import { AuthProvider, useAuth } from "./utils/auth";
@@ -254,6 +255,7 @@ export default function App() {
 					<UploadProvider>
 						<AppContent />
 						<UploadManager />
+						<InstallPrompt />
 						<Toaster
 							position="bottom-center"
 							toastOptions={{

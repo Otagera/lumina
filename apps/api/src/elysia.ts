@@ -22,7 +22,7 @@ import metricsRoutes from "./routes/metrics.route";
 import notificationsRoutes from "./routes/notifications.route";
 import peopleRoutes from "./routes/people.route";
 import picturesRoutes from "./routes/pictures.route";
-import publicRoutes from "./routes/public.route";
+import publicRoutes, { legacyGuestRedirect } from "./routes/public.route";
 import reactionsRoutes from "./routes/reactions.route";
 import searchRoutes from "./routes/search.route";
 import settingsRoutes from "./routes/settings.route";
@@ -186,6 +186,7 @@ export const createElysiaApp = async () => {
 					},
 				},
 			)
+			.use(legacyGuestRedirect)
 			.group("/api/v1", (app) =>
 				app
 					.use(authRoutes)
@@ -229,6 +230,18 @@ export const createElysiaApp = async () => {
 		}
 
 		eventEmitter.setMaxListeners(100);
+
+		// Schedule daily image expiration sweep (3am UTC, skip in test env)
+		if (config.env !== "test") {
+			queueServices.defaultQueueLib
+				.getQueue()
+				.add(
+					"expireImages",
+					{ worker: "expireImages" },
+					{ repeat: { pattern: "0 3 * * *" }, jobId: "expire-images-cron" },
+				)
+				.catch((err) => logger.error("Failed to schedule expireImages cron", { error: err.message }));
+		}
 
 		return app;
 	} catch (error: any) {

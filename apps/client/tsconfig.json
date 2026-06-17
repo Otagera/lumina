@@ -14,7 +14,8 @@
 			"node",
 			"vite/client",
 			"vitest/globals",
-			"@testing-library/jest-dom"
+			"@testing-library/jest-dom",
+			"vite-plugin-pwa/client"
 		],
 		"target": "ES2022",
 		"module": "ES2022",

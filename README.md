@@ -4,147 +4,159 @@
 
 ## Overview
 
-Lumina is an **AI Intelligence Layer** for your photo library. It allows users to organize photos, perform advanced face recognition, and host **Collaborative Events**. The platform separates AI compute from physical storage, offering a **Bring Your Own Storage (BYOS)** model that gives users full control over their data while leveraging powerful facial recognition and search.
+Lumina is an **AI-powered photo platform for events**. Hosts create albums, guests contribute photos via QR code without an account, and anyone can find every photo of themselves by taking a selfie. Lumina separates AI compute from physical storage — use managed Cloudflare R2 or connect your own S3-compatible bucket.
 
 ## Features
 
-- **Collaborative Events:** Host weddings, parties, or gatherings where guests can contribute photos via QR code without an account.
-- **Dedicated Guest App (PWA):** A lightweight, mobile-first web app optimized for fast loading and offline-ready capabilities.
-- **"Selfie to Join":** Guests can take a selfie to instantly find all photos of themselves within a shared event.
-- **Immersive Viewing:** TikTok-style vertical snap-scrolling for viewing images with overlaid actions (Love, Download, Share).
-- **BYOS (Bring Your Own Storage):** Connect your own AWS S3 or Cloudflare R2 bucket. Lumina handles the AI, while you own the files and the costs.
-- **Face Detection & Recognition:** Automatically detects and clusters faces using a high-performance background worker.
-- **Semantic Natural Language Search (Planned):** Search your photos using natural language (e.g., "cutting the cake") powered by lightweight vision models (CLIP) and `pgvector`.
-- **Managed Storage (R2):** Sustainable managed storage with zero egress fees powered by Cloudflare R2.
-- **Unified Real-time Updates:** Seamless UI synchronization across host dashboards and guest apps via Server-Sent Events (SSE).
-- **Background Uploads:** Persistent upload manager (using IndexedDB) allows uploads to continue in the background and resume after page reloads.
-- **Image Optimization:** Automatically generates optimized WebP versions of images for fast display.
+**For hosts**
+- **Collaborative Events** — Share one QR code. Guests upload photos directly; no account required.
+- **Visual Theme Editor** — Full-screen Framer-style editor at `/album/:id/theme`. 6 curated presets, custom accent color, font, hero layout (two-col / centered / full banner), background texture, corner radius tokens, photo grid style (bento / uniform / masonry), hero image or slideshow, and host branding strip.
+- **Moderation Queue** — Review and approve guest uploads before they go live.
+- **Face Clustering** — Automatic DBSCAN clustering groups recognized faces into people.
+- **People Management** — Tag and name recognized faces across the album.
+- **BYOS (Bring Your Own Storage)** — Connect AWS S3 or Cloudflare R2. Lumina handles the AI; you own the files.
+- **Usage & Billing** — Compute unit tracking with per-user quotas and billing webhook.
+- **Album Lifecycle** — Three phases: *collecting* → *curating* → *delivered*, surfaced in the shared album UI.
+
+**For guests**
+- **Selfie to Find My Photos** — Take a selfie; face search returns every matching photo in seconds.
+- **Semantic Search** — Natural language queries ("dancing", "beach", "cake cutting") powered by CLIP + pgvector.
+- **Guest Upload** — Contribute photos with optional face-indexing opt-out.
+- **Bulk Download** — ZIP generation for downloading all or selected photos.
+- **Privacy Controls** — Guests can delete their selfie embedding immediately after their search.
+
+**Platform**
+- **Real-time Updates** — SSE feed keeps guest albums live as photos are approved.
+- **Background Uploads** — Persistent upload manager (IndexedDB) survives page reloads.
+- **Image Optimization** — WebP conversion worker generates display-tier images automatically.
+- **Free-tier TTL** — Uploaded photos expire after 14 days on the free plan.
+- **Observability** — Structured JSON logging → Vector → Better Stack; Sentry for error tracking.
 
 ## Project Structure
 
 Lumina is a monorepo managed with [Bun Workspaces](https://bun.sh/docs/install/workspaces).
-- **`apps/`**: Contains the runnable services.
-  - `api`: The core backend built with Elysia JS.
-  - `client`: The host dashboard frontend built with React, Vite, and Tailwind CSS.
-  - `app`: The lightweight, mobile-first guest application (PWA).
-  - `ai`: The Python/FastAPI service for generating face and text embeddings.
-  - `worker`: The Bun background processor for image optimization and queues.
-- **`packages/`**: Contains shared libraries and domain models (e.g., `@lumina/models`, `@lumina/auth`, `@lumina/event-sdk`) to separate database logic and utilities from the application layer.
 
-## Installation
+```
+apps/
+  api/       — Core backend (Elysia JS + Bun)
+  client/    — Host dashboard + shared album guest experience (React + Vite + Tailwind)
+  ai/        — Python/FastAPI service: face embeddings (InsightFace) + CLIP semantic search
+  worker/    — Bun background processor: image optimization, queue draining
+packages/
+  models/    — Prisma-backed DB queries (@lumina/models)
+  auth/      — JWT + session logic (@lumina/auth)
+  config/    — DB + Redis client config (@lumina/config)
+  utils/     — Shared utilities: validators, image utils, cache (@lumina/utils)
+  event-sdk/ — Public album client types (@lumina/event-sdk)
+```
+
+## Getting Started
 
 ### Prerequisites
-- [Bun](https://bun.sh/) (v1.2+)
-- [Node.js](https://nodejs.org/) (v20+)
-- [Docker](https://www.docker.com/) (for full stack deployment)
+- [Bun](https://bun.sh/) v1.2+
+- [Python](https://python.org) 3.11+
+- [Docker](https://www.docker.com/) (for Postgres + Redis)
 
-To set up the project locally, follow these steps:
+### Local setup
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-repo/lumina.git
-   cd lumina
-   ```
-
-2. **Start Infrastructure (Postgres & Redis):**
-   ```bash
-   docker-compose up -d db redis
-   ```
-   
-3. **Install Dependencies:**
-   ```bash
-   bun install
-   ```
-
-### Running the Application
-
-The easiest way to run the entire stack is from the root directory:
-
-**Start All Services (Client, App, API, Worker, AI):**
 ```bash
+# 1. Clone
+git clone https://github.com/your-repo/lumina.git
+cd lumina
+
+# 2. Start infrastructure
+docker-compose up -d db redis
+
+# 3. Install JS/TS dependencies
+bun install
+
+# 4. Install Python dependencies
+cd apps/ai && pip install -r requirements.txt && cd ../..
+
+# 5. Apply DB migrations
+cd apps/api && bunx prisma migrate deploy && cd ../..
+
+# 6. Run all services
 bun run dev:all
 ```
 
-**Alternatively, start services individually:**
-- **API (Elysia):** `bun run dev:api`
-- **Dashboard (React):** `bun run dev`
-- **Guest App (React):** `bun run dev:app`
-- **Worker:** `bun run dev:worker`
-- **AI Service:** `bun run dev:ai`
+### Run services individually
 
-### Docker Deployment
+| Service | Command |
+|---|---|
+| API (Elysia) | `bun run dev:api` |
+| Client (React) | `bun run dev` |
+| Worker | `bun run dev:worker` |
+| AI service | `bun run dev:ai` |
 
-To build and start the entire application (including the guest app) in containers:
+### Docker (full stack)
+
 ```bash
 docker-compose up --build
 ```
 
-## Usage
+## API Reference
 
-1. **Sign Up/Login:** Create an account to start using the application.
-2. **Create Album:** Organize your photos by creating albums.
-3. **Upload Images:** Drag and drop images into an album. The background uploader will handle the process.
-4. **View & Search:** Click on an image to view details. Click on any detected face to find matches in the album.
-5. **Tag People:** Click "Tag Person" on a detected face to assign a name.
-6. **Share:** Use the "Share" button in an album to generate a public link for others.
-
-## API Endpoints
-
-The API is built with ElysiaJS. Key endpoints include:
-
-**Authentication**
-- `POST /api/v1/auth/signup`: Register a new user.
-- `POST /api/v1/auth/login`: Log in.
+**Auth**
+- `POST /api/v1/auth/signup` — Register
+- `POST /api/v1/auth/login` — Login
+- `POST /api/v1/auth/refresh` — Refresh token
+- `POST /api/v1/auth/logout` — Logout
 
 **Albums**
-- `GET /api/v1/albums`: List user albums.
-- `POST /api/v1/albums`: Create a new album.
-- `GET /api/v1/albums/:id`: Get album details.
-- `PUT /api/v1/albums/:id`: Update album (rename, generate share token).
+- `GET /api/v1/albums` — List albums
+- `POST /api/v1/albums` — Create album
+- `GET /api/v1/albums/:id` — Album detail
+- `PUT /api/v1/albums/:id` — Update album (name, settings, theme, share token)
+- `DELETE /api/v1/albums/:id` — Delete album
 
 **Images**
-- `GET /api/v1/images`: List images.
-- `POST /api/v1/images`: Upload images.
-- `GET /api/v1/images/:id`: Get image details and faces.
+- `POST /api/v1/images` — Upload images
+- `GET /api/v1/images/:id` — Image detail + faces
+- `DELETE /api/v1/images/:id` — Delete image
+- `POST /api/v1/images/bulk-download` — Initiate ZIP download job
+- `GET /api/v1/images/bulk-download/:jobId` — Poll ZIP status
 
 **Faces & People**
-- `GET /api/v1/faces/:id`: Get face details.
-- `POST /api/v1/faces/search`: Search for similar faces.
-- `PATCH /api/v1/faces/:id`: Update face (assign person).
-- `GET /api/v1/people`: List people.
-- `POST /api/v1/people`: Create a new person.
+- `GET /api/v1/faces/:id` — Face detail
+- `POST /api/v1/faces/search` — Face similarity search
+- `PATCH /api/v1/faces/:id` — Assign person to face
+- `GET /api/v1/people` — List people
+- `POST /api/v1/people` — Create person
+- `PUT /api/v1/people/:id` — Rename person
+- `DELETE /api/v1/people/:id` — Delete person
 
 **Search**
-- `POST /api/v1/search/semantic`: Search images using natural language (CLIP).
+- `POST /api/v1/search/semantic` — Natural language image search (CLIP)
 
-**Usage & Billing**
-- `GET /api/v1/usage`: Retrieve user usage statistics.
-- `GET /api/v1/usage/export`: Export usage report as CSV.
-- `POST /api/v1/webhooks/billing`: External billing metering webhook.
+**Public / Shared Albums**
+- `GET /api/v1/public/albums/:token` — View shared album (includes `theme_config`)
+- `POST /api/v1/public/albums/:token/upload` — Guest photo upload
+- `POST /api/v1/public/albums/:token/search-by-image` — Selfie → face match
+- `DELETE /api/v1/public/albums/:token/selfie-data` — Delete guest selfie embedding
+- `POST /api/v1/public/faces/search` — Face search in shared album
 
 **Settings & Storage**
-- `GET /api/v1/settings`: Fetch user preferences and storage configs.
-- `POST /api/v1/settings/storage`: Add a new BYOS storage configuration.
-- `PUT /api/v1/settings/storage/:id`: Update storage configuration.
-- `DELETE /api/v1/settings/storage/:id`: Remove storage configuration.
+- `GET /api/v1/settings` — User preferences + storage configs
+- `POST /api/v1/settings/storage` — Add BYOS config
+- `PUT /api/v1/settings/storage/:id` — Update BYOS config
+- `DELETE /api/v1/settings/storage/:id` — Remove BYOS config
 
-**Public (Shared & Events)**
-- `GET /api/v1/public/albums/:token`: View shared album.
-- `POST /api/v1/public/albums/:token/upload`: Guest upload to event.
-- `POST /api/v1/public/albums/:token/presigned-url`: Request guest upload URL.
-- `POST /api/v1/public/faces/search`: Search faces in shared album.
-- `POST /api/v1/public/albums/:token/search-by-image`: "Selfie to Join" search.
+**Usage**
+- `GET /api/v1/usage` — Usage stats
+- `POST /api/v1/webhooks/billing` — Billing metering webhook
+
+## Demo
+
+Visit `/share/demo` for a live themed example (wedding preset) that runs off an in-memory synthetic album — no DB record required.
 
 ## Contributing
 
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch: `git checkout -b feature/your-feature-name`
-3. Commit your changes: `git commit -m "Add your message here"`
-4. Push to your branch: `git push origin feature/your-feature-name`
-5. Open a pull request.
+1. Fork the repo.
+2. Create a branch: `git checkout -b feature/your-feature`
+3. Commit: `git commit -m "feat: your message"`
+4. Push and open a PR.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT](LICENSE)

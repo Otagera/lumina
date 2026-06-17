@@ -22,6 +22,8 @@ const spec = joi.object({
 			expires_at: joi.date().optional().allow(null),
 			allow_guest_uploads: joi.boolean().optional(),
 			semantic_search_enabled: joi.boolean().optional(),
+			tagline: joi.string().max(120).optional().allow(null, ""),
+			theme_config: joi.object().optional().allow(null),
 		})
 		.optional(),
 });

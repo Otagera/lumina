@@ -13,6 +13,7 @@ const TRUST_SIGNALS = [
 	"1GB free storage",
 	"QR contribution",
 	"Privacy-first AI",
+	"Custom themes",
 ];
 
 export const HeroCollage = () => {

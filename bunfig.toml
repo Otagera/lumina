@@ -4,7 +4,6 @@ minimumReleaseAge = 259200
 
 # Exempt all workspace packages from the age gate (they are internal/ vetted)
 minimumReleaseAgeExcludes = [
-  "@lumina/app",
   "@lumina/api",
   "@lumina/worker",
   "@lumina/client",

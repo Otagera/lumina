@@ -77,7 +77,14 @@ class MobileClipOnnxAdapter:
         self.text_input_name = self.text_session.get_inputs()[0].name
         self.tokenizer = CLIPTokenizerFast.from_pretrained(tokenizer_name)
 
-    def encode_text(self, text: str):
+    PROMPT_TEMPLATES = [
+        "a photo of {}",
+        "a picture of {}",
+        "an image of {}",
+        "{}",
+    ]
+
+    def _encode_text_single(self, text: str) -> np.ndarray:
         tokens = self.tokenizer(
             [text],
             padding="max_length",
@@ -87,6 +94,12 @@ class MobileClipOnnxAdapter:
         )["input_ids"].astype(np.int64)
         features = self.text_session.run(None, {self.text_input_name: tokens})[0]
         return _normalize(features)
+
+    def encode_text(self, text: str) -> np.ndarray:
+        embeddings = np.stack([self._encode_text_single(t.format(text)) for t in self.PROMPT_TEMPLATES])
+        mean = embeddings.mean(axis=0)
+        norm = np.linalg.norm(mean)
+        return mean / norm if norm > 0 else mean
 
     def encode_image(self, image: Image.Image):
         pixels = _preprocess_image(image)

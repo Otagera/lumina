@@ -54,9 +54,9 @@ export const ShareModal = ({
 		}
 	};
 
-	const guestAppUrl =
-		import.meta.env.VITE_GUEST_APP_URL || "http://localhost:5174";
-	const shareUrl = `${guestAppUrl}/e/${shareToken}`;
+	const clientUrl =
+		import.meta.env.VITE_CLIENT_URL || window.location.origin;
+	const shareUrl = `${clientUrl}/share/${shareToken}`;
 
 	const copyToClipboard = () => {
 		navigator.clipboard.writeText(shareUrl);

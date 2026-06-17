@@ -216,14 +216,14 @@ const run = async (jobData) => {
 
 		console.log(`Optimized image saved: ${optimizedPathOrKey}`);
 
-		// 6. Queue next step: Face Recognition
-		// We trigger this AFTER optimization so the AI service has a reliable version to work with if needed,
-		// though it usually uses the original for best quality.
-		await queueServices.faceRecognitionQueueLib.addJob("faceRecognition", {
-			imageId,
-			albumId,
-			worker: "faceRecognition",
-		});
+		// 6. Queue next step: Face Recognition (skip if uploader opted out)
+		if (!jobData.skipFaceIndexing) {
+			await queueServices.faceRecognitionQueueLib.addJob("faceRecognition", {
+				imageId,
+				albumId,
+				worker: "faceRecognition",
+			});
+		}
 
 		return {
 			status: "success",

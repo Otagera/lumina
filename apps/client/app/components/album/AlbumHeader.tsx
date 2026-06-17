@@ -1,5 +1,6 @@
 import {
 	MoreVertical,
+	Paintbrush,
 	Pencil,
 	Settings2,
 	Share2,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import AlbumCover from "~/components/AlbumCover";
 import { Button } from "~/components/standard/Button";
 import { Card } from "~/components/standard/Card";
@@ -51,6 +53,7 @@ export function AlbumHeader({
 	isRenamePending,
 }: AlbumHeaderProps) {
 	const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (!moreMenuOpen) return;
@@ -212,6 +215,17 @@ export function AlbumHeader({
 							>
 								<Settings2 size={16} />
 								Album Settings
+							</button>
+							<button
+								type="button"
+								onClick={() => {
+									setMoreMenuOpen(false);
+									navigate(`/album/${album?.id}/theme`);
+								}}
+								className="w-full px-4 py-2 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
+							>
+								<Paintbrush size={16} />
+								Customize Theme
 							</button>
 							<button
 								type="button"

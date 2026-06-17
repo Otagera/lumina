@@ -1,3 +1,11 @@
+export type AlbumPhase = "collecting" | "curating" | "delivered";
+
+export interface AlbumStats {
+	guestCount: number;
+	recentMatches: number;
+	lastActivityAt: string | null;
+}
+
 export interface PublicAlbumSettings {
 	is_event?: boolean;
 	requires_approval?: boolean;
@@ -5,6 +13,9 @@ export interface PublicAlbumSettings {
 	expires_at?: string | null;
 	allow_guest_uploads?: boolean;
 	semantic_search_enabled?: boolean;
+	curating?: boolean;
+	delivered?: boolean;
+	tagline?: string | null;
 	[key: string]: unknown;
 }
 
@@ -12,6 +23,9 @@ export interface PublicAlbum {
 	id: string;
 	albumName?: string;
 	settings?: PublicAlbumSettings;
+	canUpload?: boolean;
+	phase?: AlbumPhase;
+	stats?: AlbumStats;
 	[key: string]: unknown;
 }
 

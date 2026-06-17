@@ -78,11 +78,15 @@ Steps are designed to be independently shippable and reversible. Each step lists
 
 **Goal:** Single public read returns everything the unified UI needs.
 
+**Prerequisite:** `curating` and `delivered` columns already exist in `schema.prisma` on `album_settings` but **no migration has been run** — the database does not have these columns yet. Run `prisma migrate dev --name add_album_lifecycle_flags` before writing any phase-derivation logic in the service.
+
+**Housekeeping:** `apps/api/src/routes/public.route.ts` currently registers `GET /public/albums/:token/highlights` **twice** (duplicate handler). Remove the second definition (the one with `parseInt` on line ~143) as part of this step's file touch.
+
 **Files:**
 
-- `apps/api/src/services/public/getSharedAlbum.service.ts` — extend response with `phase`, `stats: { guestCount, recentMatches, lastActivityAt }`. Compute `phase` from `album.canUpload`, `album.curating`, `album.delivered`, and timestamps. Compute `stats` with a single Prisma aggregate (count distinct guest sessions on `guest_uploads`/`face_searches`; max(`created_at`) for `lastActivityAt`).
+- `apps/api/src/services/public/getSharedAlbum.service.ts` — extend response with `phase`, `stats: { guestCount, recentMatches, lastActivityAt }`. Compute `phase` from `album.settings.curating`, `album.settings.delivered`, `canUpload`, and timestamps. Compute `stats` with a single Prisma aggregate (count distinct guest sessions on `guest_uploads`/`face_searches`; max(`created_at`) for `lastActivityAt`).
 - `apps/api/src/services/public/getSharedAlbumStats.service.ts` — **optional split** if the aggregate is heavy. New service, mirrors `BaseService` pattern (alias → validate → query → alias). Joi schema: `{ token: joi.string().required() }`. Cache with `CACHE_TTL.SHORT` (60s).
-- `apps/api/src/routes/public.route.ts` — bind `GET /public/albums/:token` (already exists, just returns extended shape) and optionally `GET /public/albums/:token/stats`.
+- `apps/api/src/routes/public.route.ts` — bind `GET /public/albums/:token` (already exists, just returns extended shape) and optionally `GET /public/albums/:token/stats`. Remove the duplicate `GET /public/albums/:token/highlights` handler.
 - `packages/event-sdk/src/types/public.ts` — add `phase: "collecting" | "curating" | "delivered"` and `stats` to `PublicAlbum` type.
 - `apps/api/src/tests_native/services/public/getSharedAlbum.test.ts` — extend existing tests with phase-derivation cases and stats shape.
 
@@ -109,8 +113,11 @@ Steps are designed to be independently shippable and reversible. Each step lists
 
 **Goal:** Bring real-time reaction updates that the PWA already has into the client.
 
+**Prerequisite:** `POST /api/public/albums/:token/images/:imageId/react` does not exist yet. The general `POST /api/v1/reactions/` endpoint (`reactions.route.ts`) accepts `{ imageId, type? }` with optional auth and guest session support, but it is not nested under the public-albums path. A new public endpoint must be scaffolded here.
+
 **Files:**
 
+- `apps/api/src/routes/public.route.ts` — scaffold `POST /public/albums/:token/images/:imageId/react` **inside** the existing `strictPublicRateLimit` group. Body schema: `{ type?: string }`. Handler: verify the `imageId` belongs to the album identified by `:token`, then call `addReactionService({ imageId, guestSessionId })`. Import `addReactionService` from `../services/reactions/addReaction.service.ts` (already exists; already supports `guestSessionId`).
 - `apps/client/app/hooks/share/useLiveAlbum.ts` — copy from `apps/app/app/hooks/useLiveAlbum.ts`. Same EventSource wiring to `/api/public/albums/:id/events`. No changes needed beyond import paths.
 - `apps/client/app/components/share/ReactionButton.tsx` — extracted heart button; calls `POST /api/public/albums/:token/images/:imageId/react` via Eden. Consumes optimistic update from `useLiveAlbum`.
 - `apps/client/app/Images/ImageGridItem.tsx` — already has heart slot; wire it through `useLiveAlbum`-merged reactions when on `/share/:token` path.
@@ -155,6 +162,7 @@ Steps are designed to be independently shippable and reversible. Each step lists
 
 **Files:**
 
+- `apps/api/src/routes/search.route.ts` — `POST /search/semantic/public` currently has **zero rate limiting** (`searchRoutes` is a standalone Elysia instance with no limiter). Import `strictPublicRateLimit` from `./middleware/rate-limit.plugin.ts` and apply it to this route or the whole `searchRoutes` group.
 - `apps/client/app/components/share/SemanticSearchBar.tsx` — port of `apps/app/app/components/event/EventSearchBar.tsx`. Renders only when `album.settings.semantic_search_enabled`.
 - `apps/client/app/components/share/FaceReviewCarousel.tsx` — port of `apps/app/app/components/event/EventFaceReview.tsx` and `apps/app/app/components/FaceReviewCard.tsx`. Shows after a successful selfie search with multiple candidates.
 - `packages/ui/src/components/domain/SemanticSearchSuggestions.tsx` — new shared chip strip ("dancing", "cake cutting", "speeches") consumed by `SemanticSearchBar`.
@@ -185,12 +193,15 @@ Steps are designed to be independently shippable and reversible. Each step lists
 
 **Goal:** Cheap hygiene for any QRs still in the wild, even though QR backwards-compat is officially waived.
 
+**Note on ordering:** QR codes generated today point to `VITE_GUEST_APP_URL/e/${shareToken}` (hardcoded in `apps/client/app/components/ShareModal.tsx:59`). The redirect **must ship and be live** before `ShareModal.tsx` is updated — otherwise QRs generated between the two deploys will 404.
+
 **Files:**
 
 - `apps/api/src/routes/public.route.ts` — add `GET /e/:token` returning `301` to `/share/:token` (or handle at reverse-proxy if simpler).
+- `apps/client/app/components/ShareModal.tsx` — after the redirect is live: replace lines 57-59 with `const shareUrl = \`${import.meta.env.VITE_CLIENT_URL}/share/${shareToken}\`;`. Retire `VITE_GUEST_APP_URL` from all env files and Coolify config.
 - Update marketing copy / README / `apps/docs/coolify-deployment-journey.md` to reflect the new single domain.
 
-**Acceptance:** `curl -I /e/demo` returns `301 Location: /share/demo`.
+**Acceptance:** `curl -I /e/demo` returns `301 Location: /share/demo`. QR codes generated after the ShareModal update scan to `/share/:token` directly.
 
 ---
 
@@ -262,7 +273,7 @@ How the three phases render across the three breakpoints.
 |---|---|---|---|
 | **Collecting** | Phase pill in hero top-right · Quick Contribute as primary sticky bottom CTA · Find-My-Face as secondary · semantic search collapsed behind a search icon · live reactions visible | 2-col hero · Contribute + Find-My-Face inline · semantic search bar visible · stats strip hidden | Full Hero · 3-card stats strip · semantic search prominent · `BulkActionBar` (host only) · multi-file `UploadManager` |
 | **Curating** | Banner above grid: "Your photographer is curating these photos." · Quick Contribute hidden · Find-My-Face still visible · grid filters to APPROVED only | Same banner · contribute button hidden | Same banner · stats strip continues to update · host sees pending count in `BulkActionBar` |
-| **Delivered** | Phase pill shows date · "Download all" sticky bottom CTA (links to desktop client if mobile-zip not implemented) · Find-My-Face + semantic search promoted | "Download all" inline · semantic search at top | "Download all" prominent · stats strip becomes "final stats" snapshot · grid switches to magazine-bento variant for a high-fidelity feel |
+| **Delivered** | Phase pill shows date · "Download all" sticky bottom CTA (calls existing `handleBulkDownload` with all IDs pre-selected — JSZip already available) · Find-My-Face + semantic search promoted | "Download all" inline · semantic search at top | "Download all" prominent · stats strip becomes "final stats" snapshot · grid switches to magazine-bento variant for a high-fidelity feel |
 
 Phase transitions never reload the page — they re-render off the same React Query cache when the host flips `curating`/`delivered` on the album record. SSE (`useLiveAlbum`) pushes the new phase to live viewers.
 
@@ -309,15 +320,21 @@ Every step above must satisfy:
 
 ---
 
-## 9. Open questions (to resolve before Sprint A starts)
+## 9. Open questions — resolved 2026-06-17
 
-1. **Album model fields for phases** — do `albums.curating` and `albums.delivered` boolean columns exist, or do we derive purely from `canUpload` + dates? Check `packages/models/src/albums.model.ts`.
-2. **Reactions storage** — confirm the public reactions endpoint exists; in PWA today it's `POST /api/public/albums/:token/images/:imageId/react`. If not, scaffold during step 3.
-3. **Where do generated QR codes point right now?** — even though backwards-compat is waived, knowing the answer informs whether step 8's redirect is "nice-to-have" or "load-bearing for ~N% of traffic".
-4. **Semantic search rate limit** — `/search/semantic/public` should move under `strictPublicRateLimit` regardless; do that during step 6.
-5. **Home page scenario showcase** — the user asked whether the landing should showcase both wedding *and* social-event scenarios. Out of scope for this consolidation; tracked separately in `feature-roadmap-2026.md`. Decision needed: one shared Hero with a scenario toggle, or two stacked scenario sections.
-6. **Download all on mobile** — defer to desktop link or implement client-side zip via JSZip (already a dep of the client)? Affects step 4's delivered-phase CTA.
-7. **InstallPrompt copy** — current PWA copy says "Lumina"; new copy should match the rebranded product name.
+1. **Album model fields for phases** — `curating` (`Boolean @default(false)`) and `delivered` (`Boolean @default(false)`) exist in `schema.prisma` on `album_settings` with comment "Lifecycle phase flags (for consolidation plan)". **No migration has been run** — the database does not have these columns yet. Sprint A Step 1 must include `prisma migrate dev --name add_album_lifecycle_flags` before any phase-derivation logic can be written in the service.
+
+2. **Reactions storage** — `POST /api/public/albums/:token/images/:imageId/react` does **not** exist. The general `POST /api/v1/reactions/` endpoint exists and already supports guest sessions, but is not under the public-albums path and does not verify album ownership. Must be scaffolded in Step 3 inside `public.route.ts`'s `strictPublicRateLimit` group, with album-ownership validation before calling `addReactionService`.
+
+3. **Where do generated QR codes point right now?** — `ShareModal.tsx:59` generates `${VITE_GUEST_APP_URL}/e/${shareToken}`. The Step 8 redirect is **load-bearing**: QR codes already generated or printed point to `/e/:token`. Redirect must be deployed before `ShareModal.tsx` is updated to use `VITE_CLIENT_URL/share/:token`.
+
+4. **Semantic search rate limit** — `POST /search/semantic/public` has **zero rate limiting**. `searchRoutes` (`search.route.ts`) is a standalone Elysia instance separate from `publicRoutes`; neither `publicRateLimit` nor `strictPublicRateLimit` is applied to it. Step 6 must import and apply `strictPublicRateLimit` from `rate-limit.plugin.ts`.
+
+5. **Home page scenario showcase** — Deferred. Out of scope for this consolidation. See `feature-roadmap-2026.md`.
+
+6. **Download all on mobile** — No new implementation needed. `sharedAlbum.tsx` already imports JSZip (line 2) and has `handleBulkDownload` wired to `BulkActionBar`. For the delivered-phase mobile sticky CTA, expose this same handler with all image IDs pre-selected. No JSZip vs. server-zip decision required.
+
+7. **InstallPrompt copy** — Both apps already use "Lumina" branding. PWA copy (`"Install Lumina for faster loading offline."` / `"Add to Home Screen on iPhone/iPad."`) can be ported verbatim from `apps/app/app/components/InstallPrompt.tsx`. No rename needed.
 
 ---
 

@@ -294,6 +294,25 @@ export const AlbumSettingsModal = ({
 						className="h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 checked:bg-sage focus:ring-sage focus:ring-offset-2 transition-colors duration-200 ease-in-out cursor-pointer"
 					/>
 				</div>
+
+				{/* Guest Tagline */}
+				<div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
+					<p className="font-bold text-zinc-900 dark:text-white text-sm mb-2">
+						Guest Message
+					</p>
+					<textarea
+						rows={2}
+						maxLength={120}
+						placeholder="A short message shown to guests on the shared album page."
+						value={localSettings.tagline || ""}
+						onChange={(e) => handleSettingChange("tagline", e.target.value)}
+						className="w-full px-4 py-3 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-sm font-medium focus:ring-2 focus:ring-sage outline-none transition-all resize-none"
+					/>
+					<p className="text-[10px] text-zinc-500 mt-1 font-medium">
+						{(localSettings.tagline || "").length}/120 characters
+					</p>
+				</div>
+
 			</div>
 
 			<div className="mt-8 flex items-center space-x-3">

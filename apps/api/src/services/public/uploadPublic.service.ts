@@ -31,6 +31,7 @@ const spec = Joi.object({
 	files: Joi.any().optional(),
 	key: Joi.string().optional(),
 	guest_session_id: Joi.string().uuid().optional(),
+	skip_face_indexing: Joi.boolean().optional().default(false),
 });
 
 const aliasSpec = {
@@ -38,6 +39,7 @@ const aliasSpec = {
 		token: "share_token",
 		existingKey: "key",
 		guestSessionId: "guest_session_id",
+		skipFaceIndexing: "skip_face_indexing",
 	},
 	response: {
 		images: "images",
@@ -112,10 +114,18 @@ const service = async (data: any) => {
 			settings: true,
 			storage_config: true,
 			album_images: { include: { images: true }, take: 1 },
+			users: { select: { plan_name: true } },
 		},
 	});
 
 	if (!album) throw new NotFoundError("Album not found.");
+
+	// Determine TTL for free-tier creators (14-day expiry on guest uploads)
+	const planName = (album as any).users?.plan_name;
+	const expiresAt =
+		planName === "free"
+			? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+			: undefined;
 
 	const isCollaborative =
 		album.settings?.is_event && album.settings?.allow_guest_uploads;
@@ -335,6 +345,8 @@ const service = async (data: any) => {
 			files: newFiles,
 			status,
 			guestSessionId: params.guest_session_id,
+			expiresAt,
+			skipFaceIndexing: params.skip_face_indexing,
 			userId: undefined,
 		});
 	}
