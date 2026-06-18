@@ -151,11 +151,9 @@ jobs:
   # Only runs if at least one build job succeeded.
   # Skipped build jobs (no changes) don't block this from running.
   #
-  # Secrets to add in GitHub → Settings → Secrets and variables → Actions:
-  #   COOLIFY_URL        — base URL of your Coolify instance, e.g. https://coolify.example.com
-  #   COOLIFY_APP_UUID   — the UUID of your application in Coolify
-  #                        (visible in the URL when you open your app: /applications/<uuid>)
-  #   COOLIFY_TOKEN      — Coolify profile → API Tokens → create one, paste here
+  # Secret to add in GitHub → Settings → Secrets → Actions:
+  #   COOLIFY_WEBHOOK_URL — copy from your Coolify app → Settings →
+  #                         Deployments → "Deploy Webhook" URL
   deploy:
     needs: [build-api, build-worker, build-dashboard, build-ai]
     if: |
@@ -168,7 +166,4 @@ jobs:
     steps:
       - name: Trigger Coolify redeploy
         run: |
-          curl -fsSL -X POST \
-            "${{ secrets.COOLIFY_URL }}/api/v1/applications/${{ secrets.COOLIFY_APP_UUID }}/restart" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            -H "Content-Type: application/json"
+          curl -fsSL -X GET "${{ secrets.COOLIFY_WEBHOOK_URL }}"
