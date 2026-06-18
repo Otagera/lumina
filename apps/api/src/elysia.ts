@@ -159,6 +159,7 @@ export const createElysiaApp = async () => {
 							eventEmitter.on(EVENTS.FACE_CLUSTERED, handler);
 							eventEmitter.on(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
 							eventEmitter.on(EVENTS.REACTION_ADDED, handler);
+							eventEmitter.on(EVENTS.HIGHLIGHTS_READY, handler);
 
 							const cleanup = () => {
 								clearInterval(heartbeat);
@@ -167,6 +168,7 @@ export const createElysiaApp = async () => {
 								eventEmitter.off(EVENTS.FACE_CLUSTERED, handler);
 								eventEmitter.off(EVENTS.BULK_DOWNLOAD_COMPLETED, handler);
 								eventEmitter.off(EVENTS.REACTION_ADDED, handler);
+								eventEmitter.off(EVENTS.HIGHLIGHTS_READY, handler);
 								try {
 									controller.close();
 								} catch (_e) { }

@@ -329,6 +329,15 @@ const AlbumPage = () => {
 		editAlbumMutation.mutate({ albumId, coverImageId: newCoverId });
 	};
 
+	const generateHighlightsMutation = useMutation({
+		mutationFn: async () => {
+			const res = await api.albums[albumId!]["highlights"]["generate"].post({});
+			if ((res as any)?.error) throw new Error("Failed to queue highlights generation");
+		},
+		onSuccess: () => toast.success("Generating highlights… you'll be notified when ready."),
+		onError: (e: any) => toast.error(e.message || "Failed to generate highlights"),
+	});
+
 	const handleDeleteImage = (imageId: string) => {
 		batchDelete([imageId]);
 	};
@@ -447,6 +456,20 @@ const AlbumPage = () => {
 							</Button>
 						</div>
 					</form>
+				)}
+
+				{!isSearching && approvedImages.length >= 20 && (
+					<div className="flex justify-end mb-2">
+						<button
+							type="button"
+							onClick={() => generateHighlightsMutation.mutate()}
+							disabled={generateHighlightsMutation.isPending}
+							className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all disabled:opacity-50"
+						>
+							<Sparkles size={13} />
+							{generateHighlightsMutation.isPending ? "Generating..." : "Generate Highlights"}
+						</button>
+					</div>
 				)}
 
 				{!isSearching && (

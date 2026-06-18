@@ -12,6 +12,7 @@ export const EVENTS = {
 	FACE_CLUSTERED: "FACE_CLUSTERED",
 	BULK_DOWNLOAD_COMPLETED: "BULK_DOWNLOAD_COMPLETED",
 	REACTION_ADDED: "REACTION_ADDED",
+	HIGHLIGHTS_READY: "HIGHLIGHTS_READY",
 };
 
 const REDIS_CHANNEL = "facematch_events";
@@ -93,5 +94,15 @@ export const emitReactionAdded = async (payload: {
 	});
 
 	eventEmitter.emit(EVENTS.REACTION_ADDED, payload);
+	await redisClient.publish(REDIS_CHANNEL, message);
+};
+
+export const emitHighlightsReady = async (albumId: string) => {
+	const message = JSON.stringify({
+		type: EVENTS.HIGHLIGHTS_READY,
+		payload: { albumId },
+	});
+
+	eventEmitter.emit(EVENTS.HIGHLIGHTS_READY, { albumId });
 	await redisClient.publish(REDIS_CHANNEL, message);
 };

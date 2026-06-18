@@ -1,4 +1,4 @@
-import { Camera, ExternalLink, MonitorPlay, QrCode, Upload } from "lucide-react";
+import { Camera, ExternalLink, MonitorPlay, QrCode, Sparkles, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { AlbumPhase, SharedAlbum } from "~/types";
 import { useTheme } from "~/utils/ThemeContext";
@@ -16,6 +16,7 @@ interface SharedAlbumHeroProps {
 	onContribute: () => void;
 	onDownloadAll?: () => void;
 	onLiveDisplay?: () => void;
+	onViewHighlights?: () => void;
 }
 
 const accentStyle = {
@@ -68,11 +69,13 @@ export const SharedAlbumHero = ({
 	onContribute,
 	onDownloadAll,
 	onLiveDisplay,
+	onViewHighlights,
 }: SharedAlbumHeroProps) => {
 	const theme = useTheme();
 	const showContribute = album.canUpload && phase === "collecting";
 	const showDownloadAll = phase === "delivered" && onDownloadAll;
 	const showLiveDisplay = !!onLiveDisplay && !!album.settings?.is_event;
+	const showHighlights = !!onViewHighlights;
 	const { heroLayout, heroMode, heroImage, heroSlideshow, brandingHandle, brandingUrl, showCoverInHero } = theme;
 
 	const slideshowIdx = useSlideshowIndex(heroSlideshow, heroLayout === "banner" && heroMode === "slideshow");
@@ -125,6 +128,18 @@ export const SharedAlbumHero = ({
 				>
 					<MonitorPlay className="w-3.5 h-3.5" aria-hidden />
 					Live Display
+				</button>
+			)}
+
+			{showHighlights && (
+				<button
+					type="button"
+					className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md border border-zinc-200 dark:border-zinc-700 rounded-control text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-800 transition-all active:scale-95"
+					style={{ borderRadius: "var(--theme-radius-control)" }}
+					onClick={onViewHighlights}
+				>
+					<Sparkles className="w-3.5 h-3.5" aria-hidden />
+					Highlights
 				</button>
 			)}
 		</div>

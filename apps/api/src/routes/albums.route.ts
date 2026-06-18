@@ -14,6 +14,7 @@ import { resendInviteService } from "../services/albums/resendInvite.service.ts"
 import { updateMemberRoleService } from "../services/albums/updateMemberRole.service.ts";
 import { albumAnalyticsService } from "../services/albums/albumAnalytics.service.ts";
 import { generateDisplayPinService } from "../services/albums/generateDisplayPin.service.ts";
+import { generateHighlightsService } from "../services/albums/generateHighlights.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 import { checkAlbumPermissions } from "./middleware/permissions.plugin.ts";
 
@@ -505,6 +506,35 @@ albumsRoutes.get(
 	{
 		params: t.Object({ albumId: t.String() }),
 		query: t.Object({ period: t.Optional(t.String()) }),
+	},
+);
+
+albumsRoutes.post(
+	"/:albumId/highlights/generate",
+	async ({ params, set, userId }) => {
+		try {
+			const data = await generateHighlightsService({
+				albumId: params.albumId,
+				userId,
+			});
+
+			set.status = HTTP_STATUS_CODES.OK;
+			return {
+				status: "completed",
+				message: "Highlights generation queued.",
+				data,
+			};
+		} catch (error: any) {
+			set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+			return {
+				status: "error",
+				message: error?.message || "Internal server error",
+				data: null,
+			};
+		}
+	},
+	{
+		params: t.Object({ albumId: t.String() }),
 	},
 );
 

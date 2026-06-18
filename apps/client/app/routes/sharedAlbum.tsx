@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { MainContainer } from "~/components/MainContainer";
@@ -24,6 +25,7 @@ import { Upload } from "lucide-react";
 import JSZip from "jszip";
 import { ReactionButton } from "~/components/share/ReactionButton";
 import { DisplayPinModal } from "~/components/share/DisplayPinModal";
+import { HighlightsCarousel } from "~/components/share/HighlightsCarousel";
 
 const SharedAlbumPage = () => {
 	const { token } = useParams<{ token: string }>();
@@ -33,6 +35,7 @@ const SharedAlbumPage = () => {
 	const [isSelfieModalOpen, setIsSelfieModalOpen] = useState(false);
 	const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 	const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+	const [isHighlightsOpen, setIsHighlightsOpen] = useState(false);
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [uploadFiles, setUploadFiles] = useState<FileList | null>(null);
 	const [skipFaceIndexing, setSkipFaceIndexing] = useState(false);
@@ -41,6 +44,17 @@ const SharedAlbumPage = () => {
 
 	const { album: albumData, phase, stats, isLoading, isError } = useSharedAlbum(token);
 	const { reactions } = useLiveAlbum(albumData?.id);
+
+	const { data: highlightsData } = useQuery({
+		queryKey: ["album-highlights", token],
+		queryFn: async () => {
+			const res = await axiosAPI.get(`/public/albums/${token}/highlights`);
+			return (res?.data?.data as Array<{ imageId: string; imagePath: string; reactionCount: number }>) ?? [];
+		},
+		enabled: !!token,
+		staleTime: 60_000,
+	});
+	const highlights = highlightsData ?? [];
 	const {
 		searchQuery,
 		setSearchQuery,
@@ -418,6 +432,7 @@ const SharedAlbumPage = () => {
 					? () => handleGuestDownload(allImages.map((img: any) => img.imageId))
 					: undefined}
 				onLiveDisplay={albumData.settings?.is_event ? () => setIsPinModalOpen(true) : undefined}
+			onViewHighlights={highlights.length > 0 ? () => setIsHighlightsOpen(true) : undefined}
 			/>
 		),
 		stats: <StatsStrip stats={stats} isLoading={isLoading} />,
@@ -588,6 +603,14 @@ const SharedAlbumPage = () => {
 				onClose={() => setIsPinModalOpen(false)}
 				onVerify={handleVerifyPin}
 			/>
+
+			{isHighlightsOpen && highlights.length > 0 && (
+				<HighlightsCarousel
+					photos={highlights}
+					albumToken={token!}
+					onClose={() => setIsHighlightsOpen(false)}
+				/>
+			)}
 		</div>
 		</div>
 		</ThemeProvider>

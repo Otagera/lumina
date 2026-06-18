@@ -173,6 +173,15 @@ model album_views {
   @@index([album_id, created_at])
 }
 
+model album_highlights {
+  id         String   @id @default(uuid()) @db.Uuid
+  album_id   String   @unique @db.Uuid
+  image_ids  Json     @default("[]")
+  status     String   @default("pending") // pending, ready
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+}
+
 model usage_logs {
   id         Int      @id @default(autoincrement())
   user_id    String   @db.Uuid

@@ -34,6 +34,9 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({
 				if (data.albumId) {
 					queryClient.invalidateQueries({ queryKey: ["images", data.albumId] });
 				}
+				if (data.type === "HIGHLIGHTS_READY" && data.albumId) {
+					queryClient.invalidateQueries({ queryKey: ["album-highlights", data.albumId] });
+				}
 			} catch (err) {
 				console.error("Failed to parse SSE event:", err);
 			}
