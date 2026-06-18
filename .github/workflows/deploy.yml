@@ -66,6 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Lowercase owner
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -77,7 +79,7 @@ jobs:
           context: .
           target: api
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/lumina-api:latest
+          tags: ghcr.io/${{ env.OWNER }}/lumina-api:latest
           # GHA cache: unchanged layers (bun install, etc.) are reused
           # across runs even when only one file changed.
           cache-from: type=gha,scope=api
@@ -89,6 +91,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Lowercase owner
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -100,7 +104,7 @@ jobs:
           context: .
           target: worker
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/lumina-worker:latest
+          tags: ghcr.io/${{ env.OWNER }}/lumina-worker:latest
           cache-from: type=gha,scope=worker
           cache-to:   type=gha,scope=worker,mode=max
 
@@ -110,6 +114,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Lowercase owner
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -121,7 +127,7 @@ jobs:
           context: .
           target: client
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/lumina-dashboard:latest
+          tags: ghcr.io/${{ env.OWNER }}/lumina-dashboard:latest
           cache-from: type=gha,scope=dashboard
           cache-to:   type=gha,scope=dashboard,mode=max
 
@@ -131,6 +137,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Lowercase owner
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -142,7 +150,7 @@ jobs:
           context: .
           file: apps/ai/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/lumina-ai:latest
+          tags: ghcr.io/${{ env.OWNER }}/lumina-ai:latest
           cache-from: type=gha,scope=ai
           cache-to:   type=gha,scope=ai,mode=max
 
