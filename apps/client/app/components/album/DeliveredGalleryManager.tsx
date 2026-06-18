@@ -59,7 +59,7 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 		queryKey: ["album-images-delivered", deliveredAlbumId],
 		queryFn: async () => {
 			const res = await axiosAPI.get(`/albums/${deliveredAlbumId}/images`, {
-				params: { limit: 200, sortBy: "position" },
+				params: { limit: 200 },
 			});
 			return (res?.data?.data?.imagesInAlbum ?? []) as Array<{ images: AlbumImage; imageId: string }>;
 		},
