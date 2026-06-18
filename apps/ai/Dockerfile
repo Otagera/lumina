@@ -24,8 +24,7 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements and install
 # We assume the context is the root of the project to allow accessing requirements.txt
 COPY requirements.txt .
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the AI service code before semantic model preparation so Docker builds
 # can run the export/quantize scripts and bake ONNX artifacts into the image.
