@@ -151,7 +151,7 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 							<div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sage" />
 						</div>
 					) : (
-						<div className="grid grid-cols-3 gap-2 h-[calc(100vh-420px)] min-h-80 overflow-y-auto">
+						<div className="grid grid-cols-3 gap-2 max-h-[calc(100vh-420px)] min-h-80 overflow-y-auto">
 							{(sourceData ?? []).map((item) => (
 								<ImageCheckbox
 									key={item.imageId}
@@ -179,7 +179,7 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 							<p className="text-sm text-zinc-400">Select photos from the event album and add them here</p>
 						</div>
 					) : (
-						<div className="grid grid-cols-3 gap-2 h-[calc(100vh-420px)] min-h-80 overflow-y-auto">
+						<div className="grid grid-cols-3 gap-2 max-h-[calc(100vh-420px)] min-h-80 overflow-y-auto">
 							{(galleryData ?? []).map((item) => (
 								<div key={item.imageId} className="relative aspect-square rounded-xl overflow-hidden">
 									<img src={item.images?.imagePath} alt="" className="w-full h-full object-cover" />
