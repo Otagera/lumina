@@ -64,6 +64,8 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 	const [localGallery, setLocalGallery] = useState<GalleryItem[]>([]);
 	const [draggingId, setDraggingId] = useState<string | null>(null);
 	const dragSrcId = useRef<string | null>(null);
+	const isDragging = useRef(false);
+	const localGalleryRef = useRef<GalleryItem[]>([]);
 
 	const { data: sourceData, isLoading: sourceLoading } = useQuery({
 		queryKey: ["album-images-source", sourceAlbumId],
@@ -86,8 +88,12 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 	});
 
 	useEffect(() => {
-		if (galleryData && !draggingId) setLocalGallery(galleryData);
-	}, [galleryData, draggingId]);
+		localGalleryRef.current = localGallery;
+	}, [localGallery]);
+
+	useEffect(() => {
+		if (galleryData && !isDragging.current) setLocalGallery(galleryData);
+	}, [galleryData]);
 
 	const promoteMutation = useMutation({
 		mutationFn: async (imageIds: string[]) => {
@@ -112,6 +118,7 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 	});
 
 	const handleDragStart = (id: string) => {
+		isDragging.current = true;
 		dragSrcId.current = id;
 		setDraggingId(id);
 	};
@@ -130,13 +137,11 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 	};
 
 	const handleDragEnd = () => {
+		isDragging.current = false;
 		dragSrcId.current = null;
 		setDraggingId(null);
-		setLocalGallery((current) => {
-			const order = current.map((item, i) => ({ imageId: item.imageId, position: i }));
-			reorderMutation.mutate(order);
-			return current;
-		});
+		const order = localGalleryRef.current.map((item, i) => ({ imageId: item.imageId, position: i }));
+		reorderMutation.mutate(order);
 	};
 
 	const toggleId = (id: string) => {
