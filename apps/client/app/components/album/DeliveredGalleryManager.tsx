@@ -14,12 +14,27 @@ interface Props {
 function ImageCheckbox({
 	image,
 	selected,
+	alreadyAdded,
 	onToggle,
 }: {
 	image: AlbumImage;
 	selected: boolean;
+	alreadyAdded: boolean;
 	onToggle: () => void;
 }) {
+	if (alreadyAdded) {
+		return (
+			<div className="relative aspect-square rounded-xl overflow-hidden opacity-40 cursor-not-allowed">
+				<img src={image.imagePath} alt="" className="w-full h-full object-cover" />
+				<div className="absolute inset-0 bg-black/30 flex items-end justify-end p-1.5">
+					<span className="text-[10px] font-black text-white bg-sage rounded-full px-1.5 py-0.5 leading-none">
+						Added
+					</span>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<button
 			type="button"
@@ -86,6 +101,7 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 		});
 	};
 
+	const galleryIds = new Set((galleryData ?? []).map((item) => item.imageId));
 	const galleryLink = `${window.location.origin}/share/${deliveredShareToken}`;
 
 	const handleCopyLink = () => {
@@ -135,12 +151,13 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 							<div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sage" />
 						</div>
 					) : (
-						<div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto">
+						<div className="grid grid-cols-3 gap-2 h-[calc(100vh-420px)] min-h-80 overflow-y-auto">
 							{(sourceData ?? []).map((item) => (
 								<ImageCheckbox
 									key={item.imageId}
 									image={item.images}
 									selected={selectedIds.has(item.imageId)}
+									alreadyAdded={galleryIds.has(item.imageId)}
 									onToggle={() => toggleId(item.imageId)}
 								/>
 							))}
@@ -162,7 +179,7 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 							<p className="text-sm text-zinc-400">Select photos from the event album and add them here</p>
 						</div>
 					) : (
-						<div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto">
+						<div className="grid grid-cols-3 gap-2 h-[calc(100vh-420px)] min-h-80 overflow-y-auto">
 							{(galleryData ?? []).map((item) => (
 								<div key={item.imageId} className="relative aspect-square rounded-xl overflow-hidden">
 									<img src={item.images?.imagePath} alt="" className="w-full h-full object-cover" />
