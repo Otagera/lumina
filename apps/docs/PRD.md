@@ -37,6 +37,21 @@ A full-screen Framer-style editor at `/album/:id/theme`. Dimensions:
 
 All config is stored in `theme_config JSONB` on `album_settings`. CSS variables are injected at runtime — no class-name rebuilding required.
 
+### Guest Download Flow
+Guests can download their matched or selected photos from the shared album view without an account. The host controls availability via an **Allow Downloads** toggle (`album_settings.allow_downloads`); downloads are only active once the album reaches the *delivered* phase. Client-side JSZip bundles selected images into a zip using signed URLs, avoiding server-side memory pressure. A public endpoint `POST /public/albums/:token/download` accepts up to 100 image IDs and returns a signed URL per image.
+
+### Album Analytics
+Hosts see a real-time dashboard under the **Analytics** tab in the album manager. Tracked events are written to the lightweight `album_views` table (no FK to `users`, no cascade) at three points: page load (`page_view`), selfie search (`selfie_search`), and text search (`text_search`). The dashboard shows total views and unique visitors (distinct `session_hash`), selfie and text search counts, upload breakdown (host vs. guest), reaction totals by type, and a top-6 photo grid ranked by reactions. A period toggle switches between all-time and last-7-days.
+
+### Live Display Mode
+Venues can run Lumina on a screen as a real-time slideshow. The host generates a 4-digit PIN from album settings (`album_settings.display_pin`); guests enter the PIN on the shared album page to open `/share/:token/live`. The live display page subscribes to the SSE events stream and prepends newly approved photos in real time. Two modes: **Slideshow** (cross-fade every 4 s) and **Grid wall** (masonry, fills in as photos arrive), toggled with a button in the corner.
+
+### Smart Highlights Reel
+The host triggers a one-click highlights generation from the album view (available once ≥ 20 photos are approved). A background worker (`highlightsGeneration`) selects up to 10 photos: when reactions exist, it takes the top-reacted 70% and fills the remaining 30% with time-spread picks to diversify the story arc; when no reactions exist, it spreads evenly across the upload timeline. The selection is stored in `album_highlights` and the result is broadcast via `HIGHLIGHTS_READY` SSE. Guests on the shared album see a **Highlights** button that opens a full-screen carousel with keyboard/swipe navigation and a "Download Highlights" option.
+
+### Delivered Gallery
+Photographers can publish a curated subset of event photos as a polished official gallery. From album settings, the host creates a **Delivered Gallery** — a linked album with its own share token (`albums.source_album_id` FK). The **Gallery** tab in the album manager shows a dual-panel interface: event photos on the left (with checkboxes to select) and the gallery on the right. Photos promoted to the gallery can be drag-reordered; positions are saved to `album_images.position` and respected on the shared page. Selfie search on the delivered gallery covers both the delivered set and the original event album (cross-album face search).
+
 ### Storage & Pricing
 - **Compute credits** — users pay for face detection, embedding generation, clustering.
 - **Managed storage** — Cloudflare R2 (zero egress).

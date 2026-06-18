@@ -187,7 +187,7 @@ export const LivePreview = ({ demoToken = "demo" }: LivePreviewProps) => {
 									{isLoading ? "—" : facesCount}
 								</span>
 								<span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">
-									faces detected by Anoda
+									faces detected by Lumina
 								</span>
 							</div>
 							<div className="mt-2 h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
