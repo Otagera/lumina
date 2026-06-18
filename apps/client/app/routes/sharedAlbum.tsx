@@ -431,7 +431,8 @@ const SharedAlbumPage = () => {
 				onDownloadAll={phase === "delivered" && albumData.settings?.allow_downloads !== false
 					? () => handleGuestDownload(allImages.map((img: any) => img.imageId))
 					: undefined}
-				onLiveDisplay={albumData.settings?.is_event ? () => setIsPinModalOpen(true) : undefined}
+				onLiveDisplay={() => setIsPinModalOpen(true)}
+				shareToken={token}
 			onViewHighlights={highlights.length > 0 ? () => setIsHighlightsOpen(true) : undefined}
 			/>
 		),

@@ -309,8 +309,7 @@ export const AlbumSettingsModal = ({
 				</div>
 
 				{/* Live Display PIN */}
-				{localSettings.is_event && (
-					<div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
+				<div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
 						<div>
 							<p className="font-bold text-zinc-900 dark:text-white text-sm">
 								Live Display PIN
@@ -330,7 +329,6 @@ export const AlbumSettingsModal = ({
 							{generatePinMutation.isPending ? "Generating..." : displayPin ? "Regenerate" : "Generate PIN"}
 						</Button>
 					</div>
-				)}
 
 				{/* Webhooks */}
 				<div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">

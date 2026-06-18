@@ -1,6 +1,5 @@
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import { emitHighlightsReady } from "../../../../../packages/utils/src/events.util.ts";
-import { normalizeImagePath } from "../../../../../packages/utils/src/image.util.ts";
 
 const run = async (jobData) => {
 	const { albumId } = jobData;
@@ -34,11 +33,41 @@ const run = async (jobData) => {
 			return { status: "skipped", reason: "no approved images" };
 		}
 
-		// Sort by reaction count desc, pick up to 20
-		const sorted = [...approved].sort(
-			(a, b) => (b._count?.reactions ?? 0) - (a._count?.reactions ?? 0),
-		);
-		const selected = sorted.slice(0, 20);
+		const TARGET = Math.min(10, approved.length);
+		const maxReactions = Math.max(...approved.map((img) => img._count?.reactions ?? 0));
+
+		let selected;
+		if (maxReactions > 0) {
+			// Pick top reacted, then fill remaining slots with time-spread picks
+			const sorted = [...approved].sort(
+				(a, b) => (b._count?.reactions ?? 0) - (a._count?.reactions ?? 0),
+			);
+			const topHalf = Math.ceil(TARGET * 0.7);
+			const topPicks = sorted.slice(0, topHalf);
+			const remaining = sorted.slice(topHalf);
+			// Time-spread from remaining to diversify the story arc
+			const spreadCount = TARGET - topPicks.length;
+			const spreadPicks = [];
+			if (remaining.length > 0 && spreadCount > 0) {
+				const step = remaining.length / spreadCount;
+				for (let i = 0; i < spreadCount; i++) {
+					spreadPicks.push(remaining[Math.floor(i * step)]);
+				}
+			}
+			selected = [...topPicks, ...spreadPicks];
+		} else {
+			// No reactions — pick evenly across timeline
+			const chronological = [...approved].sort(
+				(a, b) =>
+					new Date(a.upload_date ?? 0).getTime() -
+					new Date(b.upload_date ?? 0).getTime(),
+			);
+			selected = [];
+			const step = chronological.length / TARGET;
+			for (let i = 0; i < TARGET; i++) {
+				selected.push(chronological[Math.floor(i * step)]);
+			}
+		}
 
 		// Sort final selection chronologically
 		selected.sort(

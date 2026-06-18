@@ -1,4 +1,5 @@
-import { Camera, ExternalLink, MonitorPlay, QrCode, Sparkles, Upload } from "lucide-react";
+import { Camera, ExternalLink, MonitorPlay, Sparkles, Upload } from "lucide-react";
+import { QRCode } from "react-qrcode-logo";
 import { useEffect, useState } from "react";
 import type { AlbumPhase, SharedAlbum } from "~/types";
 import { useTheme } from "~/utils/ThemeContext";
@@ -17,6 +18,7 @@ interface SharedAlbumHeroProps {
 	onDownloadAll?: () => void;
 	onLiveDisplay?: () => void;
 	onViewHighlights?: () => void;
+	shareToken?: string;
 }
 
 const accentStyle = {
@@ -70,11 +72,12 @@ export const SharedAlbumHero = ({
 	onDownloadAll,
 	onLiveDisplay,
 	onViewHighlights,
+	shareToken,
 }: SharedAlbumHeroProps) => {
 	const theme = useTheme();
 	const showContribute = album.canUpload && phase === "collecting";
 	const showDownloadAll = phase === "delivered" && onDownloadAll;
-	const showLiveDisplay = !!onLiveDisplay && !!album.settings?.is_event;
+	const showLiveDisplay = !!onLiveDisplay;
 	const showHighlights = !!onViewHighlights;
 	const { heroLayout, heroMode, heroImage, heroSlideshow, brandingHandle, brandingUrl, showCoverInHero } = theme;
 
@@ -423,18 +426,20 @@ export const SharedAlbumHero = ({
 					>
 						<img src={coverUrl} alt="" className="w-full h-full object-cover" />
 					</div>
-				) : (
+				) : shareToken ? (
 					<div
-						className="w-20 h-20 md:w-24 md:h-24 rounded-control flex items-center justify-center shrink-0 mx-auto md:mx-0"
-						style={{ background: "var(--theme-accent)", borderRadius: "var(--theme-radius-control)" }}
-						aria-hidden
+						className="w-20 h-20 md:w-24 md:h-24 rounded-control overflow-hidden shrink-0 mx-auto md:mx-0 bg-white p-1"
+						style={{ borderRadius: "var(--theme-radius-control)" }}
 					>
-						<QrCode
-							className="w-10 h-10 md:w-12 md:h-12"
-							style={{ color: "var(--theme-accent-fg)" }}
+						<QRCode
+							value={`${window.location.origin}/share/${shareToken}`}
+							size={80}
+							qrStyle="dots"
+							eyeRadius={4}
+							quietZone={2}
 						/>
 					</div>
-				)}
+				) : null}
 			</div>
 
 			{mobileCta}
