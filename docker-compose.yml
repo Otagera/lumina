@@ -129,13 +129,18 @@ services:
   dashboard:
     image: ghcr.io/otagera/lumina-dashboard:latest
     pull_policy: always
-    ports:
-      - "5173:5173"
     environment:
       - VITE_API_URL=${VITE_API_URL:-http://localhost:3005}
     depends_on:
       api:
         condition: service_started
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.lumina-dashboard.rule=Host(`lumina.otagera.xyz`)"
+      - "traefik.http.routers.lumina-dashboard.entrypoints=https"
+      - "traefik.http.routers.lumina-dashboard.tls=true"
+      - "traefik.http.routers.lumina-dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lumina-dashboard.loadbalancer.server.port=5173"
 
   logtail:
     image: timberio/vector:latest-debian
