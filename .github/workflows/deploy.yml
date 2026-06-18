@@ -155,34 +155,21 @@ jobs:
           cache-from: type=gha,scope=ai
           cache-to:   type=gha,scope=ai,mode=max
 
-  # ── 3. Deploy backend services via Coolify compose env ───────────────────
+  # ── 3. Deploy all services via Coolify compose env ───────────────────────
   #
-  # Only runs if at least one backend build succeeded.
+  # Runs if at least one build succeeded. Coolify pulls all updated images.
   # Secrets: COOLIFY_WEBHOOK_URL, COOLIFY_TOKEN
   deploy:
-    needs: [build-api, build-worker, build-ai]
+    needs: [build-api, build-worker, build-dashboard, build-ai]
     if: |
       always() && !failure() && !cancelled() &&
-      (needs.build-api.result    == 'success' ||
-       needs.build-worker.result == 'success' ||
-       needs.build-ai.result     == 'success')
+      (needs.build-api.result       == 'success' ||
+       needs.build-worker.result    == 'success' ||
+       needs.build-dashboard.result == 'success' ||
+       needs.build-ai.result        == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Coolify redeploy
         run: |
           curl -fsSL -X GET "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
-
-  # ── 4. Deploy dashboard (separate Coolify app, pulls from GHCR) ──────────
-  #
-  # Secret: COOLIFY_DASHBOARD_WEBHOOK_URL
-  # Variable: VITE_API_URL (e.g. https://api.otagera.xyz)
-  deploy-dashboard:
-    needs: build-dashboard
-    if: always() && needs.build-dashboard.result == 'success'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger dashboard redeploy
-        run: |
-          curl -fsSL -X GET "${{ secrets.COOLIFY_DASHBOARD_WEBHOOK_URL }}" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
