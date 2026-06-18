@@ -44,12 +44,10 @@ const aliasSpec = {
 	},
 };
 
-// Reserved share_token that backs the public marketing "Live preview"
-// section and the /share/demo route. When no DB record exists, we serve
-// a deterministic synthetic album so the preview always renders real
-// data, and admins can override by seeding an actual album with this
-// share_token.
-const DEMO_SHARE_TOKEN = "demo";
+// Reserved share_tokens that back the public marketing demos. When no DB
+// record exists we serve deterministic synthetic albums so the previews
+// always render real data. Admins can override by seeding actual albums.
+const DEMO_TOKENS = new Set(["demo", "demo-party", "demo-church"]);
 
 export type AlbumPhase = "collecting" | "curating" | "delivered";
 
@@ -134,7 +132,66 @@ const buildDemoAlbum = () => {
 				heroLayout: "centered",
 				cornerRadius: "rounded",
 				showStats: true,
-				showSearch: false,
+				showSearch: true,
+				sections: ["hero", "stats", "grid"],
+				brandingHandle: "@lumina.otagera",
+				brandingUrl: "https://lumina.otagera.xyz",
+			},
+			delivered: true,
+		},
+		canUpload: false,
+		phase: "delivered" as AlbumPhase,
+		stats: {
+			guestCount: 12,
+			recentMatches: 4,
+			lastActivityAt: new Date().toISOString(),
+		},
+		images,
+	};
+};
+
+const buildPartyDemoAlbum = () => {
+	const cover = (url: string) => ({ image_path: url, original_width: 1200, original_height: 800 });
+	const photos = [
+		cover("https://images.pexels.com/photos/1190298/pexels-photo-1190298.jpeg?auto=compress&cs=tinysrgb&w=1200"),
+		cover("https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg?auto=compress&cs=tinysrgb&w=1200"),
+		cover("https://images.pexels.com/photos/1543793/pexels-photo-1543793.jpeg?auto=compress&cs=tinysrgb&w=1200"),
+		cover("https://images.pexels.com/photos/787961/pexels-photo-787961.jpeg?auto=compress&cs=tinysrgb&w=1200"),
+		cover("https://images.pexels.com/photos/3771900/pexels-photo-3771900.jpeg?auto=compress&cs=tinysrgb&w=1200"),
+		cover("https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=1200"),
+	];
+	const images = photos.map((p, idx) => ({
+		image_id: `demo-party-img-${idx + 1}`,
+		imageId: `demo-party-img-${idx + 1}`,
+		imagePath: p.image_path,
+		originalSize: { width: p.original_width, height: p.original_height },
+		isPending: false,
+		reactionCount: 5 + idx * 2,
+		faces: Array.from({ length: 3 + (idx % 4) }, (_, fi) => ({ face_id: idx * 10 + fi + 1 })),
+		status: "APPROVED",
+		upload_date: new Date(Date.now() - idx * 43_200_000).toISOString(),
+	}));
+	return {
+		id: "00000000-0000-0000-0000-000000000001",
+		albumName: "Musa's Birthday Bash 🎉",
+		settings: {
+			is_event: true,
+			allow_guest_uploads: true,
+			requires_approval: false,
+			expires_at: null,
+			curating: false,
+			delivered: false,
+			tagline: "Blurry memories, crisp photos.",
+			theme_config: {
+				preset: "dark-luxe",
+				accent: "#7C3AED",
+				background: "dark",
+				backgroundTexture: "none",
+				font: "dm-sans",
+				heroLayout: "centered",
+				cornerRadius: "rounded",
+				showStats: true,
+				showSearch: true,
 				sections: ["hero", "stats", "grid"],
 				brandingHandle: "@lumina.otagera",
 				brandingUrl: "https://lumina.otagera.xyz",
@@ -143,8 +200,66 @@ const buildDemoAlbum = () => {
 		canUpload: true,
 		phase: "collecting" as AlbumPhase,
 		stats: {
-			guestCount: 12,
-			recentMatches: 4,
+			guestCount: 18,
+			recentMatches: 7,
+			lastActivityAt: new Date().toISOString(),
+		},
+		images,
+	};
+};
+
+const buildChurchDemoAlbum = () => {
+	const cover = (url: string) => ({ image_path: url, original_width: 1200, original_height: 800 });
+	const photos = [
+		cover("https://images.pexels.com/photos/2774556/pexels-photo-2774556.jpeg?auto=compress&cs=tinysrgb&w=1200"),
+		cover("https://images.pexels.com/photos/8468470/pexels-photo-8468470.jpeg?auto=compress&cs=tinysrgb&w=1200"),
+		cover("https://images.pexels.com/photos/1595385/pexels-photo-1595385.jpeg?auto=compress&cs=tinysrgb&w=1200"),
+		cover("https://images.pexels.com/photos/3184398/pexels-photo-3184398.jpeg?auto=compress&cs=tinysrgb&w=1200"),
+		cover("https://images.pexels.com/photos/8468673/pexels-photo-8468673.jpeg?auto=compress&cs=tinysrgb&w=1200"),
+		cover("https://images.pexels.com/photos/7214166/pexels-photo-7214166.jpeg?auto=compress&cs=tinysrgb&w=1200"),
+	];
+	const images = photos.map((p, idx) => ({
+		image_id: `demo-church-img-${idx + 1}`,
+		imageId: `demo-church-img-${idx + 1}`,
+		imagePath: p.image_path,
+		originalSize: { width: p.original_width, height: p.original_height },
+		isPending: false,
+		reactionCount: 2 + idx,
+		faces: Array.from({ length: 4 + (idx % 5) }, (_, fi) => ({ face_id: idx * 10 + fi + 1 })),
+		status: "APPROVED",
+		upload_date: new Date(Date.now() - idx * 86_400_000 * 7).toISOString(),
+	}));
+	return {
+		id: "00000000-0000-0000-0000-000000000002",
+		albumName: "Grace Community Church · June 2026",
+		settings: {
+			is_event: true,
+			allow_guest_uploads: true,
+			requires_approval: false,
+			expires_at: null,
+			curating: false,
+			delivered: false,
+			tagline: "Every service, beautifully remembered.",
+			theme_config: {
+				preset: "minimal",
+				accent: "#1d4ed8",
+				background: "light",
+				backgroundTexture: "none",
+				font: "inter",
+				heroLayout: "centered",
+				cornerRadius: "rounded",
+				showStats: true,
+				showSearch: true,
+				sections: ["hero", "stats", "grid"],
+				brandingHandle: "@lumina.otagera",
+				brandingUrl: "https://lumina.otagera.xyz",
+			},
+		},
+		canUpload: true,
+		phase: "collecting" as AlbumPhase,
+		stats: {
+			guestCount: 34,
+			recentMatches: 12,
 			lastActivityAt: new Date().toISOString(),
 		},
 		images,
@@ -222,7 +337,9 @@ const service = async (data: any) => {
 		});
 
 		if (!album) {
-			if (params.share_token === DEMO_SHARE_TOKEN) return buildDemoAlbum();
+			if (params.share_token === "demo") return buildDemoAlbum();
+			if (params.share_token === "demo-party") return buildPartyDemoAlbum();
+			if (params.share_token === "demo-church") return buildChurchDemoAlbum();
 			throw new NotFoundError("Album not found or link expired.");
 		}
 
@@ -291,8 +408,8 @@ const service = async (data: any) => {
 		? await fetchAlbum()
 		: await cacheGetOrSet(cacheKey, CACHE_TTL.SHORT, fetchAlbum);
 
-	// Fire-and-forget view tracking — skip demo and filtered views
-	if (params.share_token !== DEMO_SHARE_TOKEN && !params.status && !params.uploaderId) {
+	// Fire-and-forget view tracking — skip demo tokens and filtered views
+	if (!DEMO_TOKENS.has(params.share_token) && !params.status && !params.uploaderId) {
 		const albumId = (result as any)?.id;
 		if (albumId) {
 			prisma.album_views

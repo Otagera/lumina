@@ -6,6 +6,7 @@ import FeaturesSoft from "./FeaturesSoft";
 import HeroCollage from "./HeroCollage";
 import LivePreview from "./LivePreview";
 import PricingTiles from "./PricingTiles";
+import UseCaseSection from "./UseCaseSection";
 
 const Welcome = () => {
 	const { isAuthenticated, isInitialized } = useAuth();
@@ -26,6 +27,7 @@ const Welcome = () => {
 			<div className="relative mx-auto flex w-full max-w-6xl flex-col gap-20 px-6 py-14 sm:px-10 lg:py-20">
 				<HeroCollage />
 				<FeaturesSoft />
+				<UseCaseSection />
 				<LivePreview />
 				<PricingTiles plans={plans} isLoading={isPlansLoading} />
 			</div>

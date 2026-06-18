@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, QrCode, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
+import { QRCode } from "react-qrcode-logo";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "~/components/standard/Button";
@@ -64,36 +65,41 @@ export const LivePreview = ({ demoToken = "demo" }: LivePreviewProps) => {
 			<div className="max-w-5xl mx-auto space-y-8">
 				<div className="space-y-3 text-center">
 					<p className="text-[10px] font-black uppercase tracking-[0.3em] text-terracotta">
-						Sample event · Try the demo
+						AI face search · Try it now
 					</p>
 					<h2 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
-						See what your guests will experience.
+						Take a selfie. Find every photo of you.
 					</h2>
 					<p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto">
-						A real, public album running on the same API your guests use. Open
-						it on your phone to see the guest flow end-to-end.
+						Lumina's AI scans the entire album and surfaces every photo where
+						your face appears — in seconds, with no account.
 					</p>
 				</div>
 				<div className="rounded-tile border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/70 backdrop-blur-xl p-6 md:p-8 grid gap-8 md:grid-cols-[1.1fr_1fr]">
 					<div className="space-y-6">
-						<div className="flex items-center gap-4">
-							<div className="w-20 h-20 rounded-control bg-zinc-900 dark:bg-white flex items-center justify-center shrink-0">
-								<QrCode className="w-10 h-10 text-white dark:text-zinc-900" />
+						<div className="flex items-start gap-4">
+							<div
+								className="w-20 h-20 rounded-control overflow-hidden shrink-0 bg-white p-1"
+								style={{ borderRadius: "var(--theme-radius-control)" }}
+							>
+								<QRCode
+									value={`${window.location.origin}/share/demo`}
+									size={80}
+									qrStyle="dots"
+									eyeRadius={4}
+									quietZone={2}
+								/>
 							</div>
 							<div className="flex-1 min-w-0">
 								<p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
-									Public sample album
+									Scan to try it
 								</p>
 								<p className="font-black text-zinc-900 dark:text-white text-lg mt-1">
-									{isLoading ? (
-										<span className="inline-block h-5 w-40 rounded-control bg-zinc-200 dark:bg-zinc-800 animate-pulse align-middle" />
-									) : (
-										albumName
-									)}
+									Selfie search demo
 								</p>
 								<p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
 									{photoCount > 0
-										? `${photoCount} photos available`
+										? `${photoCount} photos to search`
 										: "Open to browse photos"}
 								</p>
 							</div>
@@ -101,24 +107,23 @@ export const LivePreview = ({ demoToken = "demo" }: LivePreviewProps) => {
 						<ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
 							<li className="flex items-start gap-2">
 								<span className="text-sage mt-0.5">·</span>
-								<span>Scan a QR or open the link on any phone</span>
+								<span>Scan the QR or open the link on any device</span>
 							</li>
 							<li className="flex items-start gap-2">
 								<span className="text-sage mt-0.5">·</span>
-								<span>Take a selfie — we find every photo of you</span>
+								<span>Take a quick selfie — no account, no app required</span>
 							</li>
 							<li className="flex items-start gap-2">
 								<span className="text-sage mt-0.5">·</span>
-								<span>Download originals, no account required</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="text-sage mt-0.5">·</span>
-								<span>Customize your album's look with themes</span>
+								<span>Instantly see every photo that includes your face</span>
 							</li>
 						</ul>
+						<p className="text-xs text-zinc-400 dark:text-zinc-500 italic">
+							Your selfie is used only for the search — it's never stored.
+						</p>
 						<Button asChild className="font-bold w-full sm:w-auto">
 							<Link to={demoHref}>
-								Open the sample event <ArrowRight className="h-4 w-4 ml-1.5" />
+								Try selfie search <ArrowRight className="h-4 w-4 ml-1.5" />
 							</Link>
 						</Button>
 					</div>
@@ -187,7 +192,7 @@ export const LivePreview = ({ demoToken = "demo" }: LivePreviewProps) => {
 									{isLoading ? "—" : facesCount}
 								</span>
 								<span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">
-									faces detected by Lumina
+									faces indexed · selfie-match any of them
 								</span>
 							</div>
 							<div className="mt-2 h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
