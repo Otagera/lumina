@@ -26,9 +26,8 @@ services:
       retries: 5
 
   ai_service:
-    build:
-      context: .
-      dockerfile: apps/ai/Dockerfile
+    image: ghcr.io/otagera/lumina-ai:latest
+    pull_policy: always
     volumes:
       - uploads:/app/apps/api/src/uploads
     deploy:
@@ -49,9 +48,8 @@ services:
         max-file: "3"
 
   api:
-    build:
-      context: .
-      target: api
+    image: ghcr.io/otagera/lumina-api:latest
+    pull_policy: always
     command: sh -c "cd apps/api && bun run migrate && bunx prisma db seed && cd /app && bun run start:api"
     ports:
       - "3005:3005"
@@ -93,10 +91,8 @@ services:
         max-file: "3"
 
   worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: worker
+    image: ghcr.io/otagera/lumina-worker:latest
+    pull_policy: always
     deploy:
       resources:
         limits:
@@ -131,9 +127,8 @@ services:
         max-file: "3"
 
   dashboard:
-    build:
-      context: .
-      target: client
+    image: ghcr.io/otagera/lumina-dashboard:latest
+    pull_policy: always
     ports:
       - "5173:5173"
     environment:
