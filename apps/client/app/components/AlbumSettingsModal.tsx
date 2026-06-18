@@ -260,6 +260,26 @@ export const AlbumSettingsModal = ({
 					</>
 				)}
 
+				{/* Allow Downloads */}
+				<div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
+					<div>
+						<p className="font-bold text-zinc-900 dark:text-white text-sm">
+							Allow Photo Downloads
+						</p>
+						<p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+							Guests can download photos from the shared album. Only active after album is delivered.
+						</p>
+					</div>
+					<input
+						type="checkbox"
+						checked={localSettings.allow_downloads !== false}
+						onChange={(e) =>
+							handleSettingChange("allow_downloads", e.target.checked)
+						}
+						className="h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 checked:bg-sage focus:ring-sage focus:ring-offset-2 transition-colors duration-200 ease-in-out cursor-pointer"
+					/>
+				</div>
+
 				{/* Webhooks */}
 				<div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
 					<Input

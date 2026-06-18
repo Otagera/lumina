@@ -21,6 +21,8 @@ import axiosAPI from "../utils/axios";
 import { useUpload } from "../utils/UploadContext";
 import { ThemeProvider } from "../utils/ThemeContext";
 import { Upload } from "lucide-react";
+import JSZip from "jszip";
+import { ReactionButton } from "~/components/share/ReactionButton";
 
 const SharedAlbumPage = () => {
 	const { token } = useParams<{ token: string }>();
@@ -147,6 +149,35 @@ const SharedAlbumPage = () => {
 
 	const handleDownloadAll = () => handleBulkDownload(allImages.map((img: any) => img.imageId));
 
+	const handleGuestDownload = async (imageIds: string[]) => {
+		if (imageIds.length === 0) { toast.error("No images selected"); return; }
+		const toastId = toast.loading(`Preparing ${imageIds.length} photos...`);
+		try {
+			const { data: res } = await axiosAPI.post(`/public/albums/${token}/download`, { imageIds });
+			const urls: Array<{ imageId: string; url: string }> = res.data.urls;
+			toast.loading("Downloading photos...", { id: toastId });
+			const zip = new JSZip();
+			await Promise.all(
+				urls.map(async ({ imageId, url }, i) => {
+					const response = await fetch(url);
+					const blob = await response.blob();
+					const ext = blob.type.split("/")[1] || "jpg";
+					zip.file(`photo-${i + 1}-${imageId.slice(0, 8)}.${ext}`, blob);
+				}),
+			);
+			const content = await zip.generateAsync({ type: "blob" });
+			const link = document.createElement("a");
+			link.href = URL.createObjectURL(content);
+			link.download = `photos-${Date.now()}.zip`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			toast.success("Download started!", { id: toastId });
+		} catch (error: any) {
+			toast.error(error.message || "Download failed.", { id: toastId });
+		}
+	};
+
 	const handleFaceSearch = async (faceId: number) => {
 		const toastId = toast.loading("Finding matching photos...");
 		try {
@@ -241,7 +272,7 @@ const SharedAlbumPage = () => {
 					{displayedImages.map((image: any) => {
 						const width = image.originalSize?.width || 0;
 						const height = image.originalSize?.height || 0;
-						const _liveCount = reactions[image.imageId] ?? image.reactionCount ?? 0;
+						const liveCount = reactions[image.imageId] ?? image.reactionCount ?? 0;
 						return (
 							<div key={image.imageId} className="relative aspect-square">
 								<ImageGridItem
@@ -255,6 +286,11 @@ const SharedAlbumPage = () => {
 									onClick={() => !image.isPending && setSelectedImage(image)}
 									variant="admin"
 								/>
+								{!image.isPending && token && (
+									<div className="absolute bottom-2 right-2 z-10">
+										<ReactionButton imageId={image.imageId} shareToken={token} count={liveCount} />
+									</div>
+								)}
 								{image.isPending && (
 									<div className="absolute top-2 left-2 z-10 px-2 py-1 bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-lg flex items-center gap-1.5">
 										<div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -272,7 +308,7 @@ const SharedAlbumPage = () => {
 					{displayedImages.map((image: any) => {
 						const width = image.originalSize?.width || 0;
 						const height = image.originalSize?.height || 0;
-						const _liveCount = reactions[image.imageId] ?? image.reactionCount ?? 0;
+						const liveCount = reactions[image.imageId] ?? image.reactionCount ?? 0;
 						return (
 							<div key={image.imageId} className="relative break-inside-avoid mb-2 w-full">
 								<ImageGridItem
@@ -286,6 +322,11 @@ const SharedAlbumPage = () => {
 									onClick={() => !image.isPending && setSelectedImage(image)}
 									variant="admin"
 								/>
+								{!image.isPending && token && (
+									<div className="absolute bottom-2 right-2 z-10">
+										<ReactionButton imageId={image.imageId} shareToken={token} count={liveCount} />
+									</div>
+								)}
 								{image.isPending && (
 									<div className="absolute top-2 left-2 z-10 px-2 py-1 bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-lg flex items-center gap-1.5">
 										<div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -306,7 +347,7 @@ const SharedAlbumPage = () => {
 						const area = width * height;
 						const isFeatured = area > 2000000;
 						const spanClass = getBentoSpanClass(width, height, index, isFeatured);
-						const _liveCount = reactions[image.imageId] ?? image.reactionCount ?? 0;
+						const liveCount = reactions[image.imageId] ?? image.reactionCount ?? 0;
 
 						return (
 							<div key={image.imageId} className={`relative cv-tile ${spanClass}`}>
@@ -321,6 +362,11 @@ const SharedAlbumPage = () => {
 									onClick={() => !image.isPending && setSelectedImage(image)}
 									variant="admin"
 								/>
+								{!image.isPending && token && (
+									<div className="absolute bottom-2 right-2 z-10">
+										<ReactionButton imageId={image.imageId} shareToken={token} count={liveCount} />
+									</div>
+								)}
 								{image.isPending && (
 									<div className="absolute top-2 left-2 z-10 px-2 py-1 bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-lg flex items-center gap-1.5">
 										<div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -351,7 +397,9 @@ const SharedAlbumPage = () => {
 				onClearFilter={clearSearch}
 				onFindMyFace={() => setIsSelfieModalOpen(true)}
 				onContribute={() => setIsUploadModalOpen(true)}
-				onDownloadAll={phase === "delivered" ? handleDownloadAll : undefined}
+				onDownloadAll={phase === "delivered" && albumData.settings?.allow_downloads !== false
+					? () => handleGuestDownload(allImages.map((img: any) => img.imageId))
+					: undefined}
 			/>
 		),
 		stats: <StatsStrip stats={stats} isLoading={isLoading} />,
@@ -448,7 +496,11 @@ const SharedAlbumPage = () => {
 			<BulkActionBar
 				selectedCount={selectedIds.size}
 				onClear={() => setSelectedIds(new Set())}
-				onDownload={handleBulkDownload}
+				onDownload={
+					albumData.settings?.allow_downloads !== false
+						? () => handleGuestDownload(Array.from(selectedIds))
+						: undefined
+				}
 			/>
 
 			<Modal

@@ -1,0 +1,3 @@
+ALTER TABLE "album_settings"
+  ADD COLUMN IF NOT EXISTS "allow_downloads" BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS "display_pin" VARCHAR;

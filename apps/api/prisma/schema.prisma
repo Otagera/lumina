@@ -65,6 +65,9 @@ model album_settings {
   // Lifecycle phase flags (for consolidation plan)
   curating                 Boolean   @default(false)
   delivered                Boolean   @default(false)
+  // Downloads & display
+  allow_downloads          Boolean   @default(true)
+  display_pin              String?
   // Custom theme & branding
   tagline                  String?   // Custom host message shown on shared page
   theme_config             Json?     // Full visual theme configuration (ThemeConfig)

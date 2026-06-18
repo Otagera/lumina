@@ -117,6 +117,8 @@ export interface AlbumSettings {
 	expires_at?: string | null;
 	allow_guest_uploads?: boolean;
 	semantic_search_enabled?: boolean;
+	allow_downloads?: boolean;
+	display_pin?: string | null;
 	tagline?: string | null;
 	theme_config?: ThemeConfig | null;
 }
