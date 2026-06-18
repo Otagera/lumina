@@ -15,6 +15,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AddToAlbumModal } from "~/components/AddToAlbumModal";
 import { AlbumSettingsModal } from "~/components/AlbumSettingsModal";
 import { AlbumHeader, AlbumToolbar } from "~/components/album";
+import { AlbumAnalytics } from "~/components/album/AlbumAnalytics";
 import { BackButton } from "~/components/BackButton";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { CompactListView } from "~/components/CompactListView";
@@ -456,6 +457,7 @@ const AlbumPage = () => {
 						onDisplayModeChange={setDisplayMode}
 						showModeration={showModeration}
 						showDuplicates={true}
+						showAnalytics={true}
 					/>
 				)}
 
@@ -476,7 +478,9 @@ const AlbumPage = () => {
 					</div>
 				)}
 
-				{view === "duplicates" && !isSearching ? (
+				{view === "analytics" && !isSearching ? (
+					<AlbumAnalytics albumId={albumId!} />
+				) : view === "duplicates" && !isSearching ? (
 					<DuplicateReview albumId={albumId!} />
 				) : (
 					<>

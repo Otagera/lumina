@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 
+import type { ViewMode } from "~/types";
+
 export interface UseInfiniteScrollOptions {
-	view: "gallery" | "moderation" | "duplicates";
+	view: ViewMode;
 	hasGalleryNextPage: boolean;
 	hasModerationNextPage: boolean;
 	isFetchingGalleryNext: boolean;

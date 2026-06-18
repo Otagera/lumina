@@ -7,6 +7,7 @@ export interface AlbumToolbarProps {
 	onDisplayModeChange: (mode: DisplayMode) => void;
 	showModeration?: boolean;
 	showDuplicates?: boolean;
+	showAnalytics?: boolean;
 }
 
 export function AlbumToolbar({
@@ -16,10 +17,11 @@ export function AlbumToolbar({
 	onDisplayModeChange,
 	showModeration = false,
 	showDuplicates = false,
+	showAnalytics = false,
 }: AlbumToolbarProps) {
 	return (
 		<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 w-full">
-			{(showModeration || showDuplicates) && (
+			{(showModeration || showDuplicates || showAnalytics) && (
 				<div
 					role="group"
 					aria-label="Album view"
@@ -60,6 +62,19 @@ export function AlbumToolbar({
 								}`}
 						>
 							Duplicates
+						</button>
+					)}
+					{showAnalytics && (
+						<button
+							type="button"
+							onClick={() => onViewChange("analytics")}
+							aria-pressed={view === "analytics"}
+							className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "analytics"
+									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+								}`}
+						>
+							Analytics
 						</button>
 					)}
 				</div>

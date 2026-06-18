@@ -163,6 +163,16 @@ model user_storage_configs {
   users             users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 }
 
+model album_views {
+  id           Int      @id @default(autoincrement())
+  album_id     String   @db.Uuid
+  session_hash String?
+  view_type    String   @default("page_view") // page_view, selfie_search, text_search
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([album_id, created_at])
+}
+
 model usage_logs {
   id         Int      @id @default(autoincrement())
   user_id    String   @db.Uuid

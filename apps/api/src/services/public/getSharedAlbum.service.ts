@@ -283,9 +283,27 @@ const service = async (data: any) => {
 		};
 	};
 
-	if (isPersonalView) return fetchAlbum();
+	const result = isPersonalView
+		? await fetchAlbum()
+		: await cacheGetOrSet(cacheKey, CACHE_TTL.SHORT, fetchAlbum);
 
-	return cacheGetOrSet(cacheKey, CACHE_TTL.SHORT, fetchAlbum);
+	// Fire-and-forget view tracking — skip demo and filtered views
+	if (params.share_token !== DEMO_SHARE_TOKEN && !params.status && !params.uploaderId) {
+		const albumId = (result as any)?.id;
+		if (albumId) {
+			prisma.album_views
+				.create({
+					data: {
+						album_id: albumId,
+						session_hash: params.guest_session_id ?? null,
+						view_type: "page_view",
+					},
+				})
+				.catch(() => {});
+		}
+	}
+
+	return result;
 };
 
 export const getSharedAlbumService = service;

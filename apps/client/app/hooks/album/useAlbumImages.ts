@@ -7,13 +7,14 @@ import type {
 	ApiResponse,
 	ImagesInAlbum,
 	ImagesInAlbumResponse,
+	ViewMode,
 } from "~/types";
 import { fetchAlbum, fetchImagesInAlbum, fetchSettings } from "~/utils/api";
 import { albumKeys, imageKeys, settingsKeys } from "~/utils/queryKeys";
 
 export interface UseAlbumImagesOptions {
 	albumId: string;
-	view: "gallery" | "moderation" | "duplicates";
+	view: ViewMode;
 	filters?: AlbumImageFilters;
 }
 

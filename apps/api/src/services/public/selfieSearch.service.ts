@@ -110,6 +110,17 @@ const service = async (data: any) => {
 		},
 	}));
 
+	// Fire-and-forget search tracking
+	prisma.album_views
+		.create({
+			data: {
+				album_id: album.album_id,
+				session_hash: null,
+				view_type: "selfie_search",
+			},
+		})
+		.catch(() => {});
+
 	return { faces: formattedResults };
 };
 

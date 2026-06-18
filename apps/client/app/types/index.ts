@@ -249,7 +249,7 @@ export type ImageStatus = "APPROVED" | "PENDING" | "REJECTED";
 
 // ============== UI State Types ==============
 
-export type ViewMode = "gallery" | "moderation" | "duplicates";
+export type ViewMode = "gallery" | "moderation" | "duplicates" | "analytics";
 export type DisplayMode = "grid" | "list";
 
 export interface UIState {

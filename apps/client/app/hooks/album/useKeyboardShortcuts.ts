@@ -1,8 +1,8 @@
 import { useCallback, useEffect } from "react";
-import type { AlbumImage, ImageStatus } from "~/types";
+import type { AlbumImage, ImageStatus, ViewMode } from "~/types";
 
 export interface UseKeyboardShortcutsOptions {
-	view: "gallery" | "moderation" | "duplicates";
+	view: ViewMode;
 	selectedIds: Set<string>;
 	images: AlbumImage[];
 	onModerate?: (status: ImageStatus, imageIds: string[]) => void;

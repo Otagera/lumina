@@ -12,6 +12,7 @@ import { removeAlbumService } from "../services/albums/removeAlbum.service.ts";
 import { updateImagesInAlbumStatusService } from "../services/albums/removeImagesInAlbum.service.ts";
 import { resendInviteService } from "../services/albums/resendInvite.service.ts";
 import { updateMemberRoleService } from "../services/albums/updateMemberRole.service.ts";
+import { albumAnalyticsService } from "../services/albums/albumAnalytics.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 import { checkAlbumPermissions } from "./middleware/permissions.plugin.ts";
 
@@ -445,5 +446,36 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			}),
 		},
 	);
+
+albumsRoutes.get(
+	"/:albumId/analytics",
+	async ({ params, query, set, userId }) => {
+		try {
+			const data = await albumAnalyticsService({
+				albumId: params.albumId,
+				userId,
+				period: query.period,
+			});
+
+			set.status = HTTP_STATUS_CODES.OK;
+			return {
+				status: "completed",
+				message: "Analytics fetched.",
+				data,
+			};
+		} catch (error: any) {
+			set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+			return {
+				status: "error",
+				message: error?.message || "Internal server error",
+				data: null,
+			};
+		}
+	},
+	{
+		params: t.Object({ albumId: t.String() }),
+		query: t.Object({ period: t.Optional(t.String()) }),
+	},
+);
 
 export default albumsRoutes;
