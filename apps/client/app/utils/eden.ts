@@ -1,7 +1,6 @@
 import { edenTreaty } from "@elysiajs/eden";
 
-// Use relative path to go through Vite proxy
-const API_BASE_URL = "";
+const API_BASE_URL = import.meta.env.DEV ? "" : import.meta.env.VITE_API_URL || "";
 
 export const eden = edenTreaty<any>(API_BASE_URL, {
 	$fetch: {
