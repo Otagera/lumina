@@ -129,8 +129,6 @@ jobs:
             VITE_API_URL=${{ vars.VITE_API_URL }}
             VITE_CLIENT_URL=${{ vars.VITE_CLIENT_URL }}
             VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
-          cache-from: type=gha,scope=dashboard
-          cache-to:   type=gha,scope=dashboard,mode=max
 
   build-ai:
     needs: changes
