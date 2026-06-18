@@ -328,6 +328,8 @@ export const getAlbumLinks = async (where, options = {}) => {
 	const orderBy =
 		sortBy === "oldest"
 			? { images: { upload_date: "asc" } }
+			: sortBy === "position"
+			? [{ position: "asc" as const }, { images: { upload_date: "desc" as const } }]
 			: { images: { upload_date: "desc" } };
 
 	const album = await fetchAlbumImages(filter, { ...options, orderBy });

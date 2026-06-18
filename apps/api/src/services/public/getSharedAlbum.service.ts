@@ -212,6 +212,10 @@ const service = async (data: any) => {
 						},
 					},
 					where: { images: imageFilter },
+					orderBy: [
+						{ position: "asc" },
+						{ images: { upload_date: "desc" } },
+					],
 				},
 				settings: true,
 			},

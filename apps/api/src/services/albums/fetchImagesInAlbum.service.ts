@@ -13,7 +13,7 @@ const spec = joi.object({
 	limit: joi.alternatives().try(joi.number(), joi.string()).optional(),
 	nextCursor: joi.string().optional(),
 	paginationType: joi.string().optional(),
-	sortBy: joi.string().valid("newest", "oldest").optional(),
+	sortBy: joi.string().valid("newest", "oldest", "position").optional(),
 	// Filters
 	startDate: joi.date().optional(),
 	endDate: joi.date().optional(),
