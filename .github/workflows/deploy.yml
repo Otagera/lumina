@@ -53,7 +53,6 @@ jobs:
               - 'packages/**'
               - 'package.json'
               - 'bun.lock'
-              - 'Dockerfile'
             ai:
               - 'apps/ai/**'
               - 'requirements.txt'
@@ -80,8 +79,6 @@ jobs:
           target: api
           push: true
           tags: ghcr.io/${{ env.OWNER }}/lumina-api:latest
-          # GHA cache: unchanged layers (bun install, etc.) are reused
-          # across runs even when only one file changed.
           cache-from: type=gha,scope=api
           cache-to:   type=gha,scope=api,mode=max
 
@@ -108,29 +105,6 @@ jobs:
           cache-from: type=gha,scope=worker
           cache-to:   type=gha,scope=worker,mode=max
 
-  build-dashboard:
-    needs: changes
-    if: needs.changes.outputs.dashboard == 'true' || github.event.inputs.force_all == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Lowercase owner
-        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: client
-          push: true
-          tags: ghcr.io/${{ env.OWNER }}/lumina-dashboard:latest
-          cache-from: type=gha,scope=dashboard
-          cache-to:   type=gha,scope=dashboard,mode=max
-
   build-ai:
     needs: changes
     if: needs.changes.outputs.ai == 'true' || github.event.inputs.force_all == 'true'
@@ -154,25 +128,35 @@ jobs:
           cache-from: type=gha,scope=ai
           cache-to:   type=gha,scope=ai,mode=max
 
-  # ── 3. Tell Coolify to pull the new images ────────────────────────────
+  # ── 3. Deploy backend services (api, worker, ai) via Coolify compose env ─
   #
-  # Only runs if at least one build job succeeded.
-  # Skipped build jobs (no changes) don't block this from running.
-  #
-  # Secret to add in GitHub → Settings → Secrets → Actions:
-  #   COOLIFY_WEBHOOK_URL — copy from your Coolify app → Settings →
-  #                         Deployments → "Deploy Webhook" URL
+  # Only runs if at least one backend build succeeded.
+  # Secrets: COOLIFY_WEBHOOK_URL, COOLIFY_TOKEN
   deploy:
-    needs: [build-api, build-worker, build-dashboard, build-ai]
+    needs: [build-api, build-worker, build-ai]
     if: |
       always() && !failure() && !cancelled() &&
-      (needs.build-api.result       == 'success' ||
-       needs.build-worker.result    == 'success' ||
-       needs.build-dashboard.result == 'success' ||
-       needs.build-ai.result        == 'success')
+      (needs.build-api.result    == 'success' ||
+       needs.build-worker.result == 'success' ||
+       needs.build-ai.result     == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Coolify redeploy
         run: |
           curl -fsSL -X GET "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
+
+  # ── 4. Deploy dashboard (separate Coolify webapp) ─────────────────────
+  #
+  # Fires directly from the path filter — no Docker build needed.
+  # Coolify builds the Vite app itself (Nixpacks).
+  # Secret: COOLIFY_DASHBOARD_WEBHOOK_URL
+  deploy-dashboard:
+    needs: changes
+    if: needs.changes.outputs.dashboard == 'true' || github.event.inputs.force_all == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger dashboard redeploy
+        run: |
+          curl -fsSL -X GET "${{ secrets.COOLIFY_DASHBOARD_WEBHOOK_URL }}" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
