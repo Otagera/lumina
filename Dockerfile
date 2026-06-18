@@ -43,7 +43,8 @@ CMD ["bun", "run", "start:worker"]
 
 # Stage: Client (Builder & Server)
 FROM base AS client
-# Build the client
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
 RUN cd apps/client && bun run build
 EXPOSE 5173
 # Typically you'd serve this with Nginx or a lightweight static server, but for now we'll run the preview
