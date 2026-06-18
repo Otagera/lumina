@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy } from "lucide-react";
-import { useState } from "react";
+import { Check, Copy, GripVertical } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import axiosAPI from "~/utils/axios";
 import type { AlbumImage } from "~/types";
@@ -10,6 +10,8 @@ interface Props {
 	deliveredAlbumId: string;
 	deliveredShareToken: string;
 }
+
+type GalleryItem = { images: AlbumImage; imageId: string };
 
 function ImageCheckbox({
 	image,
@@ -59,6 +61,9 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 	const queryClient = useQueryClient();
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [copied, setCopied] = useState(false);
+	const [localGallery, setLocalGallery] = useState<GalleryItem[]>([]);
+	const [dragging, setDragging] = useState(false);
+	const dragSrc = useRef<number | null>(null);
 
 	const { data: sourceData, isLoading: sourceLoading } = useQuery({
 		queryKey: ["album-images-source", sourceAlbumId],
@@ -66,7 +71,7 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 			const res = await axiosAPI.get(`/albums/${sourceAlbumId}/images`, {
 				params: { limit: 200, status: "APPROVED" },
 			});
-			return (res?.data?.data?.imagesInAlbum ?? []) as Array<{ images: AlbumImage; imageId: string }>;
+			return (res?.data?.data?.imagesInAlbum ?? []) as GalleryItem[];
 		},
 	});
 
@@ -76,9 +81,13 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 			const res = await axiosAPI.get(`/albums/${deliveredAlbumId}/images`, {
 				params: { limit: 200 },
 			});
-			return (res?.data?.data?.imagesInAlbum ?? []) as Array<{ images: AlbumImage; imageId: string }>;
+			return (res?.data?.data?.imagesInAlbum ?? []) as GalleryItem[];
 		},
 	});
+
+	useEffect(() => {
+		if (galleryData && !dragging) setLocalGallery(galleryData);
+	}, [galleryData, dragging]);
 
 	const promoteMutation = useMutation({
 		mutationFn: async (imageIds: string[]) => {
@@ -92,6 +101,39 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 		onError: (e: any) => toast.error(e?.response?.data?.message || "Failed to promote photos"),
 	});
 
+	const reorderMutation = useMutation({
+		mutationFn: async (order: Array<{ imageId: string; position: number }>) => {
+			await axiosAPI.put(`/albums/${deliveredAlbumId}/images/reorder`, { order });
+		},
+		onError: () => {
+			if (galleryData) setLocalGallery(galleryData);
+			toast.error("Failed to save order.");
+		},
+	});
+
+	const handleDragStart = (idx: number) => {
+		dragSrc.current = idx;
+		setDragging(true);
+	};
+
+	const handleDragEnter = (idx: number) => {
+		if (dragSrc.current === null || dragSrc.current === idx) return;
+		setLocalGallery((prev) => {
+			const next = [...prev];
+			const [moved] = next.splice(dragSrc.current!, 1);
+			next.splice(idx, 0, moved);
+			dragSrc.current = idx;
+			return next;
+		});
+	};
+
+	const handleDragEnd = () => {
+		setDragging(false);
+		dragSrc.current = null;
+		const order = localGallery.map((item, i) => ({ imageId: item.imageId, position: i }));
+		reorderMutation.mutate(order);
+	};
+
 	const toggleId = (id: string) => {
 		setSelectedIds((prev) => {
 			const next = new Set(prev);
@@ -101,7 +143,7 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 		});
 	};
 
-	const galleryIds = new Set((galleryData ?? []).map((item) => item.imageId));
+	const galleryIds = new Set(localGallery.map((item) => item.imageId));
 	const galleryLink = `${window.location.origin}/share/${deliveredShareToken}`;
 
 	const handleCopyLink = () => {
@@ -167,22 +209,43 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 
 				{/* Gallery panel */}
 				<div>
-					<h3 className="text-sm font-black uppercase tracking-widest text-zinc-400 mb-3">
-						Official Gallery ({(galleryData ?? []).length})
-					</h3>
+					<div className="flex items-center justify-between mb-3">
+						<h3 className="text-sm font-black uppercase tracking-widest text-zinc-400">
+							Official Gallery ({localGallery.length})
+						</h3>
+						{localGallery.length > 0 && (
+							<span className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
+								<GripVertical size={11} />
+								Drag to reorder
+							</span>
+						)}
+					</div>
 					{galleryLoading ? (
 						<div className="flex justify-center py-10">
 							<div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sage" />
 						</div>
-					) : (galleryData ?? []).length === 0 ? (
+					) : localGallery.length === 0 ? (
 						<div className="flex items-center justify-center h-32 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl">
 							<p className="text-sm text-zinc-400">Select photos from the event album and add them here</p>
 						</div>
 					) : (
 						<div className="grid grid-cols-3 gap-2 max-h-[calc(100vh-420px)] min-h-80 overflow-y-auto">
-							{(galleryData ?? []).map((item) => (
-								<div key={item.imageId} className="relative aspect-square rounded-xl overflow-hidden">
+							{localGallery.map((item, idx) => (
+								<div
+									key={item.imageId}
+									draggable
+									onDragStart={() => handleDragStart(idx)}
+									onDragEnter={() => handleDragEnter(idx)}
+									onDragEnd={handleDragEnd}
+									onDragOver={(e) => e.preventDefault()}
+									className={`relative aspect-square rounded-xl overflow-hidden cursor-grab active:cursor-grabbing transition-opacity ${
+										dragging && dragSrc.current === idx ? "opacity-40" : "opacity-100"
+									}`}
+								>
 									<img src={item.images?.imagePath} alt="" className="w-full h-full object-cover" />
+									<div className="absolute top-1 left-1 p-0.5 rounded-md bg-black/30 opacity-0 group-hover:opacity-100">
+										<GripVertical size={12} className="text-white" />
+									</div>
 								</div>
 							))}
 						</div>
