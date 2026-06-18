@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HardDrive } from "lucide-react";
 import { useEffect, useState } from "react";
+import { api } from "~/utils/eden";
 import DatePicker from "react-datepicker";
 import toast from "react-hot-toast";
 import { editAlbumSettings, fetchSettings } from "../utils/api";
@@ -27,6 +28,7 @@ export const AlbumSettingsModal = ({
 }: AlbumSettingsModalProps) => {
 	const queryClient = useQueryClient();
 	const [localSettings, setLocalSettings] = useState(settings || {});
+	const [displayPin, setDisplayPin] = useState<string | null>(settings?.display_pin ?? null);
 	const [selectedStorageId, setSelectedStorageId] = useState<string | null>(
 		storageConfigId || null,
 	);
@@ -65,6 +67,18 @@ export const AlbumSettingsModal = ({
 	const handleSettingChange = (key: string, value: any) => {
 		setLocalSettings((prev: any) => ({ ...prev, [key]: value }));
 	};
+
+	const generatePinMutation = useMutation({
+		mutationFn: async () => {
+			const res = await api.albums[albumId]["display-pin"].post({});
+			return (res as any)?.data?.data?.pin as string;
+		},
+		onSuccess: (pin) => {
+			setDisplayPin(pin);
+			toast.success("New PIN generated");
+		},
+		onError: () => toast.error("Failed to generate PIN"),
+	});
 
 	const handleDateChange = (date: Date | null) => {
 		setExpiresAt(date);
@@ -279,6 +293,30 @@ export const AlbumSettingsModal = ({
 						className="h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 checked:bg-sage focus:ring-sage focus:ring-offset-2 transition-colors duration-200 ease-in-out cursor-pointer"
 					/>
 				</div>
+
+				{/* Live Display PIN */}
+				{localSettings.is_event && (
+					<div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
+						<div>
+							<p className="font-bold text-zinc-900 dark:text-white text-sm">
+								Live Display PIN
+							</p>
+							<p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+								{displayPin ? (
+									<>Current PIN: <span className="font-black tracking-widest text-zinc-700 dark:text-zinc-200">{displayPin}</span></>
+								) : "No PIN set. Generate one to enable live display mode."}
+							</p>
+						</div>
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={() => generatePinMutation.mutate()}
+							disabled={generatePinMutation.isPending}
+						>
+							{generatePinMutation.isPending ? "Generating..." : displayPin ? "Regenerate" : "Generate PIN"}
+						</Button>
+					</div>
+				)}
 
 				{/* Webhooks */}
 				<div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { MainContainer } from "~/components/MainContainer";
 import { OfflineFallback } from "~/components/share/OfflineFallback";
@@ -23,13 +23,16 @@ import { ThemeProvider } from "../utils/ThemeContext";
 import { Upload } from "lucide-react";
 import JSZip from "jszip";
 import { ReactionButton } from "~/components/share/ReactionButton";
+import { DisplayPinModal } from "~/components/share/DisplayPinModal";
 
 const SharedAlbumPage = () => {
 	const { token } = useParams<{ token: string }>();
+	const navigate = useNavigate();
 	const { addUploads, tasks } = useUpload();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [isSelfieModalOpen, setIsSelfieModalOpen] = useState(false);
 	const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+	const [isPinModalOpen, setIsPinModalOpen] = useState(false);
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [uploadFiles, setUploadFiles] = useState<FileList | null>(null);
 	const [skipFaceIndexing, setSkipFaceIndexing] = useState(false);
@@ -175,6 +178,20 @@ const SharedAlbumPage = () => {
 			toast.success("Download started!", { id: toastId });
 		} catch (error: any) {
 			toast.error(error.message || "Download failed.", { id: toastId });
+		}
+	};
+
+	const handleVerifyPin = async (pin: string): Promise<boolean> => {
+		try {
+			const res = await axiosAPI.post(`/public/albums/${token}/display/verify`, { pin });
+			if (res.data?.data?.valid) {
+				setIsPinModalOpen(false);
+				navigate(`/share/${token}/live`);
+				return true;
+			}
+			return false;
+		} catch {
+			return false;
 		}
 	};
 
@@ -400,6 +417,7 @@ const SharedAlbumPage = () => {
 				onDownloadAll={phase === "delivered" && albumData.settings?.allow_downloads !== false
 					? () => handleGuestDownload(allImages.map((img: any) => img.imageId))
 					: undefined}
+				onLiveDisplay={albumData.settings?.is_event ? () => setIsPinModalOpen(true) : undefined}
 			/>
 		),
 		stats: <StatsStrip stats={stats} isLoading={isLoading} />,
@@ -564,6 +582,12 @@ const SharedAlbumPage = () => {
 					</div>
 				</div>
 			</Modal>
+
+			<DisplayPinModal
+				isOpen={isPinModalOpen}
+				onClose={() => setIsPinModalOpen(false)}
+				onVerify={handleVerifyPin}
+			/>
 		</div>
 		</div>
 		</ThemeProvider>

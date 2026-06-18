@@ -13,6 +13,7 @@ import { updateImagesInAlbumStatusService } from "../services/albums/removeImage
 import { resendInviteService } from "../services/albums/resendInvite.service.ts";
 import { updateMemberRoleService } from "../services/albums/updateMemberRole.service.ts";
 import { albumAnalyticsService } from "../services/albums/albumAnalytics.service.ts";
+import { generateDisplayPinService } from "../services/albums/generateDisplayPin.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 import { checkAlbumPermissions } from "./middleware/permissions.plugin.ts";
 
@@ -446,6 +447,35 @@ const albumsRoutes = new Elysia({ prefix: "/albums" })
 			}),
 		},
 	);
+
+albumsRoutes.post(
+	"/:albumId/display-pin",
+	async ({ params, set, userId }) => {
+		try {
+			const data = await generateDisplayPinService({
+				albumId: params.albumId,
+				userId,
+			});
+
+			set.status = HTTP_STATUS_CODES.OK;
+			return {
+				status: "completed",
+				message: "Display PIN generated.",
+				data,
+			};
+		} catch (error: any) {
+			set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+			return {
+				status: "error",
+				message: error?.message || "Internal server error",
+				data: null,
+			};
+		}
+	},
+	{
+		params: t.Object({ albumId: t.String() }),
+	},
+);
 
 albumsRoutes.get(
 	"/:albumId/analytics",

@@ -15,6 +15,7 @@ import Search from "./routes/search";
 import Settings from "./routes/settings";
 import SharedAlbum from "./routes/sharedAlbum";
 import Slideshow from "./routes/slideshow";
+import LiveDisplay from "./routes/liveDisplay";
 import Signup from "./routes/signup";
 import StylePreview from "./routes/style-preview";
 import Trash from "./routes/trash";
@@ -63,6 +64,10 @@ export default [
 			{
 				path: "share/:token/slideshow",
 				element: <Slideshow />,
+			},
+			{
+				path: "share/:token/live",
+				element: <LiveDisplay />,
 			},
 			{
 				path: "join/:token",

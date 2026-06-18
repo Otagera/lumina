@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { AlbumImage } from "~/types";
 
 export interface LivePayload {
 	type: string;
@@ -7,6 +8,7 @@ export interface LivePayload {
 
 export const useLiveAlbum = (albumId?: string) => {
 	const [reactions, setReactions] = useState<Record<string, number>>({});
+	const [newImages, setNewImages] = useState<AlbumImage[]>([]);
 
 	useEffect(() => {
 		if (!albumId) return;
@@ -24,6 +26,14 @@ export const useLiveAlbum = (albumId?: string) => {
 					const { imageId, count } = payload.data;
 					setReactions((prev) => ({ ...prev, [imageId]: count }));
 				}
+
+				if (
+					payload.type === "IMAGE_PROCESSED" &&
+					payload.data.albumId === albumId
+				) {
+					const image = payload.data.image as AlbumImage;
+					setNewImages((prev) => [image, ...prev]);
+				}
 			} catch (err) {
 				console.error("[SSE] Parse error:", err);
 			}
@@ -38,5 +48,5 @@ export const useLiveAlbum = (albumId?: string) => {
 		};
 	}, [albumId]);
 
-	return { reactions };
+	return { reactions, newImages };
 };
