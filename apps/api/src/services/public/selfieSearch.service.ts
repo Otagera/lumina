@@ -31,7 +31,13 @@ const service = async (data: any) => {
 	// 1. Verify the share token and get albumId
 	const album = await prisma.albums.findUnique({
 		where: { share_token: params.share_token },
-		include: { album_images: true },
+		include: {
+			album_images: true,
+			// For delivered galleries, also pull source album images
+			source_album: {
+				include: { album_images: true },
+			},
+		},
 	});
 
 	if (!album) throw new NotFoundError("Invalid share token.");
@@ -87,8 +93,11 @@ const service = async (data: any) => {
 
 	const searchEmbedding = faceData.results[0].faces[0].embedding;
 
-	// 4. Perform scoped vector search
-	const albumImageIds = album.album_images.map((ai) => ai.image_id);
+	// 4. Perform scoped vector search (include source album images for cross-album search)
+	const ownImageIds = album.album_images.map((ai) => ai.image_id);
+	const sourceImageIds = (album as any).source_album?.album_images?.map((ai: any) => ai.image_id) ?? [];
+	const albumImageIds = [...new Set([...ownImageIds, ...sourceImageIds])];
+
 	const searchResults = await searchFacesByEmbedding({
 		embedding: searchEmbedding,
 		threshold: 0.6,

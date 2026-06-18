@@ -76,13 +76,18 @@ const service = async (data: unknown) => {
 					) || [],
 		};
 
+		const firstDelivered = (album as any).delivered_albums?.[0] ?? null;
+		const deliveredAlbum = firstDelivered
+			? { id: firstDelivered.album_id, shareToken: firstDelivered.share_token }
+			: null;
+
 		const aliasRes = aliaserSpec(aliasSpec.response, {
 			...formattedAlbum,
 			// Use snake_case keys for aliasing
 			cover_image: formattedAlbum.coverImage,
 			cover_images: formattedAlbum.coverImages,
 		});
-		return aliasRes;
+		return { ...aliasRes, deliveredAlbum };
 	});
 };
 

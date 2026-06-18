@@ -216,6 +216,11 @@ export const getAlbumForUser = async (albumId: string, userId: string) => {
 				orderBy: { images: { upload_date: "desc" } },
 				include: { images: true },
 			},
+			delivered_albums: {
+				where: { deleted_at: null },
+				select: { album_id: true, share_token: true },
+				take: 1,
+			},
 		},
 	});
 

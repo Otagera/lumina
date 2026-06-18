@@ -16,6 +16,7 @@ import { AddToAlbumModal } from "~/components/AddToAlbumModal";
 import { AlbumSettingsModal } from "~/components/AlbumSettingsModal";
 import { AlbumHeader, AlbumToolbar } from "~/components/album";
 import { AlbumAnalytics } from "~/components/album/AlbumAnalytics";
+import { DeliveredGalleryManager } from "~/components/album/DeliveredGalleryManager";
 import { BackButton } from "~/components/BackButton";
 import { BulkActionBar } from "~/components/BulkActionBar";
 import { CompactListView } from "~/components/CompactListView";
@@ -481,6 +482,7 @@ const AlbumPage = () => {
 						showModeration={showModeration}
 						showDuplicates={true}
 						showAnalytics={true}
+						showDelivered={!!albumData?.data?.deliveredAlbum}
 					/>
 				)}
 
@@ -503,6 +505,12 @@ const AlbumPage = () => {
 
 				{view === "analytics" && !isSearching ? (
 					<AlbumAnalytics albumId={albumId!} />
+				) : view === "delivered" && !isSearching && albumData?.data?.deliveredAlbum ? (
+					<DeliveredGalleryManager
+						sourceAlbumId={albumId!}
+						deliveredAlbumId={albumData.data.deliveredAlbum.id}
+						deliveredShareToken={albumData.data.deliveredAlbum.shareToken}
+					/>
 				) : view === "duplicates" && !isSearching ? (
 					<DuplicateReview albumId={albumId!} />
 				) : (
@@ -850,6 +858,7 @@ const AlbumPage = () => {
 					albumName={albumData?.data?.albumName ?? ""}
 					settings={albumData?.data?.settings}
 					storageConfigId={albumData?.data?.storageConfigId ?? null}
+					deliveredAlbum={albumData?.data?.deliveredAlbum ?? null}
 					onClose={() => setIsAlbumSettingsModalOpen(false)}
 				/>
 			)}

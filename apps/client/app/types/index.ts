@@ -146,6 +146,8 @@ export interface Album {
 	qrColor?: string;
 	qrLogoUrl?: string;
 	cover_image?: { imagePath: string };
+	sourceAlbumId?: string | null;
+	deliveredAlbum?: { id: string; shareToken: string } | null;
 }
 
 export type AlbumListItem = Pick<
@@ -249,7 +251,7 @@ export type ImageStatus = "APPROVED" | "PENDING" | "REJECTED";
 
 // ============== UI State Types ==============
 
-export type ViewMode = "gallery" | "moderation" | "duplicates" | "analytics";
+export type ViewMode = "gallery" | "moderation" | "duplicates" | "analytics" | "delivered";
 export type DisplayMode = "grid" | "list";
 
 export interface UIState {

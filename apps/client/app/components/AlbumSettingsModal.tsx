@@ -16,6 +16,7 @@ interface AlbumSettingsModalProps {
 	albumName: string;
 	settings: any; // album_settings object
 	storageConfigId?: string | null;
+	deliveredAlbum?: { id: string; shareToken: string } | null;
 	onClose: () => void;
 }
 
@@ -24,6 +25,7 @@ export const AlbumSettingsModal = ({
 	albumName,
 	settings,
 	storageConfigId,
+	deliveredAlbum,
 	onClose,
 }: AlbumSettingsModalProps) => {
 	const queryClient = useQueryClient();
@@ -67,6 +69,18 @@ export const AlbumSettingsModal = ({
 	const handleSettingChange = (key: string, value: any) => {
 		setLocalSettings((prev: any) => ({ ...prev, [key]: value }));
 	};
+
+	const createDeliveredMutation = useMutation({
+		mutationFn: async () => {
+			const res = await api.albums[albumId].delivered.post({});
+			return (res as any)?.data?.data as { albumId: string; albumName: string; shareToken: string };
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: albumKeys.detail(albumId) });
+			toast.success("Official gallery created!");
+		},
+		onError: (e: any) => toast.error((e as any)?.message || "Failed to create gallery"),
+	});
 
 	const generatePinMutation = useMutation({
 		mutationFn: async () => {
@@ -352,6 +366,27 @@ export const AlbumSettingsModal = ({
 						className="h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 checked:bg-sage focus:ring-sage focus:ring-offset-2 transition-colors duration-200 ease-in-out cursor-pointer"
 					/>
 				</div>
+
+				{/* Delivered Gallery */}
+				{localSettings.is_event && (
+					<div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
+						<p className="font-bold text-zinc-900 dark:text-white text-sm">Official Gallery</p>
+						<p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium mb-3">
+							{deliveredAlbum
+								? "Official gallery created. Manage photos from the album view."
+								: "Create a curated official gallery linked to this event album."}
+						</p>
+						{!deliveredAlbum && (
+							<Button
+								size="sm"
+								onClick={() => createDeliveredMutation.mutate()}
+								disabled={createDeliveredMutation.isPending}
+							>
+								{createDeliveredMutation.isPending ? "Creating..." : "Create Official Gallery"}
+							</Button>
+						)}
+					</div>
+				)}
 
 				{/* Guest Tagline */}
 				<div className="p-4 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl">

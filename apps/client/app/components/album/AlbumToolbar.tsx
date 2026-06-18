@@ -8,6 +8,7 @@ export interface AlbumToolbarProps {
 	showModeration?: boolean;
 	showDuplicates?: boolean;
 	showAnalytics?: boolean;
+	showDelivered?: boolean;
 }
 
 export function AlbumToolbar({
@@ -18,10 +19,11 @@ export function AlbumToolbar({
 	showModeration = false,
 	showDuplicates = false,
 	showAnalytics = false,
+	showDelivered = false,
 }: AlbumToolbarProps) {
 	return (
 		<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 w-full">
-			{(showModeration || showDuplicates || showAnalytics) && (
+			{(showModeration || showDuplicates || showAnalytics || showDelivered) && (
 				<div
 					role="group"
 					aria-label="Album view"
@@ -75,6 +77,19 @@ export function AlbumToolbar({
 								}`}
 						>
 							Analytics
+						</button>
+					)}
+					{showDelivered && (
+						<button
+							type="button"
+							onClick={() => onViewChange("delivered")}
+							aria-pressed={view === "delivered"}
+							className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${view === "delivered"
+									? "bg-white dark:bg-zinc-800 text-sage shadow-sm"
+									: "text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+								}`}
+						>
+							Gallery
 						</button>
 					)}
 				</div>

@@ -15,6 +15,9 @@ import { updateMemberRoleService } from "../services/albums/updateMemberRole.ser
 import { albumAnalyticsService } from "../services/albums/albumAnalytics.service.ts";
 import { generateDisplayPinService } from "../services/albums/generateDisplayPin.service.ts";
 import { generateHighlightsService } from "../services/albums/generateHighlights.service.ts";
+import { createDeliveredGalleryService } from "../services/albums/createDeliveredGallery.service.ts";
+import { promoteToDeliveredService } from "../services/albums/promoteToDelivered.service.ts";
+import { reorderGalleryService } from "../services/albums/reorderGallery.service.ts";
 import { authDerivation } from "./middleware/auth.plugin.ts";
 import { checkAlbumPermissions } from "./middleware/permissions.plugin.ts";
 
@@ -535,6 +538,74 @@ albumsRoutes.post(
 	},
 	{
 		params: t.Object({ albumId: t.String() }),
+	},
+);
+
+albumsRoutes.post(
+	"/:albumId/delivered",
+	async ({ params, set, userId }) => {
+		try {
+			const data = await createDeliveredGalleryService({
+				albumId: params.albumId,
+				userId,
+			});
+			set.status = HTTP_STATUS_CODES.CREATED;
+			return { status: "completed", message: "Delivered gallery created.", data };
+		} catch (error: any) {
+			set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+			return { status: "error", message: error?.message || "Internal server error", data: null };
+		}
+	},
+	{ params: t.Object({ albumId: t.String() }) },
+);
+
+albumsRoutes.post(
+	"/:albumId/promote",
+	async ({ params, body, set, userId }) => {
+		try {
+			const data = await promoteToDeliveredService({
+				albumId: params.albumId,
+				userId,
+				imageIds: (body as any).imageIds,
+				positions: (body as any).positions,
+			});
+			set.status = HTTP_STATUS_CODES.OK;
+			return { status: "completed", message: "Images promoted.", data };
+		} catch (error: any) {
+			set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+			return { status: "error", message: error?.message || "Internal server error", data: null };
+		}
+	},
+	{
+		params: t.Object({ albumId: t.String() }),
+		body: t.Object({
+			imageIds: t.Array(t.String()),
+			positions: t.Optional(t.Record(t.String(), t.Number())),
+		}),
+	},
+);
+
+albumsRoutes.put(
+	"/:albumId/images/reorder",
+	async ({ params, body, set, userId }) => {
+		try {
+			const data = await reorderGalleryService({
+				albumId: params.albumId,
+				userId,
+				order: (body as any).order,
+			});
+			set.status = HTTP_STATUS_CODES.OK;
+			return { status: "completed", message: "Gallery reordered.", data };
+		} catch (error: any) {
+			set.status = error?.statusCode ?? HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+			return { status: "error", message: error?.message || "Internal server error", data: null };
+		}
+	},
+	{
+		params: t.Object({ albumId: t.String() }),
+		body: t.Object({
+			order: t.Array(t.Object({ imageId: t.String(), position: t.Number() })),
+		}),
 	},
 );
 
