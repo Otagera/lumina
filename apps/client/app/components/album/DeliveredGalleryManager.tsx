@@ -130,10 +130,13 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 	};
 
 	const handleDragEnd = () => {
-		setDraggingId(null);
 		dragSrcId.current = null;
-		const order = localGallery.map((item, i) => ({ imageId: item.imageId, position: i }));
-		reorderMutation.mutate(order);
+		setDraggingId(null);
+		setLocalGallery((current) => {
+			const order = current.map((item, i) => ({ imageId: item.imageId, position: i }));
+			reorderMutation.mutate(order);
+			return current;
+		});
 	};
 
 	const toggleId = (id: string) => {
@@ -244,7 +247,7 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 										draggingId === item.imageId ? "opacity-40 scale-95" : "opacity-100"
 									}`}
 								>
-									<img src={item.images?.imagePath} alt="" className="w-full h-full object-cover" />
+									<img src={item.images?.imagePath} alt="" draggable={false} className="w-full h-full object-cover pointer-events-none" />
 									<div className="absolute top-1 left-1 p-0.5 rounded-md bg-black/30 opacity-0 group-hover:opacity-100">
 										<GripVertical size={12} className="text-white" />
 									</div>
