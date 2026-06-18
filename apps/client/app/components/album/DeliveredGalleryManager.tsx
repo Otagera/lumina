@@ -62,8 +62,8 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [copied, setCopied] = useState(false);
 	const [localGallery, setLocalGallery] = useState<GalleryItem[]>([]);
-	const [dragging, setDragging] = useState(false);
-	const dragSrc = useRef<number | null>(null);
+	const [draggingId, setDraggingId] = useState<string | null>(null);
+	const dragSrcId = useRef<string | null>(null);
 
 	const { data: sourceData, isLoading: sourceLoading } = useQuery({
 		queryKey: ["album-images-source", sourceAlbumId],
@@ -86,8 +86,8 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 	});
 
 	useEffect(() => {
-		if (galleryData && !dragging) setLocalGallery(galleryData);
-	}, [galleryData, dragging]);
+		if (galleryData && !draggingId) setLocalGallery(galleryData);
+	}, [galleryData, draggingId]);
 
 	const promoteMutation = useMutation({
 		mutationFn: async (imageIds: string[]) => {
@@ -111,25 +111,27 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 		},
 	});
 
-	const handleDragStart = (idx: number) => {
-		dragSrc.current = idx;
-		setDragging(true);
+	const handleDragStart = (id: string) => {
+		dragSrcId.current = id;
+		setDraggingId(id);
 	};
 
-	const handleDragEnter = (idx: number) => {
-		if (dragSrc.current === null || dragSrc.current === idx) return;
+	const handleDragEnter = (targetId: string) => {
+		if (!dragSrcId.current || dragSrcId.current === targetId) return;
 		setLocalGallery((prev) => {
+			const srcIdx = prev.findIndex((item) => item.imageId === dragSrcId.current);
+			const tgtIdx = prev.findIndex((item) => item.imageId === targetId);
+			if (srcIdx === -1 || tgtIdx === -1) return prev;
 			const next = [...prev];
-			const [moved] = next.splice(dragSrc.current!, 1);
-			next.splice(idx, 0, moved);
-			dragSrc.current = idx;
+			const [moved] = next.splice(srcIdx, 1);
+			next.splice(tgtIdx, 0, moved);
 			return next;
 		});
 	};
 
 	const handleDragEnd = () => {
-		setDragging(false);
-		dragSrc.current = null;
+		setDraggingId(null);
+		dragSrcId.current = null;
 		const order = localGallery.map((item, i) => ({ imageId: item.imageId, position: i }));
 		reorderMutation.mutate(order);
 	};
@@ -230,16 +232,16 @@ export function DeliveredGalleryManager({ sourceAlbumId, deliveredAlbumId, deliv
 						</div>
 					) : (
 						<div className="grid grid-cols-3 gap-2 max-h-[calc(100vh-420px)] min-h-80 overflow-y-auto">
-							{localGallery.map((item, idx) => (
+							{localGallery.map((item) => (
 								<div
 									key={item.imageId}
 									draggable
-									onDragStart={() => handleDragStart(idx)}
-									onDragEnter={() => handleDragEnter(idx)}
+									onDragStart={() => handleDragStart(item.imageId)}
+									onDragEnter={() => handleDragEnter(item.imageId)}
 									onDragEnd={handleDragEnd}
 									onDragOver={(e) => e.preventDefault()}
 									className={`relative aspect-square rounded-xl overflow-hidden cursor-grab active:cursor-grabbing transition-opacity ${
-										dragging && dragSrc.current === idx ? "opacity-40" : "opacity-100"
+										draggingId === item.imageId ? "opacity-40 scale-95" : "opacity-100"
 									}`}
 								>
 									<img src={item.images?.imagePath} alt="" className="w-full h-full object-cover" />
