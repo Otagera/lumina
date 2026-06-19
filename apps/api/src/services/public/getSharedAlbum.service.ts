@@ -404,9 +404,10 @@ const service = async (data: any) => {
 		};
 	};
 
+	const ttl = DEMO_TOKENS.has(params.share_token) ? CACHE_TTL.DAY : CACHE_TTL.MEDIUM;
 	const result = isPersonalView
 		? await fetchAlbum()
-		: await cacheGetOrSet(cacheKey, CACHE_TTL.SHORT, fetchAlbum);
+		: await cacheGetOrSet(cacheKey, ttl, fetchAlbum);
 
 	// Fire-and-forget view tracking — skip demo tokens and filtered views
 	if (!DEMO_TOKENS.has(params.share_token) && !params.status && !params.uploaderId) {

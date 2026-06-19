@@ -1,6 +1,10 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import { moderateImagesQuery } from "../../../../../packages/models/src/images.model.ts";
+import {
+	cacheDelPattern,
+	cacheKeys,
+} from "../../../../../packages/utils/src/cache.util.ts";
 import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
 import {
 	aliaserSpec,
@@ -54,6 +58,11 @@ const service = async (data: any) => {
 			reason: params.reason,
 		});
 	}
+
+	prisma.albums
+		.findUnique({ where: { album_id: params.album_id }, select: { share_token: true } })
+		.then((a) => { if (a?.share_token) cacheDelPattern(cacheKeys.publicAlbumPattern(a.share_token)); })
+		.catch(() => {});
 
 	return aliaserSpec(aliasSpec.response, {
 		count: result.count,

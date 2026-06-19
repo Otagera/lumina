@@ -1,6 +1,10 @@
 import Joi from "joi";
 import prisma from "../../../../../packages/config/src/db.config.ts";
 import {
+	cacheDelPattern,
+	cacheKeys,
+} from "../../../../../packages/utils/src/cache.util.ts";
+import {
 	BadRequestError,
 	ForbiddenError,
 	NotFoundError,
@@ -64,6 +68,10 @@ const service = async (data: any) => {
 			}),
 		),
 	);
+
+	if (deliveredAlbum.share_token) {
+		cacheDelPattern(cacheKeys.publicAlbumPattern(deliveredAlbum.share_token)).catch(() => {});
+	}
 
 	return { promoted: toAdd.length };
 };

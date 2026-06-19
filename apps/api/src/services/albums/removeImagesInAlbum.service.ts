@@ -1,4 +1,9 @@
 import joi from "joi";
+import prisma from "../../../../../packages/config/src/db.config.ts";
+import {
+	cacheDelPattern,
+	cacheKeys,
+} from "../../../../../packages/utils/src/cache.util.ts";
 import { NotFoundError } from "../../../../../packages/utils/src/error.util.ts";
 import {
 	aliaserSpec,
@@ -41,6 +46,11 @@ const service = async (data) => {
 	}
 
 	const deletedAlbum = await deleteAlbumImages(album_id, image_ids);
+
+	prisma.albums
+		.findUnique({ where: { album_id }, select: { share_token: true } })
+		.then((a) => { if (a?.share_token) cacheDelPattern(cacheKeys.publicAlbumPattern(a.share_token)); })
+		.catch(() => {});
 
 	const aliasRes = aliaserSpec(aliasSpec.response, deletedAlbum);
 	return aliasRes;

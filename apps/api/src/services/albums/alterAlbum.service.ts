@@ -1,5 +1,9 @@
 import joi from "joi";
 import {
+	cacheDelPattern,
+	cacheKeys,
+} from "../../../../../packages/utils/src/cache.util.ts";
+import {
 	aliaserSpec,
 	validateSpec,
 } from "../../../../../packages/utils/src/specValidator.util.ts";
@@ -62,6 +66,10 @@ const service = async (data) => {
 	const { album_id, created_by, ...albumData } = params;
 
 	const updatedAlbum = await updateAlbum(album_id, created_by, albumData);
+
+	if (updatedAlbum?.share_token) {
+		cacheDelPattern(cacheKeys.publicAlbumPattern(updatedAlbum.share_token)).catch(() => {});
+	}
 
 	const aliasRes = aliaserSpec(aliasSpec.response, updatedAlbum);
 	return aliasRes;

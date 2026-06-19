@@ -14,6 +14,10 @@ import {
 	UPLOADS_DIR,
 } from "../../../../../packages/utils/src/constants.util.ts";
 import {
+	cacheDelPattern,
+	cacheKeys,
+} from "../../../../../packages/utils/src/cache.util.ts";
+import {
 	BadRequestError,
 	NotFoundError,
 } from "../../../../../packages/utils/src/error.util.ts";
@@ -350,6 +354,8 @@ const service = async (data: any) => {
 			userId: undefined,
 		});
 	}
+
+	cacheDelPattern(cacheKeys.publicAlbumPattern(params.share_token)).catch(() => {});
 
 	return {
 		...uploadResult,
