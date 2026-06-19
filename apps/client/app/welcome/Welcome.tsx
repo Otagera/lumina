@@ -3,8 +3,10 @@ import { Navigate } from "react-router-dom";
 import { fetchPlans } from "../utils/api";
 import { useAuth } from "../utils/auth";
 import FeaturesSoft from "./FeaturesSoft";
+import Footer from "./Footer";
 import HeroCollage from "./HeroCollage";
 import LivePreview from "./LivePreview";
+import MoreFeatures from "./MoreFeatures";
 import PricingTiles from "./PricingTiles";
 import UseCaseSection from "./UseCaseSection";
 
@@ -27,10 +29,12 @@ const Welcome = () => {
 			<div className="relative mx-auto flex w-full max-w-6xl flex-col gap-20 px-6 py-14 sm:px-10 lg:py-20">
 				<HeroCollage />
 				<FeaturesSoft />
+				<MoreFeatures />
 				<UseCaseSection />
 				<LivePreview />
 				<PricingTiles plans={plans} isLoading={isPlansLoading} />
 			</div>
+			<Footer />
 		</div>
 	);
 };

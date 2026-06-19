@@ -79,15 +79,15 @@ export const LivePreview = ({ demoToken = "demo" }: LivePreviewProps) => {
 					<div className="space-y-6">
 						<div className="flex items-start gap-4">
 							<div
-								className="w-20 h-20 rounded-control overflow-hidden shrink-0 bg-white p-1"
+								className="w-24 h-24 rounded-control overflow-hidden shrink-0 bg-white flex items-center justify-center"
 								style={{ borderRadius: "var(--theme-radius-control)" }}
 							>
 								<QRCode
 									value={`${window.location.origin}/share/demo`}
-									size={80}
+									size={88}
 									qrStyle="dots"
 									eyeRadius={4}
-									quietZone={2}
+									quietZone={4}
 								/>
 							</div>
 							<div className="flex-1 min-w-0">

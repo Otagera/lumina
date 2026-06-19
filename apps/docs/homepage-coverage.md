@@ -16,16 +16,16 @@ Update status when a section ships: ✅ present · 🔄 planned/in-progress · �
 | BYOS Storage | FeaturesSoft "Own" | ✅ |
 | Selfie Search (AI face match) | LivePreview "Try selfie search" | ✅ |
 | Live Demo (interactive) | LivePreview + UseCaseSection CTAs | ✅ |
-| Guest Downloads | — | ❌ |
-| Album Analytics | — | ❌ |
-| Reactions | — | ❌ |
+| Guest Downloads | MoreFeatures "Downloads" | ✅ |
+| Album Analytics | MoreFeatures "Analytics" | ✅ |
+| Reactions | MoreFeatures "Reactions" | ✅ |
 | Live Display Mode | UseCaseSection "Parties" | ✅ |
 | Smart Highlights Reel | UseCaseSection "Parties" | ✅ |
 | Delivered Gallery | UseCaseSection "Weddings" | ✅ |
 | Multi-contributor | UseCaseSection "Church & Media" | ✅ |
-| Face Tagging / People | — | ❌ |
+| Face Tagging / People | MoreFeatures "People" | ✅ |
 | Series / Recurring Events | UseCaseSection "Church & Media" | ✅ |
-| Semantic Search (text) | — | ❌ |
+| Semantic Search (text) | MoreFeatures "Semantic Search" | ✅ |
 
 ---
 
@@ -36,9 +36,24 @@ Update status when a section ships: ✅ present · 🔄 planned/in-progress · �
 | Weddings | UseCaseSection | `/share/demo` | ✅ |
 | Parties / Birthdays | UseCaseSection | `/share/demo-party` | ✅ |
 | Church & Media Teams | UseCaseSection | `/share/demo-church` | ✅ |
-| Corporate / Conferences | — | — | ❌ |
-| School / Graduation | — | — | ❌ |
-| Sports & Community | — | — | ❌ |
+| Corporate / Conferences | UseCaseSection | — (→ /signup) | ✅ |
+| School / Graduation | UseCaseSection | — (→ /signup) | ✅ |
+| Sports & Community | UseCaseSection | — (→ /signup) | ✅ |
+
+---
+
+## Page Structure
+
+| Section | Component | Status |
+|---|---|---|
+| Navigation | `root.tsx` Navbar | ✅ |
+| Hero | `HeroCollage` | ✅ |
+| Primary features | `FeaturesSoft` | ✅ |
+| Secondary features | `MoreFeatures` | ✅ |
+| Use cases | `UseCaseSection` | ✅ |
+| Live AI demo | `LivePreview` | ✅ |
+| Pricing | `PricingTiles` | ✅ |
+| Footer | `Footer` | ✅ |
 
 ---
 

@@ -18,9 +18,9 @@ const TRUST_SIGNALS = [
 
 export const HeroCollage = () => {
 	return (
-		<section className="relative overflow-hidden">
+		<section className="relative">
 			<div className="absolute inset-0 pointer-events-none">
-				<div className="absolute -top-[18%] left-[10%] h-96 w-96 rounded-full bg-sage/20 blur-[130px]" />
+				<div className="absolute top-[-5%] left-[10%] h-96 w-96 rounded-full bg-sage/20 blur-[130px]" />
 				<div className="absolute top-[20%] -right-[10%] h-96 w-96 rounded-full bg-plum/15 blur-[130px]" />
 			</div>
 			<div className="relative grid gap-10 lg:grid-cols-[1.05fr_1fr] items-center">

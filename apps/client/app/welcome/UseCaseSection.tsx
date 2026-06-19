@@ -1,13 +1,38 @@
-import { ArrowRight } from "lucide-react";
+import {
+	ArrowRight,
+	Building2,
+	Church,
+	GraduationCap,
+	Heart,
+	PartyPopper,
+	Trophy,
+	type LucideIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "~/components/standard/Button";
 
-const USE_CASES = [
+type UseCase = {
+	id: string;
+	label: string;
+	icon: LucideIcon;
+	activeAnimation: string;
+	eyebrow: string;
+	heading: string;
+	tagline: string;
+	badge: string | null;
+	features: string[];
+	demoToken: string | null;
+	demoLabel: string;
+	photos: string[];
+};
+
+const USE_CASES: UseCase[] = [
 	{
 		id: "weddings",
 		label: "Weddings",
-		emoji: "💍",
+		icon: Heart,
+		activeAnimation: "animate-pulse",
 		eyebrow: "Wedding photography",
 		heading: "Deliver polished galleries your couples will cherish.",
 		tagline:
@@ -30,7 +55,8 @@ const USE_CASES = [
 	{
 		id: "parties",
 		label: "Parties",
-		emoji: "🎉",
+		icon: PartyPopper,
+		activeAnimation: "animate-bounce",
 		eyebrow: "Birthday & social events",
 		heading: "Put the vibe on the wall in real time.",
 		tagline: "Live Display streams every new photo to a screen as it's uploaded.",
@@ -52,7 +78,8 @@ const USE_CASES = [
 	{
 		id: "church",
 		label: "Church & Media",
-		emoji: "⛪",
+		icon: Church,
+		activeAnimation: "",
 		eyebrow: "Church & media teams",
 		heading: "Build a living archive across every service.",
 		tagline:
@@ -72,7 +99,76 @@ const USE_CASES = [
 			"https://images.pexels.com/photos/1595385/pexels-photo-1595385.jpeg?auto=compress&cs=tinysrgb&w=1200",
 		],
 	},
-] as const;
+	{
+		id: "corporate",
+		label: "Conferences",
+		icon: Building2,
+		activeAnimation: "",
+		eyebrow: "Corporate & conferences",
+		heading: "Branded galleries for events that represent your company.",
+		tagline: "From keynote to networking — every moment captured and searchable.",
+		badge: null,
+		features: [
+			"Branded gallery with your logo, colours, and custom domain",
+			"Selfie search across thousands of attendee photos instantly",
+			"Bulk exports for comms teams and post-event reports",
+			"Analytics: views, searches, and top-reacted photos at a glance",
+		],
+		demoToken: null,
+		demoLabel: "Get started free",
+		photos: [
+			"https://images.pexels.com/photos/3184357/pexels-photo-3184357.jpeg?auto=compress&cs=tinysrgb&w=1200",
+			"https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?auto=compress&cs=tinysrgb&w=1200",
+			"https://images.pexels.com/photos/1181304/pexels-photo-1181304.jpeg?auto=compress&cs=tinysrgb&w=1200",
+		],
+	},
+	{
+		id: "school",
+		label: "Schools",
+		icon: GraduationCap,
+		activeAnimation: "",
+		eyebrow: "Schools & graduation",
+		heading: "Every student finds their moment in seconds.",
+		tagline: "Selfie search makes graduation photo chaos a thing of the past.",
+		badge: null,
+		features: [
+			"Students find their own ceremony photos instantly with a selfie",
+			"Multiple photographers upload simultaneously from any device",
+			"Delivered Gallery creates the official school archive",
+			"Guest downloads available once the gallery is published",
+		],
+		demoToken: null,
+		demoLabel: "Get started free",
+		photos: [
+			"https://images.pexels.com/photos/267885/pexels-photo-267885.jpeg?auto=compress&cs=tinysrgb&w=1200",
+			"https://images.pexels.com/photos/1205651/pexels-photo-1205651.jpeg?auto=compress&cs=tinysrgb&w=1200",
+			"https://images.pexels.com/photos/1139319/pexels-photo-1139319.jpeg?auto=compress&cs=tinysrgb&w=1200",
+		],
+	},
+	{
+		id: "sports",
+		label: "Sports",
+		icon: Trophy,
+		activeAnimation: "",
+		eyebrow: "Sports & community",
+		heading: "Action shots on the screen before the crowd even cheers.",
+		tagline: "Live Display puts new photos on venue screens the moment they land.",
+		badge: null,
+		features: [
+			"Live Display streams action shots to stadium screens in real time",
+			"Players find themselves in action photos with a quick selfie",
+			"React to highlights and auto-generate a season reel",
+			"Series support keeps a continuous archive across the whole season",
+		],
+		demoToken: null,
+		demoLabel: "Get started free",
+		photos: [
+			"https://images.pexels.com/photos/1618200/pexels-photo-1618200.jpeg?auto=compress&cs=tinysrgb&w=1200",
+			"https://images.pexels.com/photos/3755440/pexels-photo-3755440.jpeg?auto=compress&cs=tinysrgb&w=1200",
+			"https://images.pexels.com/photos/2834917/pexels-photo-2834917.jpeg?auto=compress&cs=tinysrgb&w=1200",
+		],
+	},
+];
 
 export const UseCaseSection = () => {
 	const [activeIdx, setActiveIdx] = useState(0);
@@ -96,22 +192,29 @@ export const UseCaseSection = () => {
 					</p>
 				</div>
 
-				{/* Tab nav */}
-				<div className="flex justify-center gap-2">
-					{USE_CASES.map((uc, i) => (
-						<button
-							key={uc.id}
-							type="button"
-							onClick={() => setActiveIdx(i)}
-							className={`px-4 py-2 rounded-full text-xs font-black transition-all ${
-								i === activeIdx
-									? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
-									: "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600"
-							}`}
-						>
-							{uc.emoji} {uc.label}
-						</button>
-					))}
+				{/* Tab nav — scrollable on mobile */}
+				<div className="flex gap-2 overflow-x-auto pb-1 sm:justify-center scrollbar-none">
+					{USE_CASES.map((uc, i) => {
+						const isActive = i === activeIdx;
+						return (
+							<button
+								key={uc.id}
+								type="button"
+								onClick={() => setActiveIdx(i)}
+								className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black transition-all duration-200 ${
+									isActive
+										? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+										: "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600"
+								}`}
+							>
+								<uc.icon
+									size={14}
+									className={isActive && uc.activeAnimation ? uc.activeAnimation : ""}
+								/>
+								{uc.label}
+							</button>
+						);
+					})}
 				</div>
 
 				{/* Stacked card container */}
@@ -121,9 +224,13 @@ export const UseCaseSection = () => {
 						className="absolute inset-x-4 bottom-[-10px] h-full rounded-tile border border-zinc-200 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/40 scale-[0.97] blur-[1px] -z-10"
 						aria-hidden
 					>
-						<div className="h-full flex items-center justify-center">
+						<div className="h-full flex items-center justify-center gap-1.5">
+							<next.icon
+								size={12}
+								className="text-zinc-400 dark:text-zinc-600"
+							/>
 							<span className="text-xs font-black text-zinc-400 dark:text-zinc-600 select-none">
-								{next.emoji} {next.label}
+								{next.label}
 							</span>
 						</div>
 					</div>
@@ -163,14 +270,20 @@ export const UseCaseSection = () => {
 							</ul>
 
 							<Button asChild className="font-bold w-full sm:w-auto">
-								<Link to={`/share/${active.demoToken}`}>
+								<Link
+									to={
+										active.demoToken
+											? `/share/${active.demoToken}`
+											: "/signup"
+									}
+								>
 									{active.demoLabel}{" "}
 									<ArrowRight className="h-4 w-4 ml-1.5" />
 								</Link>
 							</Button>
 						</div>
 
-						{/* Photo mosaic — same layout as LivePreview */}
+						{/* Photo mosaic */}
 						<div className="grid grid-cols-3 gap-2">
 							{active.photos.map((src, i) => (
 								<div
