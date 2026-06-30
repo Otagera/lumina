@@ -8,6 +8,7 @@ import HeroCollage from "./HeroCollage";
 import LivePreview from "./LivePreview";
 import MoreFeatures from "./MoreFeatures";
 import PricingTiles from "./PricingTiles";
+import PrivacyStance from "./PrivacyStance";
 import UseCaseSection from "./UseCaseSection";
 
 const Welcome = () => {
@@ -33,6 +34,7 @@ const Welcome = () => {
 				<UseCaseSection />
 				<LivePreview />
 				<PricingTiles plans={plans} isLoading={isPlansLoading} />
+				<PrivacyStance />
 			</div>
 			<Footer />
 		</div>

@@ -15,8 +15,8 @@ const USE_CASE_LINKS = [
 ];
 
 const LEGAL_LINKS = [
-	{ label: "Privacy Policy", to: "#" },
-	{ label: "Terms of Service", to: "#" },
+	{ label: "Privacy Policy", to: "/privacy" },
+	{ label: "Terms of Service", to: "/terms" },
 ];
 
 const FooterCol = ({

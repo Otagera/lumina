@@ -51,7 +51,12 @@ export const listPendingModerationService = async (data: {
 	]);
 
 	const normalized = images.map((img) => ({
-		...img,
+		image_id: img.image_id,
+		upload_date: img.upload_date,
+		storage_provider: img.storage_provider,
+		uploaderEmail: img.users?.email ?? null,
+		albumName: img.album_images?.[0]?.albums?.album_name ?? null,
+		albumId: img.album_images?.[0]?.albums?.album_id ?? null,
 		imagePath: normalizeImagePath(
 			img.optimized_path ?? img.image_path,
 			img.storage_provider,

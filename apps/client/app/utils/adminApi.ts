@@ -51,6 +51,9 @@ export const adminModerateImages = (data: {
 	reason?: string;
 }) => axiosAPI.patch("/admin/moderation", data).then((r) => r.data.data);
 
+export const clearAllPendingModeration = () =>
+	axiosAPI.delete("/admin/moderation/pending").then((r) => r.data.data);
+
 // Queues
 export const fetchQueueStats = () =>
 	axiosAPI.get("/admin/queues").then((r) => r.data.data);

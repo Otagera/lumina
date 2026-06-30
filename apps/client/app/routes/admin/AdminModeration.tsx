@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle2, XCircle, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Card } from "~/components/standard/Card";
 import { Heading } from "~/components/standard/Heading";
 import { Button } from "~/components/standard/Button";
-import { fetchPendingModeration, adminModerateImages } from "../../utils/adminApi";
+import { fetchPendingModeration, adminModerateImages, clearAllPendingModeration } from "../../utils/adminApi";
 
 export default function AdminModeration() {
 	const qc = useQueryClient();
 	const [page, setPage] = useState(1);
 	const [selected, setSelected] = useState<Set<string>>(new Set());
+	const [confirmClearAll, setConfirmClearAll] = useState(false);
 
 	const { data, isLoading } = useQuery({
 		queryKey: ["admin", "moderation", page],
@@ -23,6 +24,17 @@ export default function AdminModeration() {
 			qc.invalidateQueries({ queryKey: ["admin", "moderation"] });
 			setSelected(new Set());
 			toast.success(`${vars.imageIds.length} image(s) ${vars.status.toLowerCase()}.`);
+		},
+		onError: (e: any) => toast.error(e.response?.data?.message ?? "Failed"),
+	});
+
+	const clearAllMutation = useMutation({
+		mutationFn: clearAllPendingModeration,
+		onSuccess: (result: any) => {
+			qc.invalidateQueries({ queryKey: ["admin", "moderation"] });
+			setSelected(new Set());
+			setConfirmClearAll(false);
+			toast.success(`Cleared ${result?.count ?? 0} pending image(s).`);
 		},
 		onError: (e: any) => toast.error(e.response?.data?.message ?? "Failed"),
 	});
@@ -57,6 +69,38 @@ export default function AdminModeration() {
 					<p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">
 						{total} pending image{total !== 1 ? "s" : ""} across all albums.
 					</p>
+				</div>
+				<div className="flex gap-2 flex-wrap">
+					{total > 0 && selected.size === 0 && (
+						confirmClearAll ? (
+							<>
+								<span className="text-xs text-zinc-500 dark:text-zinc-400 self-center">
+									Reject all {total} pending images?
+								</span>
+								<Button
+									size="sm"
+									variant="ghost"
+									className="text-plum dark:text-rose-400 hover:bg-plum/10"
+									onClick={() => clearAllMutation.mutate()}
+									disabled={clearAllMutation.isPending}
+								>
+									<Trash2 size={14} className="mr-1.5" /> Confirm clear all
+								</Button>
+								<Button size="sm" variant="secondary" onClick={() => setConfirmClearAll(false)}>
+									Cancel
+								</Button>
+							</>
+						) : (
+							<Button
+								size="sm"
+								variant="ghost"
+								className="text-zinc-500 hover:text-plum dark:hover:text-rose-400"
+								onClick={() => setConfirmClearAll(true)}
+							>
+								<Trash2 size={14} className="mr-1.5" /> Clear all pending
+							</Button>
+						)
+					)}
 				</div>
 				{selected.size > 0 && (
 					<div className="flex gap-2">
@@ -124,7 +168,6 @@ export default function AdminModeration() {
 					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
 						{images.map((img: any) => {
 							const isSelected = selected.has(img.image_id);
-							const album = img.album_images?.[0]?.albums;
 							return (
 								<button
 									key={img.image_id}
@@ -139,10 +182,10 @@ export default function AdminModeration() {
 									<img
 										src={getImageUrl(img)}
 										alt=""
-										className="w-full h-full object-cover"
+										className="w-full h-full object-cover bg-zinc-200 dark:bg-zinc-800"
 										loading="lazy"
 										onError={(e) => {
-											(e.target as HTMLImageElement).src = "";
+											(e.currentTarget as HTMLImageElement).style.opacity = "0";
 										}}
 									/>
 									{isSelected && (
@@ -152,10 +195,10 @@ export default function AdminModeration() {
 									)}
 									<div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2">
 										<p className="text-[10px] font-bold text-white truncate">
-											{album?.album_name ?? "Unknown album"}
+											{img.albumName ?? "No album"}
 										</p>
-										{img.users?.email && (
-											<p className="text-[9px] text-white/60 truncate">{img.users.email}</p>
+										{img.uploaderEmail && (
+											<p className="text-[9px] text-white/60 truncate">{img.uploaderEmail}</p>
 										)}
 									</div>
 								</button>

@@ -27,6 +27,8 @@ import Signup from "./routes/signup";
 import StylePreview from "./routes/style-preview";
 import Trash from "./routes/trash";
 import Usage from "./routes/usage";
+import PrivacyPage from "./routes/privacy";
+import TermsPage from "./routes/terms";
 import Welcome from "./welcome/Welcome";
 
 const ETokenRedirect = () => {
@@ -79,6 +81,14 @@ export default [
 			{
 				path: "join/:token",
 				element: <JoinAlbum />,
+			},
+			{
+				path: "privacy",
+				element: <PrivacyPage />,
+			},
+			{
+				path: "terms",
+				element: <TermsPage />,
 			},
 			...(import.meta.env.DEV
 				? [

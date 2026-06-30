@@ -26,9 +26,12 @@ export const PricingTiles = ({ plans, isLoading }: PricingTilesProps) => {
 					Transparent pricing
 				</h2>
 				<p className="mx-auto max-w-2xl text-lg text-zinc-600 dark:text-zinc-400 font-medium">
-					Start free with 100 AI-processed images per month.{" "}
+					Start free with 300 AI-processed images per month.{" "}
 					<br className="hidden md:block" />
 					Scale as you grow with Bring Your Own Storage.
+				</p>
+				<p className="mx-auto max-w-xl text-sm text-zinc-500 dark:text-zinc-500 italic">
+					A working wedding photographer shoots ~40 events a year. The Pro plan pays for itself on the first one.
 				</p>
 			</div>
 
@@ -54,6 +57,11 @@ export const PricingTiles = ({ plans, isLoading }: PricingTilesProps) => {
 							<h3 className="text-xl font-black text-zinc-900 dark:text-white capitalize">
 								{plan.name === "byos" ? "BYOS" : plan.name}
 							</h3>
+							<p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+								{plan.name === "free" && "Perfect for one event or trying it out"}
+								{plan.name === "pro" && "For photographers and coordinators running real events"}
+								{plan.name === "byos" && "Your data, your storage, your rules"}
+							</p>
 							<div className="mt-4 mb-6">
 								<span className="text-3xl font-black text-zinc-900 dark:text-white">
 									{plan.price_usd}

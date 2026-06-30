@@ -10,9 +10,9 @@ const COLLAGE = [
 ];
 
 const TRUST_SIGNALS = [
-	"1GB free storage",
-	"QR contribution",
-	"Privacy-first AI",
+	"5 GB free",
+	"QR in seconds",
+	"Selfies never stored",
 	"Custom themes",
 ];
 
@@ -27,16 +27,17 @@ export const HeroCollage = () => {
 				<div className="space-y-7">
 					<div className="space-y-5">
 						<p className="text-[10px] font-black uppercase tracking-[0.25em] text-sage">
-							For hosts of every event
+							For photographers & event hosts
 						</p>
 						<h1 className="text-5xl sm:text-6xl font-black tracking-tight text-zinc-900 dark:text-white leading-[0.95]">
-							Photos from everyone,
+							Your guests find themselves
 							<br />
-							<span className="text-sage italic">organized for you.</span>
+							<span className="text-sage italic">in every photo — automatically.</span>
 						</h1>
 						<p className="max-w-xl text-lg leading-relaxed text-zinc-600 dark:text-zinc-300 font-medium">
-							Share one QR code. Guests upload directly. Anyone finds their
-							own photos with a selfie — no accounts, no chaos.
+							Give every guest a QR code. They upload. They search with a
+							selfie. You deliver a moment they'll remember — without managing
+							a single file.
 						</p>
 					</div>
 					<div className="flex flex-wrap items-center gap-3">
