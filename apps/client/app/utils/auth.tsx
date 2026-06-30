@@ -13,6 +13,7 @@ interface User {
 	id: string;
 	email: string;
 	planName?: string;
+	role?: "USER" | "ADMIN" | "SUPER_ADMIN";
 }
 
 interface AuthContextType {
@@ -22,6 +23,8 @@ interface AuthContextType {
 	logout: () => void;
 	isAuthenticated: boolean;
 	isInitialized: boolean;
+	isAdmin: boolean;
+	isSuperAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -96,6 +99,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	};
 
 	const isAuthenticated = !!user;
+	const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+	const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
 	return (
 		<AuthContext.Provider
@@ -106,6 +111,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 				logout,
 				isAuthenticated,
 				isInitialized,
+				isAdmin,
+				isSuperAdmin,
 			}}
 		>
 			{children}

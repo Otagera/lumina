@@ -14,6 +14,7 @@ import {
 } from "../../../packages/utils/src/events.util.ts";
 import { createServiceLogger } from "../../../packages/utils/src/logger.util.ts";
 import { queueServices } from "../../worker/src/queue/queue.service.ts";
+import adminRoutes from "./routes/admin.route";
 import albumsRoutes from "./routes/albums.route";
 import authRoutes from "./routes/auth.route";
 import billingWebhookRoutes from "./routes/billing-webhook.route";
@@ -204,7 +205,8 @@ export const createElysiaApp = async () => {
 					.use(notificationsRoutes)
 					.use(usageRoutes)
 					.use(reactionsRoutes)
-					.use(billingWebhookRoutes),
+					.use(billingWebhookRoutes)
+					.use(adminRoutes),
 			)
 
 			.use(swagger());

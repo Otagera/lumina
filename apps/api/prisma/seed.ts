@@ -93,6 +93,26 @@ async function main() {
 
 	console.log(`System user created/updated: ${systemUser.user_id}`);
 
+	const adminEmail = process.env.INITIAL_ADMIN_EMAIL;
+	const adminPassword = process.env.INITIAL_ADMIN_PASSWORD;
+
+	if (adminEmail && adminPassword) {
+		console.log(`Seeding admin user: ${adminEmail}`);
+		const hash = await Bun.password.hash(adminPassword);
+		await prisma.users.upsert({
+			where: { email: adminEmail },
+			update: { role: "SUPER_ADMIN" },
+			create: {
+				email: adminEmail,
+				password: hash,
+				plan_name: "free",
+				plan_id: freePlan?.id,
+				role: "SUPER_ADMIN",
+			},
+		});
+		console.log(`Admin user seeded: ${adminEmail}`);
+	}
+
 	console.log("Seeding completed.");
 }
 

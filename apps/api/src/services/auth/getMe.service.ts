@@ -17,6 +17,7 @@ const aliasSpec = {
 		user_id: "id",
 		email: "email",
 		plan_name: "planName",
+		role: "role",
 	},
 };
 
@@ -39,6 +40,7 @@ const service = async (token: string) => {
 			user_id: user.user_id,
 			email: user.email,
 			plan_name: user.plan_name,
+			role: user.role,
 		});
 	} catch (error: any) {
 		if (error?.message === "User not found.") {

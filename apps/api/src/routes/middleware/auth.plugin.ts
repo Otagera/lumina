@@ -39,6 +39,10 @@ export const authDerivation = async ({
 			throw new AuthError("Invalid User");
 		}
 
+		if (validUser.suspended_at) {
+			throw new AuthError("Account has been suspended");
+		}
+
 		return {
 			user: validUser,
 			userId: userId,

@@ -1,6 +1,13 @@
 import type { RouteObject } from "react-router-dom";
 import { Navigate, useParams } from "react-router-dom";
 import PrivateRoute from "./components/PrivateRoute";
+import AdminRoute from "./components/AdminRoute";
+import AdminOverview from "./routes/admin/AdminOverview";
+import AdminUsers from "./routes/admin/AdminUsers";
+import AdminUserDetail from "./routes/admin/AdminUserDetail";
+import AdminPlans from "./routes/admin/AdminPlans";
+import AdminModeration from "./routes/admin/AdminModeration";
+import AdminQueues from "./routes/admin/AdminQueues";
 import App, { ErrorBoundary as AppErrorBoundary } from "./root";
 import Album from "./routes/album";
 import ThemeEditor from "./routes/themeEditor";
@@ -116,6 +123,18 @@ export default [
 						path: "trash",
 						element: <Trash />,
 					},
+				],
+			},
+			// Admin routes
+			{
+				element: <AdminRoute />,
+				children: [
+					{ path: "admin", element: <AdminOverview /> },
+					{ path: "admin/users", element: <AdminUsers /> },
+					{ path: "admin/users/:userId", element: <AdminUserDetail /> },
+					{ path: "admin/plans", element: <AdminPlans /> },
+					{ path: "admin/moderation", element: <AdminModeration /> },
+					{ path: "admin/queues", element: <AdminQueues /> },
 				],
 			},
 			// Not found page

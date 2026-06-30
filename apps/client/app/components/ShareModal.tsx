@@ -54,8 +54,9 @@ export const ShareModal = ({
 		}
 	};
 
-	const clientUrl =
-		import.meta.env.VITE_CLIENT_URL || window.location.origin;
+	const clientUrl = (
+		import.meta.env.VITE_CLIENT_URL || window.location.origin
+	).replace(/\/$/, "");
 	const shareUrl = `${clientUrl}/share/${shareToken}`;
 
 	const copyToClipboard = () => {

@@ -40,7 +40,7 @@ import { EventsProvider } from "./utils/EventsContext";
 import { UploadProvider } from "./utils/UploadContext";
 
 const Navbar = () => {
-	const { isAuthenticated, logout } = useAuth();
+	const { isAuthenticated, logout, isAdmin } = useAuth();
 	const navigate = useNavigate();
 	const [isHydrated, setIsHydrated] = useState(false);
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -123,6 +123,19 @@ const Navbar = () => {
 									Trash
 								</NavLink>
 							</div>
+							{isAdmin && (
+								<NavLink
+									to="/admin"
+									className={({ isActive }) =>
+										`px-3 py-1.5 text-sm font-bold transition-colors ${isActive
+											? "text-sage underline underline-offset-4 decoration-2"
+											: "text-zinc-500 dark:text-zinc-400 hover:text-sage dark:hover:text-sage"
+										}`
+									}
+								>
+									Admin
+								</NavLink>
+							)}
 							<div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-1" />
 							<div className="flex items-center gap-1">
 								<UsageIndicator />
